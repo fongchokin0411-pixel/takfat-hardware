@@ -6,7 +6,8 @@
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Tak Fat Hardware 收銀系統</title>
 <script>window.TF_OCR_BASE = "ocr/"; window.TF_OCR_CORE = "core/tesseract-core-simd-lstm.wasm.js";</script>
-<style>@font-face{font-family:"Geist";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:"Geist Mono";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}</style><link rel="manifest" href="manifest.webmanifest">
+<style>@font-face{font-family:"Geist";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:"Geist Mono";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}</style>
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#f3f3f0">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -310,6 +311,15 @@ tr.grp td .muted { margin-left: 8px; }
 .p-hint { flex: 1 1 280px; margin: 0; text-align: right; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .sumtable { width: 100%; }
+/* access code: the web-hosted app asks for it once on a new computer */
+.gate { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: var(--ground);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.gate-card { width: min(380px, 100%); display: grid; gap: 14px; justify-items: start; padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.gate-card h1 { margin: 0; }
+.gate-ask { display: grid; gap: 12px; width: 100%; }
+.gate-ask .field { width: 100%; }
+.gate-ask input { height: 44px; font-size: 16px; }
+.gate-err { margin: 0; color: var(--negative); font-size: 13px; }
 
 /* printing: only #printArea goes to paper; a receipt is sized for a till roll, lists for A4 */
 #printArea { display: none; }
@@ -1102,6 +1112,19 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 <div id="toast" class="toast" role="status" hidden></div>
 </div>
 <div id="printArea" aria-hidden="true"></div>
+<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+  <form class="gate-card" id="gateForm" autocomplete="off">
+    <span class="mark" aria-hidden="true">TF</span>
+    <h1 id="gateTitle">Tak Fat Hardware</h1>
+    <p class="hint" id="gateWait">載入中…</p>
+    <div class="gate-ask" id="gateAsk" hidden>
+      <label class="field">請輸入啟用碼<input id="gateCode" type="password" autocomplete="off" spellcheck="false" autocapitalize="off"></label>
+      <p class="gate-err" id="gateErr" role="alert" hidden>啟用碼唔啱，請再試。</p>
+      <button class="btn primary" type="submit">開始使用</button>
+      <p class="hint">啟用碼由店主提供。每部電腦只需要輸入一次。</p>
+    </div>
+  </form>
+</div>
 
 <script>
 /* charts.js from tasteskill (github.com/Leonxlnx/taste-skill, MIT licence) */
@@ -1924,6 +1947,7 @@ function applyCatalog(docs) {
   state.sortedCodes = [...state.catalog.keys()].sort();
   state.tokIndex = null;
   state.catalogLoaded = true;
+  settleAccess();
   renderSell(); renderProducts(); renderTypeFilter();
   if (!$('#cartList').contains(document.activeElement)) renderCart();
 }
@@ -4743,6 +4767,44 @@ $('#modalExtra').addEventListener('click', async () => {
   if (!ex.dataset.armed) { ex.dataset.armed = '1'; ex.textContent = md.extra.confirm || '再按確認'; return; }
   try { await md.extra.fn(); closeModal(); } catch (err) { writeFailed(err); }
 });
+
+/* ---------- access code for the web-hosted app ----------
+   A new computer types the code once (the owner hands it out); a computer that already keeps this shop's products is
+   let straight in. Only the code's SHA-256 is in the page. It keeps casual visitors out; the records never leave the PC. */
+const ACCESS_HASH = '8ae612647d1f95ad15d4015d0eb75c3c22b13247f8d1aa21f9cd9d50fec4466f';
+const ACCESS_KEY = 'tf-access';
+let accessPending = !window.claude && !!document.querySelector('link[rel="manifest"]') && lsGet(ACCESS_KEY) !== ACCESS_HASH;
+function openGate(ask) {
+  $('#gate').hidden = false; $('#app').inert = true;
+  $('#gateWait').hidden = ask; $('#gateAsk').hidden = !ask;
+  if (ask) $('#gateCode').focus();
+}
+function passGate() {
+  accessPending = false; lsSet(ACCESS_KEY, ACCESS_HASH);
+  $('#gate').hidden = true; $('#app').inert = false;
+  if (!$('#view-sell').hidden) $('#scan').focus();
+}
+function settleAccess() {
+  if (!accessPending) return;
+  if (state.catalog.size > 0) passGate(); else openGate(true);
+}
+async function sha256Hex(t) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+if (accessPending) {
+  openGate(false);
+  setTimeout(() => { if (accessPending && $('#gateAsk').hidden) openGate(true); }, 4000);   // the shop's data never came: ask
+  $('#gateForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const typed = $('#gateCode').value.trim().toLowerCase().replace(/\s+/g, '');
+    let ok = false;
+    try { ok = !!typed && (await sha256Hex(typed)) === ACCESS_HASH; } catch (err) {}
+    if (ok) { passGate(); toast('歡迎使用 Tak Fat Hardware。'); }
+    else { $('#gateErr').hidden = false; $('#gateCode').select(); }
+  });
+  $('#gateCode').addEventListener('input', () => { $('#gateErr').hidden = true; });
+}
 
 /* ---------- the Edge-installed app: offline files, the Install button and updates ---------- */
 if (!window.claude && 'serviceWorker' in navigator && document.querySelector('link[rel="manifest"]') && /^https?:$/.test(location.protocol)) {
