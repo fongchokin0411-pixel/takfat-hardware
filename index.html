@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Tak Fat Hardware 收銀系統</title>
-<script>window.TF_OCR_BASE = "ocr/"; window.TF_OCR_CORE = "core/tesseract-core-simd-lstm.wasm.js";</script>
+<script>window.TF_OCR_BASE = "ocr/"; window.TF_OCR_CORE = "core/tesseract-core-simd-lstm.wasm.js"; window.TF_DEFAULT_LOGO = "icons/pig-128.png";</script>
 <style>@font-face{font-family:"Geist";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:"Geist Mono";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#f3f3f0">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/pig-192.png">
+<link rel="apple-touch-icon" href="icons/pig-192.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -316,6 +316,7 @@ tr.grp td .muted { margin-left: 8px; }
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .gate-card { width: min(380px, 100%); display: grid; gap: 14px; justify-items: start; padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); }
 .gate-card h1 { margin: 0; }
+.gate-card .mark.logo { width: 64px; height: 64px; }
 .gate-ask { display: grid; gap: 12px; width: 100%; }
 .gate-ask .field { width: 100%; }
 .gate-ask input { height: 44px; font-size: 16px; }
@@ -3697,7 +3698,8 @@ function receiptHtml(r, lines) {
     const q = num(l.qty) || 0, p = num(l.price) || 0;
     return `<div class="it"><div class="nm">${esc(l.name || l.code)}</div><div class="ln"><span>${esc(l.code)} · ${qtyFmt(q)}${l.unit ? ' ' + esc(l.unit) : ''} × ${money(p)}</span><span>${money(q * p)}</span></div></div>`;
   }).join('');
-  return `<div class="pr-receipt w${esc(w)}">${state.logo ? `<img class="logo" src="${esc(state.logo)}" alt="">` : ''}<div class="shop">${esc(shop)}</div><div class="c">收據 · 第 ${esc(r.no ?? '–')} 單</div>
+  const logo = state.logo || DEFAULT_LOGO;
+  return `<div class="pr-receipt w${esc(w)}">${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ''}<div class="shop">${esc(shop)}</div><div class="c">收據 · 第 ${esc(r.no ?? '–')} 單</div>
     <div class="c">${isNaN(at) ? '' : at.toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' })}</div><hr>${items}<hr>
     <div class="ln tot"><span>合計</span><span>${money(total)}</span></div>
     ${paid !== null ? `<div class="ln"><span>收</span><span>${money(paid)}</span></div><div class="ln"><span>找續</span><span>${money(Math.max(0, paid - total))}</span></div>` : ''}
@@ -4274,6 +4276,7 @@ async function exportRestock() {
 
 /* ---------- shop name, backup and restore ---------- */
 const DEFAULT_SHOP = $('#shopTitle').textContent;
+const DEFAULT_LOGO = window.TF_DEFAULT_LOGO || '';   // the web app ships the shop's pig; the owner's own logo replaces it
 function shopInitials(name) {
   if (/^[\x20-\x7E]+$/.test(name)) return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'POS';
   return [...name.replace(/\s/g, '')].slice(0, 2).join('');
@@ -4282,8 +4285,9 @@ function applyShop(name, logo) {
   const n = String(name || '').trim() || DEFAULT_SHOP;
   state.logo = typeof logo === 'string' && logo.startsWith('data:image/') ? logo : '';
   const mark = $('#shopMark');
-  mark.classList.toggle('logo', !!state.logo);
-  if (state.logo) mark.innerHTML = `<img src="${esc(state.logo)}" alt="">`; else mark.textContent = shopInitials(n);
+  const shown = state.logo || DEFAULT_LOGO;
+  mark.classList.toggle('logo', !!shown);
+  if (shown) mark.innerHTML = `<img src="${esc(shown)}" alt="">`; else mark.textContent = shopInitials(n);
   $('#logoPrev').innerHTML = state.logo ? `<img src="${esc(state.logo)}" alt="">` : '';
   $('#logoClear').hidden = !state.logo;
   $('#shopTitle').textContent = n; $('#shopName').value = n;
@@ -4775,6 +4779,8 @@ const ACCESS_HASH = '8ae612647d1f95ad15d4015d0eb75c3c22b13247f8d1aa21f9cd9d50fec
 const ACCESS_KEY = 'tf-access';
 let accessPending = !window.claude && !!document.querySelector('link[rel="manifest"]') && lsGet(ACCESS_KEY) !== ACCESS_HASH;
 function openGate(ask) {
+  const mark = $('#gate .mark');
+  if (DEFAULT_LOGO && !mark.classList.contains('logo')) { mark.classList.add('logo'); mark.innerHTML = `<img src="${esc(DEFAULT_LOGO)}" alt="">`; }
   $('#gate').hidden = false; $('#app').inert = true;
   $('#gateWait').hidden = ask; $('#gateAsk').hidden = !ask;
   if (ask) $('#gateCode').focus();

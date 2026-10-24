@@ -1,9 +1,9 @@
 // Keeps every file of the app on this computer, so the installed app opens and reads delivery notes with no internet.
 // Bump VERSION with each release: the new files are fetched in the background and used from the next opening.
-const VERSION = 'tf-1.6.1';
+const VERSION = 'tf-1.6.2';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
+  'icons/pig-128.png', 'icons/pig-192.png', 'icons/pig-512.png', 'icons/pig-maskable-512.png',
   'fonts/geist-latin-wght-normal.woff2', 'fonts/geist-mono-latin-wght-normal.woff2',
   'ocr/tesseract.min.js', 'ocr/worker.min.js', 'ocr/core/tesseract-core-simd-lstm.wasm.js',
   'ocr/lang/chi_tra.traineddata.gz', 'ocr/lang/eng.traineddata.gz',
