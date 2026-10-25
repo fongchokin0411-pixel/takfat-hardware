@@ -175,6 +175,13 @@ button, input, select { font: inherit; color: inherit; }
 .btn.ghost:hover { background: var(--raised); }
 .btn.danger { background: transparent; color: var(--negative); outline: 1px solid currentColor; outline-offset: -1px; }
 .btn.danger:hover { background: var(--pill-negative-bg); }
+.btn.danger.solid { background: var(--negative); color: #fff; outline: 0; }
+.btn.danger.solid:hover { background: color-mix(in srgb, var(--negative) 86%, #000); }
+.modal.confirm { z-index: 35; }
+.confirm .sheet { width: min(420px, 100%); gap: 10px; }
+.confirm h2 { margin: 0; }
+.confirm #cfBody { margin: 0; font-size: var(--fs-body); }
+.confirm .actions { display: flex; gap: 10px; margin-top: 8px; }
 .btn.small { height: 30px; padding: 0 10px; font-size: 13px; }
 .btn.big { height: 48px; padding: 0 22px; font-size: 16px; }
 .btn.icon { width: var(--control-height); padding: 0; }
@@ -1309,6 +1316,13 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
 </main>
 
 <datalist id="dlSuppliers"></datalist>
+<div id="confirm" class="modal confirm" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfBody">
+    <h2 id="cfTitle"></h2>
+    <p id="cfBody" class="hint"></p>
+    <div class="actions"><span style="flex:1"></span><button type="button" class="btn ghost" id="cfNo">取消</button><button type="button" class="btn danger solid" id="cfYes">確認</button></div>
+  </div>
+</div>
 <div id="modal" class="modal" hidden>
   <form class="sheet" id="modalForm" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h2 id="modalTitle"></h2>
@@ -2383,7 +2397,7 @@ function renderCart() {
   $('#cartEmpty').hidden = !!state.cart.length;
   const n = state.cart.reduce((s, c) => s + (num(c.qty) || 0), 0);
   $('#cartCount').textContent = state.cart.length ? `${qtyFmt(round3(n))} 件` : '';
-  const clr = $('#cartClear'); clr.hidden = !state.cart.length; clr.dataset.armed = ''; clr.textContent = '清除呢張單';
+  $('#cartClear').hidden = !state.cart.length;
   renderPay();
 }
 const HK_CASH = [[100000, 'note'], [50000, 'note'], [10000, 'note'], [5000, 'note'], [2000, 'note'], [1000, 'coin'], [500, 'coin'], [200, 'coin'], [100, 'coin'], [50, 'coin'], [20, 'coin'], [10, 'coin']];
@@ -2607,7 +2621,7 @@ function openProduct(code) {
     }
     await Promise.all(writes);
     toast(editing ? `已儲存 ${c}。` : `已新增 ${c}。`);
-  }, editing ? { extra: { label: '刪除貨品', confirm: '再按一次確認刪除', fn: async () => {
+  }, editing ? { extra: { label: '刪除貨品', ask: `刪除 ${code}？`, body: '呢件貨會由貨品表移除。以前嘅銷售同入貨紀錄會保留。', fn: async () => {
     await state.store.patchChunk(state.codeChunk.get(code), { items: { [code]: { removed: true } } });
     toast(`已刪除 ${code}。`);
   } } } : {});
@@ -3127,7 +3141,7 @@ async function openPurchaseLine(day, id) {
     <p class="hint" id="peInfo"></p>
     ${state.unlocked ? '<label class="check"><input type="checkbox" name="updCost" checked><span>同時將貨品來價改做呢個來價</span></label>' : ''}`,
     fd => savePurchaseLine(day, id, fd),
-    { ok: '儲存修改', extra: { label: '作廢呢行', confirm: '再按一次確認作廢', fn: () => voidPurchaseLine(day, id) } });
+    { ok: '儲存修改', extra: { label: '作廢呢行', ask: '作廢呢行入貨？', body: '呢行入貨會取消，存量會減返。', fn: () => voidPurchaseLine(day, id) } });
   // the code box shows which product it points at, and fills that product's name and price
   const body = $('#modalBody'), codeIn = body.querySelector('[name=code]');
   const show = () => {
@@ -4282,7 +4296,7 @@ function applyReader(note) {
   $('#aiUseApi').checked = pref === 'api'; $('#aiUseOcr').checked = pref !== 'api';
   $('#aiKey').value = '';
   $('#aiKey').placeholder = key ? `已儲存（${key.slice(0, 10)}…${key.slice(-4)}）` : 'sk-ant-…';
-  $('#aiClear').hidden = !key; $('#aiClear').dataset.armed = ''; $('#aiClear').textContent = '刪除 key';
+  $('#aiClear').hidden = !key;
   $('#aiOcrHint').textContent = '喺呢部機讀字，唔使錢。只適合電腦打印、影得清楚嘅單，手寫字讀唔到。讀完要逐行核對貨號同數量。' + (window.TF_OCR_BASE || ocrEmbedded() ? '' : '第一次用要上網下載辨識檔（大約 10 MB），之後就唔使。');
   renderThumbs();
   setRcvBusy(false, note !== undefined ? note : pref === 'api' && !canApi ? '未有 Claude API key，暫時用離線文字辨識。可以喺「匯入・設定」加 key。'
@@ -4786,7 +4800,7 @@ function openModal(title, html, onSubmit, opts = {}) {
   $('#modalErr').hidden = true;
   $('#modalOk').textContent = opts.ok || '儲存';
   const ex = $('#modalExtra');
-  ex.hidden = !opts.extra; ex.dataset.armed = '';
+  ex.hidden = !opts.extra;
   if (opts.extra) ex.textContent = opts.extra.label;
   state.modal = { onSubmit, extra: opts.extra };
   $('#modal').hidden = false;
@@ -5153,7 +5167,7 @@ function customerForm(c) {
     await saveCustomer(id, data);
     state.acct.sel = id; renderAccounts();
     toast(c ? '客戶資料已更新。' : `已新增客戶「${name}」。`);
-  }, { ok: c ? '儲存' : '新增', extra: c ? { label: '刪除客戶', confirm: '再按確認刪除', fn: async () => {
+  }, { ok: c ? '儲存' : '新增', extra: c ? { label: '刪除客戶', ask: `刪除客戶「${c.name}」？`, body: '之後收銀揀唔到佢。以前嘅單同收款紀錄會保留。', fn: async () => {
     const b = acctBalance(c.id);
     if (b === null || Math.abs(b) > 0.004) { toast(b === null ? '計緊數，請等一陣再試。' : `${c.name} 仲欠 ${money(b)}，找清數先可以刪除。`, true); throw Object.assign(new Error(''), { quiet: true }); }
     await saveCustomer(c.id, { removed: true });
@@ -5225,6 +5239,7 @@ $$('.tab').forEach(b => b.addEventListener('click', () => showView(b.dataset.vie
 document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) showView(g.dataset.goto); });
 const FKEYS = { F2: 'sell', F3: 'returns', F7: 'products', F8: 'today', F9: 'receive' };
 document.addEventListener('keydown', e => {
+  if (!$('#confirm').hidden && (e.key === 'F5' || FKEYS[e.key])) cfClose(false);
   if (e.key === 'F5' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
     e.preventDefault();   // F5 would reload the page; at this till it means "next customer" (Ctrl+F5 still reloads)
     if ($('#app').inert) return;
@@ -5361,12 +5376,17 @@ $('#acBody').addEventListener('click', e => { const tr = e.target.closest('[data
 $('#acPay').addEventListener('submit', recordPay);
 $('#acMonth').addEventListener('change', () => { if ($('#acMonth').value) { state.acct.month = $('#acMonth').value; renderAccounts(); } });
 $('#acPrint').addEventListener('click', printStatement);
-$('#acLog').addEventListener('click', e => { const b = e.target.closest('[data-unpay]'); if (b) arm(b, '作廢呢筆收款', () => voidPay(b.dataset.unpay, b.dataset.day)); });
+$('#acLog').addEventListener('click', e => {
+  const b = e.target.closest('[data-unpay]'); if (!b) return;
+  const p = acctEntries().find(x => x.pid === b.dataset.unpay), c = p && state.customers.get(p.acct);
+  ask('作廢呢筆收款？', p ? `${c ? c.name : ''} ${dayLabel(p.day)} 收 ${money(-p.amount)}${p.note ? `（${p.note}）` : ''}。佢嘅欠數會加返。` : '', '確認作廢', () => voidPay(b.dataset.unpay, b.dataset.day));
+});
 $('#slots').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (b) switchCustomer(num(b.dataset.slot)); });
 $('#cartClear').addEventListener('click', () => {
-  const b = $('#cartClear');
-  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '再按一次清除'; setTimeout(() => { if (b.dataset.armed) { b.dataset.armed = ''; b.textContent = '清除呢張單'; } }, 3000); return; }
-  state.cart = []; $('#paid').value = ''; state.cartAcct = null; saveCart(); renderCart(); $('#scan').focus();
+  if (!state.cart.length) return;
+  ask('清除呢張單？', `客 ${state.saleNo} 目前交易嘅 ${state.cart.length} 款貨品會清走，唔會記錄。`, '清除', () => {
+    state.cart = []; $('#paid').value = ''; state.cartAcct = null; saveCart(); renderCart(); $('#scan').focus();
+  });
 });
 $('#scan').addEventListener('input', () => {
   hideMsg(); if (state.scanPick) resetPick();
@@ -5395,20 +5415,30 @@ $('#needSkip').addEventListener('click', () => submitInfo(true));
 $('#needCancel').addEventListener('click', closeNeed);
 $('#needForm').addEventListener('keydown', e => { if (e.key === 'Escape') closeNeed(); });
 $('#undoBtn').addEventListener('click', () => {
-  const b = $('#undoBtn');
   const l = state.lines.find(x => x.kind === 'sale' && !x.void); if (!l) return;
-  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '再按一次確認作廢'; setTimeout(() => { b.dataset.armed = ''; b.textContent = '作廢上一單'; }, 3000); return; }
-  b.dataset.armed = ''; b.textContent = '作廢上一單';
-  if (l.rid) voidGroup(l.rid); else voidLine(l.id);
+  if (l.rid) askVoidGroup(l.rid); else askVoidLine(l.id);
 });
-const arm = (btn, label, fn) => {
-  if (btn.dataset.armed) fn();
-  else { btn.dataset.armed = '1'; btn.textContent = '再按確認'; setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ''; btn.textContent = label; } }, 3000); }
-};
+function askVoidLine(id) {
+  const l = state.lines.find(x => x.id === id); if (!l || l.void) return;
+  const back = l.ret ? (l.restock === false ? '' : '存量會減返。') : '存量會加返。';
+  ask(l.ret ? '作廢呢筆退貨？' : '作廢呢筆銷售？', `${l.code} ${l.name || ''} × ${qtyFmt(Math.abs(num(l.qty) || 0))}。${back}`, '確認作廢', () => voidLine(id));
+}
+function askVoidGroup(key) {
+  const ls = state.lines.filter(l => (l.rid === key || l.pid === key) && !l.void); if (!ls.length) return;
+  const n = new Set(ls.map(l => l.code)).size;
+  if (ls[0].pid === key) {
+    const pu = state.purchases[key] || {};
+    ask('作廢呢張入貨單？', `${pu.supplier || '未填供應商'}${pu.ref ? ` · 單號 ${pu.ref}` : ''} · ${n} 款貨品。存量會減返。`, '確認作廢', () => voidGroup(key));
+    return;
+  }
+  const r = state.receipts[key] || {}, amt = ls.reduce((t, l) => t + (num(l.qty) || 0) * (num(l.price) || 0), 0);
+  if (r.ret) ask(`作廢退貨單（第 ${r.no ?? '–'} 單）？`, `退款 ${money(-amt)}${r.acct ? `（${r.acctName || ''} 月結數）` : ''}。${r.restock === false ? '' : '退返嘅貨會由存量減返。'}`, '確認作廢', () => voidGroup(key));
+  else ask(`作廢第 ${r.no ?? '–'} 單？`, `${n} 款貨品，合計 ${money(amt)}${r.acct ? `（掛數 ${r.acctName || ''}）` : ''}。存量會加返。`, '確認作廢', () => voidGroup(key));
+}
 $('#tape').addEventListener('click', e => {
   const v = e.target.closest('[data-void]'), ed = e.target.closest('[data-edit]'), vr = e.target.closest('[data-vr]');
-  if (v) arm(v, '作廢', () => voidLine(v.dataset.void));
-  if (vr) arm(vr, vr.dataset.label || '作廢', () => voidGroup(vr.dataset.vr));
+  if (v) askVoidLine(v.dataset.void);
+  if (vr) askVoidGroup(vr.dataset.vr);
   if (ed) editLine(ed.dataset.edit);
 });
 $('#rcvFile').addEventListener('change', async () => { const f = $('#rcvFile').files; if (f && f.length) await addPhotos(f); $('#rcvFile').value = ''; });
@@ -5476,7 +5506,7 @@ $('#rcvLines').addEventListener('input', e => {
   li.querySelector('[data-info]').innerHTML = rowInfo(x);
   renderRcvSum();
 });
-$('#rcvToday').addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (b) arm(b, '作廢', () => voidGroup(b.dataset.vp)); });
+$('#rcvToday').addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (b) askVoidGroup(b.dataset.vp); });
 $('#puMonth').addEventListener('change', () => loadPurchases(false));
 $('#puPrev').addEventListener('click', () => { $('#puMonth').value = shiftMonth($('#puMonth').value || state.today.slice(0, 7), -1); loadPurchases(false); });
 $('#puNext').addEventListener('click', () => { $('#puMonth').value = shiftMonth($('#puMonth').value || state.today.slice(0, 7), 1); loadPurchases(false); });
@@ -5513,7 +5543,7 @@ $('#prTest').addEventListener('click', testPrint);
 $$('input[name="aiEngine"]').forEach(r => r.addEventListener('change', () => { lsSet(LS_READER, r.value); applyReader(); $('#aiInfo').textContent = r.value === 'api' && !lsGet(LS_KEY) ? '請貼上 API key，再按「儲存並測試」。' : '已更改讀單方法。'; }));
 $('#aiSave').addEventListener('click', saveApiKey);
 $('#aiKey').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); } });
-$('#aiClear').addEventListener('click', () => arm($('#aiClear'), '刪除 key', () => { lsSet(LS_KEY, ''); lsSet(LS_READER, 'ocr'); applyReader(); $('#aiInfo').textContent = '已刪除 key，改用離線文字辨識。'; }));
+$('#aiClear').addEventListener('click', () => ask('刪除 API key？', '之後影相讀單會改用離線文字辨識。', '刪除', () => { lsSet(LS_KEY, ''); lsSet(LS_READER, 'ocr'); applyReader(); $('#aiInfo').textContent = '已刪除 key，改用離線文字辨識。'; }));
 // every edit of the search jumps, even to the same code again after scrolling away
 $('#pSearch').addEventListener('input', () => { state.pKey = null; renderProducts(); });
 $('#pType').addEventListener('change', renderProducts);
@@ -5606,10 +5636,39 @@ $('#modalForm').addEventListener('submit', async e => {
 $('#modalCancel').addEventListener('click', closeModal);
 $('#modal').addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 $('#modalExtra').addEventListener('click', async () => {
-  const ex = $('#modalExtra'), md = state.modal; if (!md || !md.extra) return;
-  if (!ex.dataset.armed) { ex.dataset.armed = '1'; ex.textContent = md.extra.confirm || '再按確認'; return; }
+  const md = state.modal; if (!md || !md.extra) return;
+  if (!(await confirmBox(md.extra.ask || `${md.extra.label}？`, md.extra.body || '', md.extra.label)) || state.modal !== md) return;
   try { await md.extra.fn(); closeModal(); } catch (err) { if (!err || !err.quiet) writeFailed(err); }
 });
+
+/* ---------- 確認 / 取消: anything that voids, deletes or clears asks in its own small window ----------
+   A double click can't confirm it: the second click lands while the window is opening and is ignored, clicks outside
+   it do nothing, and 取消 has the focus, so Enter backs out. */
+let cfResolve = null, cfOpenedAt = 0, cfFrom = null;
+function confirmBox(title, body, ok) {
+  if (cfResolve) cfResolve(false);
+  else cfFrom = document.activeElement;
+  $('#cfTitle').textContent = title;
+  $('#cfBody').textContent = body || ''; $('#cfBody').hidden = !body;
+  $('#cfYes').textContent = ok || '確認';
+  $('#confirm').hidden = false; cfOpenedAt = Date.now();
+  $('#cfNo').focus();
+  return new Promise(res => { cfResolve = res; });
+}
+function cfClose(yes) {
+  $('#confirm').hidden = true;
+  const r = cfResolve; cfResolve = null;
+  // the focus goes back where it was (a dialog underneath still answers to Esc)
+  if (cfFrom && cfFrom.isConnected && cfFrom.getClientRects().length) cfFrom.focus();
+  cfFrom = null;
+  if (r) r(yes);
+}
+const ask = (title, body, ok, fn) => confirmBox(title, body, ok).then(yes => { if (yes) fn(); });
+$('#cfYes').addEventListener('click', () => { if (Date.now() - cfOpenedAt > 450) cfClose(true); });
+$('#cfNo').addEventListener('click', () => cfClose(false));
+// Esc backs out wherever the focus is, and a click on the dimmed page keeps the focus on 取消
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#confirm').hidden) { e.stopPropagation(); e.preventDefault(); cfClose(false); } }, true);
+$('#confirm').addEventListener('mousedown', e => { if (e.target === $('#confirm')) e.preventDefault(); });
 
 /* ---------- access code for the web-hosted app ----------
    A new computer types the code once (the owner hands it out); a computer that already keeps this shop's products is
