@@ -334,21 +334,46 @@ tr.grp td .muted { margin-left: 8px; }
   #printArea .tag { padding: 0; font: 500 11px/1.4 var(--mono); }
   #printArea .tag::before { content: none; }
   #printArea.locked .priv { display: none !important; }
-  .pr-receipt { width: 72mm; }
+  /* the printed letterhead: a hex nut and TAK FAT / HARDWARE, black only (the pig stays on screen) */
+  #printArea .pb { display: inline-flex; align-items: center; gap: .3em; line-height: 1; }
+  #printArea .pb svg { display: block; flex: none; width: 1.45em; height: auto; margin-right: .08em; }
+  #printArea .pb .wm { display: inline-grid; }
+  #printArea .pb .wm b { font-weight: 800; letter-spacing: .01em; }
+  #printArea .pb .hw { display: flex; justify-content: space-between; margin-top: .2em; font-size: .36em; font-weight: 600; }
+  #printArea .pb .hw i { font-style: normal; }
+  #printArea .pb-name { font-weight: 800; }
+  .pr-receipt { width: 72mm; font-size: 12px; line-height: 1.45; }
   .pr-receipt.w58 { width: 48mm; font-size: 11px; }
   .pr-receipt.wa4 { width: 110mm; font-size: 13px; }
-  .pr-receipt .shop { font-size: 16px; font-weight: 700; text-align: center; }
-  .pr-receipt .logo { display: block; width: 20mm; height: auto; margin: 0 auto 2mm; }
-  .pr-receipt .c { text-align: center; }
-  .pr-receipt hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  .pr-receipt .pb-wrap { display: flex; justify-content: center; padding: 1mm 0 3mm; font-size: 21px; }
+  .pr-receipt.w58 .pb-wrap { font-size: 18px; }
+  .pr-receipt.wa4 .pb-wrap { font-size: 26px; }
+  .pr-receipt .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-top: 6px; border-top: 1.5px solid #000; }
+  .pr-receipt .meta b { font-size: 1.17em; }
+  .pr-receipt .when { padding-bottom: 6px; border-bottom: 1px solid #000; font-size: .92em; }
   .pr-receipt .ln { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
-  .pr-receipt .it { padding: 2px 0; break-inside: avoid; }
+  .pr-receipt .it { padding: 5px 0; border-bottom: 1px dotted #888; break-inside: avoid; }
+  .pr-receipt .it:last-of-type { border-bottom: 0; }
   .pr-receipt .it .nm { overflow-wrap: anywhere; }
-  .pr-receipt .tot { font-size: 1.3em; font-weight: 700; }
-  .pr-report h1 { font-size: 18px; font-weight: 700; margin: 0; }
+  .pr-receipt .q { font-size: .92em; }
+  .pr-receipt .sum { display: grid; gap: 2px; margin-top: 2px; padding-top: 6px; border-top: 1.5px solid #000; }
+  .pr-receipt .tot { font-size: 1.42em; font-weight: 800; }
+  .pr-receipt .note { padding-top: 6px; text-align: center; font-size: .92em; }
+  .pr-receipt .foot { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #000; text-align: center; font-size: .92em; }
+  .pr-report .ph { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 12px; border-bottom: 2px solid #000; font-size: 24px; }
+  .pr-report .ph-t { text-align: right; line-height: 1.15; }
+  .pr-report .ph-t b { display: block; font-size: 22px; }
+  .pr-report .ph-t span { font-size: 9px; font-weight: 600; letter-spacing: .3em; margin-right: -.3em; }
+  .pr-report .kv { display: grid; grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 3px 10px; padding: 10px 0; font-size: 11px; }
+  .pr-report .kv .k { opacity: .65; }
   .pr-report .sub { margin: 2px 0 10px; }
-  .pr-report .figs { display: flex; flex-wrap: wrap; gap: 4px 24px; margin-bottom: 10px; }
-  .pr-report .figs b { font-size: 15px; }
+  .pr-report .figs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-bottom: 10px; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+  .pr-report .figs > div { display: grid; gap: 2px; padding: 6px 8px; }
+  .pr-report .figs > div + div { border-left: 1px solid #bbb; }
+  .pr-report .figs span { font-size: 9px; }
+  .pr-report .figs b { font-size: 14px; font-variant-numeric: tabular-nums; }
+  .pr-report .figs .due { outline: 2px solid #000; outline-offset: -2px; }
+  .pr-report td.nw { white-space: nowrap; }
   .pr-report table { width: 100%; border-collapse: collapse; }
   .pr-report th { position: static; height: auto; padding: 4px 6px; font-size: 10px; text-align: left; border-bottom: 1px solid #000; }
   .pr-report td { padding: 3px 6px; font-size: 11px; border-top: 1px solid #bbb; vertical-align: top; }
@@ -3941,24 +3966,39 @@ async function exportPurchases() {
    the browser's print window. The claude.ai viewer blocks printing, so the buttons are hidden there. */
 const PR = { width: 'tf-print-width', auto: 'tf-print-auto', device: 'tf-print-device', footer: 'tf-print-footer' };
 const canPrint = () => !window.claude;
-function printFigs(pairs) { return `<div class="figs">${pairs.map(([k, v, cls]) => `<span class="${cls || ''}">${k} <b>${v}</b></span>`).join('')}</div>`; }
+function printFigs(pairs) { return `<div class="figs">${pairs.map(([k, v, cls]) => `<div class="${cls || ''}"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`; }
+// Printed paper has its own letterhead, black only so a till roll prints it clean: a hex nut and TAK FAT / HARDWARE.
+// The pig stays on screen. A shop renamed to something else gets its name in plain type.
+const PRINT_NUT = '<svg viewBox="0 0 48 42" aria-hidden="true"><path d="M12 0h24l12 21-12 21H12L0 21z" fill="#000"/><circle cx="24" cy="21" r="8.2" fill="#fff"/></svg>';
+function printBrand() {
+  const shop = $('#shopTitle').textContent.trim();
+  if (!/^tak\s*fat\b/i.test(shop)) return `<span class="pb"><span class="pb-name">${esc(shop)}</span></span>`;
+  return `<span class="pb" role="img" aria-label="${esc(shop)}">${PRINT_NUT}<span class="wm"><b>TAK FAT</b><span class="hw">${[...'HARDWARE'].map(c => `<i>${c}</i>`).join('')}</span></span></span>`;
+}
+// A4 heading: the letterhead, what the paper is, then its facts two to a row
+function printHead(title, en, facts) {
+  return `<header class="ph">${printBrand()}<div class="ph-t"><b>${title}</b>${en ? `<span>${en}</span>` : ''}</div></header>`
+    + (facts && facts.length ? `<div class="kv">${facts.map(([k, v]) => `<span class="k">${k}</span><span>${v}</span>`).join('')}</div>` : '');
+}
 function printedAt() { return '列印時間 ' + new Date().toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' }); }
 function receiptHtml(r, lines) {
-  const w = lsGet(PR.width) || '80', shop = $('#shopTitle').textContent, at = new Date(r.at);
+  const w = lsGet(PR.width) || '80', at = new Date(r.at);
   const total = lines.reduce((t, l) => t + (num(l.qty) || 0) * (num(l.price) || 0), 0);
   const paid = num(r.paid), items = lines.map(l => {
-    const q = num(l.qty) || 0, p = num(l.price) || 0;
-    return `<div class="it"><div class="nm">${esc(l.name || l.code)}</div><div class="ln"><span>${esc(l.code)} · ${qtyFmt(q)}${l.unit ? ' ' + esc(l.unit) : ''} × ${money(p)}</span><span>${money(q * p)}</span></div></div>`;
+    const q = Math.abs(num(l.qty) || 0), p = num(l.price) || 0;   // a return slip lists what came back, so no minus signs
+    return `<div class="it"><div class="nm">${esc(l.name || l.code)}</div><div class="ln q"><span>${esc(l.code)} · ${qtyFmt(q)}${l.unit ? ' ' + esc(l.unit) : ''} × ${money(p)}</span><span>${money(q * p)}</span></div></div>`;
   }).join('');
-  const logo = state.logo || DEFAULT_LOGO;
-  const foot = r.ret ? `<div class="ln tot"><span>${r.acct ? `扣返 ${esc(r.acctName || '')} 月結數` : '退款'}</span><span>${money(-total)}</span></div>${r.from ? `<div class="c">原單：${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單</div>` : ''}${r.note ? `<div class="c">原因：${esc(r.note)}</div>` : ''}`
-    : r.acct ? `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div><div class="ln"><span>掛數</span><span>${esc(r.acctName || '')}</span></div><div class="c">記入月結，月尾找數</div>`
-    : `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div>
-    ${paid !== null ? `<div class="ln"><span>收</span><span>${money(paid)}</span></div><div class="ln"><span>找續</span><span>${money(Math.max(0, paid - total))}</span></div>` : ''}`;
-  return `<div class="pr-receipt w${esc(w)}">${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ''}<div class="shop">${esc(shop)}</div><div class="c">${r.ret ? '退貨單' : '收據'} · 第 ${esc(r.no ?? '–')} 單</div>
-    <div class="c">${isNaN(at) ? '' : at.toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' })}</div><hr>${items}<hr>
-    ${foot}
-    <hr><div class="c">${esc(lsGet(PR.footer) || '多謝惠顧')}</div></div>`;
+  const sum = r.ret ? `<div class="ln tot"><span>${r.acct ? '扣返月結數' : '退款'}</span><span>${money(-total)}</span></div>${r.acct ? `<div class="ln"><span>客戶</span><span>${esc(r.acctName || '')}</span></div>` : ''}`
+    : r.acct ? `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div><div class="ln"><span>掛數</span><span>${esc(r.acctName || '')}</span></div>`
+    : `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div>${paid !== null ? `<div class="ln"><span>收</span><span>${money(paid)}</span></div><div class="ln"><span>找續</span><span>${money(Math.max(0, paid - total))}</span></div>` : ''}`;
+  const notes = [r.ret && r.from ? `原單：${dayLabel(r.from.day)} 第 ${r.from.no} 單` : '', r.ret && r.note ? `原因：${r.note}` : '', r.acct && !r.ret ? '記入月結，月尾找數' : ''].filter(Boolean);
+  const no = Number.isFinite(r.no) ? `第 ${r.no} 單` : esc(r.no ?? '');
+  return `<div class="pr-receipt w${esc(w)}"><div class="pb-wrap">${printBrand()}</div>
+    <div class="meta"><b>${r.ret ? '退貨單' : '收據'}</b><span>${no}</span></div>
+    <div class="when">${isNaN(at) ? '' : at.toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+    ${items}<div class="sum">${sum}</div>
+    ${notes.length ? `<div class="note">${notes.map(esc).join('<br>')}</div>` : ''}
+    <div class="foot">${esc(lsGet(PR.footer) || '多謝惠顧')}</div></div>`;
 }
 function printReceipt(rid, auto) {
   const r = state.receipts[rid];
@@ -3979,7 +4019,7 @@ function printToday() {
     const q = num(l.qty) || 0, p = num(l.price) || 0, c = num(l.cost);
     rows.push(`<tr><td>${l.rid ? '' : timeOf(l.at)}</td><td><span class="tag">${esc(l.code)}</span></td><td>${esc(l.name)}</td><td class="r">${qtyFmt(q)}</td><td class="r">${money(p)}</td><td class="r">${money(q * p)}</td><td class="r priv">${c === null ? '–' : money(q * (p - c))}</td></tr>`);
   }
-  runPrint('report', `<div class="pr-report"><h1>${esc($('#shopTitle').textContent)} · 今日銷售</h1><p class="sub">${esc($('#todayLabel').textContent)}</p>
+  runPrint('report', `<div class="pr-report">${printHead('今日銷售', 'DAILY SALES', [['營業日', esc($('#todayLabel').textContent.replace(/^營業日\s*/, ''))]])}
     ${printFigs([['營業額', money(s.sales), 'priv'], ['利潤', money(s.profit), 'priv'], ['件數', qtyFmt(round3(s.qty))], ['交易', txs.size]])}
     <table><thead><tr><th>時間</th><th>貨號</th><th>貨品</th><th class="r">數量</th><th class="r">單價</th><th class="r">金額</th><th class="r priv">利潤</th></tr></thead><tbody>${rows.join('')}</tbody></table>
     <p class="foot">${printedAt()}</p></div>`);
@@ -3988,7 +4028,7 @@ function printPurchases() {
   const P = state.pu, rows = puFiltered();
   if (!P || !rows.length) { toast('呢個月未有入貨紀錄可以列印。'); return; }
   const sup = $('#puSup').value, t = puTable(rows, true), total = rows.reduce((a, r) => a + puAmt(r), 0);
-  runPrint('report', `<div class="pr-report"><h1>${esc($('#shopTitle').textContent)} · 入貨記錄</h1><p class="sub">${monthLabel(P.month)}${sup ? ' · ' + esc(sup) : ''} · ${state.puMode === 'notes' ? '按入貨單' : '按貨品'}</p>
+  runPrint('report', `<div class="pr-report">${printHead('入貨記錄', 'PURCHASES', [['月份', monthLabel(P.month)], ['供應商', sup ? esc(sup) : '全部'], ['顯示', state.puMode === 'notes' ? '按入貨單' : '按貨品']])}
     ${printFigs([['入貨成本', money(total), 'priv'], ['入貨單', new Set(rows.filter(r => !r.single).map(r => r.key)).size + ' 張'], ['貨品', new Set(rows.map(r => r.code)).size + ' 款'], ['供應商', new Set(rows.map(r => r.supplier)).size + ' 間']])}
     <table><thead>${t.head}</thead><tbody>${t.body}</tbody></table><p class="foot">${printedAt()}</p></div>`);
 }
@@ -5086,13 +5126,13 @@ function printStatement() {
     run = round3(run + e.amount);
     const what = e.kind === 'pay' ? `收款${e.note ? `（${esc(e.note)}）` : ''}` : `${e.kind === 'ret' ? '退貨 · ' : ''}第 ${esc(e.no ?? '–')} 單`;
     const items = e.kind === 'pay' ? '' : e.items.map(i => `${esc(i.name)} × ${qtyFmt(Math.abs(i.qty))} @ ${money(i.price)}`).join('<br>');
-    return `<tr><td>${esc(e.day)}</td><td>${what}</td><td>${items}</td><td class="r">${money(e.amount)}</td><td class="r">${money(run)}</td></tr>`;
+    return `<tr><td class="nw">${esc(e.day.slice(5))}</td><td class="nw">${what}</td><td>${items}</td><td class="r">${money(e.amount)}</td><td class="r">${money(run)}</td></tr>`;
   });
-  runPrint('report', `<div class="pr-report"><h1>${esc($('#shopTitle').textContent)} · 月結單</h1><p class="sub">客戶：${esc(c.name)}${c.phone ? ` · 電話 ${esc(c.phone)}` : ''} · ${monthLabel(A.month)}</p>
-    ${printFigs([['上月結欠', money(st.open)], ['本月掛數', money(st.sales)], ...(st.rets ? [['本月退貨', money(st.rets)]] : []), ['本月收款', money(st.paid)], ['結欠', money(st.close)]])}
+  runPrint('report', `<div class="pr-report">${printHead('月結單', 'STATEMENT', [['客戶', esc(c.name)], ['月份', monthLabel(A.month)], ['電話', c.phone ? esc(c.phone) : '–'], ['列印日期', esc(new Date().toLocaleDateString('zh-HK', { dateStyle: 'medium' }))]])}
+    ${printFigs([['上月結欠', money(st.open)], ['本月掛數', money(st.sales)], ...(st.rets ? [['本月退貨', money(st.rets)]] : []), ['本月收款', money(st.paid)], ['結欠', money(st.close), 'due']])}
     <table><thead><tr><th>日期</th><th>單號</th><th>貨品</th><th class="r">金額</th><th class="r">結欠</th></tr></thead><tbody>
     <tr><td></td><td colspan="2">上月結欠</td><td></td><td class="r">${money(st.open)}</td></tr>${rows.join('')}</tbody></table>
-    <p class="foot">多謝惠顧。 · ${printedAt()}</p></div>`);
+    <p class="foot">多謝惠顧 · ${printedAt()}</p></div>`);
 }
 async function saveCustomer(id, data) {
   state.customers.set(id, { ...(state.customers.get(id) || {}), ...data, id });
