@@ -601,6 +601,14 @@ tr.rcpt.acct td.sum strong.who { font-weight: 600; }
 .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .check input { width: 18px; height: 18px; margin: 0; accent-color: var(--text); }
 tr.rcpt.ret td { background: var(--pill-warning-bg); }
+.where-list { display: grid; gap: 8px; }
+.where { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-control); cursor: pointer; }
+.where:has(input:checked) { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+.where input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--text); }
+.where strong { font-weight: 600; }
+.where .hint { grid-column: 2; }
+.where-list + .hint, .hint + .where-list { margin-top: 12px; }
+.bk-banner { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
 .autobk { display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
 .autobk-t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .autobk-t strong { font-weight: 500; }
@@ -742,6 +750,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
 
 <main class="canvas">
   <div id="banner" class="banner" hidden></div>
+  <div id="bkBanner" class="banner bk-banner" hidden><span id="bkBannerText">自動日結已完成，但備份要你撳一下先寫到。</span><button id="bkBannerBtn" class="btn small" type="button">寫入備份</button></div>
 
   <!-- 收銀 -->
   <section id="view-sell" class="view" role="tabpanel" aria-labelledby="tab-sell">
@@ -1238,6 +1247,11 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <input id="bkFile" class="vh" type="file" accept=".json,application/json">
           </div>
           <p class="hint" id="bkInfo"></p>
+          <div class="autobk" id="autoClose">
+            <div class="autobk-t"><strong>每日自動日結</strong><span class="chip" id="acState">未開</span></div>
+            <p class="hint" id="acInfo"></p>
+            <div class="row-wrap" id="acRow"><label class="check"><input type="checkbox" id="acOn"> 每日自動日結，時間</label><input id="acTime" type="time" value="20:00" aria-label="自動日結時間" style="width:120px"></div>
+          </div>
           <div class="autobk" id="autoBk">
             <div class="autobk-t"><strong>日結自動備份</strong><span class="chip" id="abState">未設定</span></div>
             <p class="hint" id="abInfo">每次按「日結」，系統會將備份寫入呢部電腦嘅同一個檔案。新備份會取代舊嗰個，唔會越積越多。</p>
@@ -4598,7 +4612,16 @@ $('#bkDown').addEventListener('click', downloadBackup);
 
 /* ---------- 日結 auto-backup: one file on this computer, written over each day ----------
    The file is picked once (showSaveFilePicker); its handle is kept in IndexedDB so later 日結 write to the same file. */
-const AB = { db: null, handle: null, last: '', off: false };
+const AB = { db: null, handle: null, last: '', off: false, where: '' };
+// A browser app cannot sign in to OneDrive or Google Drive itself, but both keep a folder on the computer that uploads
+// whatever is put in it, so the backup file is saved there.
+const BK_WHERE = {
+  pc: { label: '呢部電腦', hint: '存喺「文件」資料夾，直接按「存檔」就得。不過電腦壞咗，備份都會冇埋。' },
+  onedrive: { label: 'OneDrive', hint: '喺儲存視窗左邊揀「OneDrive」資料夾，再按「存檔」。檔案會自動上雲端（onedrive.live.com），電腦壞咗都仲有。要先喺呢部電腦登入 OneDrive。' },
+  gdrive: { label: 'Google Drive', hint: '要先安裝「Google 雲端硬碟電腦版」並登入。喺儲存視窗揀「Google Drive」磁碟機 →「我的雲端硬碟」，再按「存檔」。檔案會自動上 drive.google.com。' },
+};
+const bkWhereHtml = cur => `<div class="where-list" role="radiogroup" aria-label="備份存喺邊">${Object.entries(BK_WHERE).map(([k, w]) =>
+  `<label class="where"><input type="radio" name="bkWhere" value="${k}"${k === cur ? ' checked' : ''}><strong>${w.label}</strong><span class="hint">${w.hint}</span></label>`).join('')}</div>`;
 const abSupported = () => !window.claude && typeof window.showSaveFilePicker === 'function' && window.self === window.top;
 function abDb() {
   return AB.db || (AB.db = new Promise((res, rej) => { const r = indexedDB.open('tf-files', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
@@ -4609,7 +4632,7 @@ async function abPut(k, v) {
   return new Promise((res, rej) => { const t = db.transaction('h', 'readwrite'), st = t.objectStore('h'); if (v === undefined) st.delete(k); else st.put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
 }
 async function abLoad() {
-  if (abSupported()) try { AB.handle = (await abGet('backup')) || null; AB.last = (await abGet('backupAt')) || ''; AB.off = !!(await abGet('backupOff')); } catch (e) {}
+  if (abSupported()) try { AB.handle = (await abGet('backup')) || null; AB.last = (await abGet('backupAt')) || ''; AB.off = !!(await abGet('backupOff')); AB.where = (await abGet('backupWhere')) || ''; } catch (e) {}
   renderAutoBk();
 }
 function renderAutoBk() {
@@ -4621,14 +4644,14 @@ function renderAutoBk() {
   $('#abNow').hidden = !on; $('#abOff').hidden = !on;
   const when = AB.last ? new Date(AB.last).toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' }) : '';
   $('#abInfo').textContent = !ok ? '自動備份要喺安裝咗嘅 Tak Fat Hardware app（Edge）先用到。呢度可以用上面「下載備份」。'
-    : on ? `每次日結會寫入「${AB.handle.name}」，取代上一個備份。${when ? `上次備份：${when}。` : '未備份過。'}`
+    : on ? `每次日結會寫入「${AB.handle.name}」${BK_WHERE[AB.where] ? `（${BK_WHERE[AB.where].label}）` : ''}，取代上一個備份。${when ? `上次備份：${when}。` : '未備份過。'}`
     : '每次按「日結」，系統會將備份寫入呢部電腦嘅同一個檔案。新備份會取代舊嗰個，唔會越積越多。第一次日結會問你存喺邊。';
 }
-async function abPick() {
+async function abPick(where) {
   try {
-    const h = await window.showSaveFilePicker({ suggestedName: 'TakFat-備份.json', types: [{ description: '備份檔', accept: { 'application/json': ['.json'] } }] });
-    AB.handle = h; AB.off = false;
-    await abPut('backup', h); await abPut('backupOff', undefined);
+    const h = await window.showSaveFilePicker({ id: 'tf-backup', startIn: 'documents', suggestedName: 'TakFat-備份.json', types: [{ description: '備份檔', accept: { 'application/json': ['.json'] } }] });
+    AB.handle = h; AB.off = false; AB.where = BK_WHERE[where] ? where : 'pc';
+    await abPut('backup', h); await abPut('backupOff', undefined); await abPut('backupWhere', AB.where);
     renderAutoBk();
     return true;
   } catch (e) { if (!e || e.name !== 'AbortError') toast('未能揀儲存位置。', true); return false; }
@@ -4646,14 +4669,26 @@ async function abWrite() {
   renderAutoBk();
 }
 // at 日結: pick the file the first time, then make sure it may be written (runs inside the 確認日結 click)
-function abBegin() {
+function abBegin(where) {
   if (!abSupported() || AB.off) return null;
-  return AB.handle ? abAllow() : abPick().then(ok => ok && abAllow());
+  return AB.handle ? abAllow() : abPick(where).then(ok => ok && abAllow());
 }
-$('#abPick').addEventListener('click', async () => { if (await abPick()) toast(`日結時會備份去「${AB.handle.name}」。`); });
+$('#acOn').addEventListener('change', () => { lsSet(AC_KEY, $('#acOn').checked ? ($('#acTime').value || '20:00') : 'off'); renderAutoClose(); autoCloseCheck(); });
+$('#acTime').addEventListener('change', () => { if ($('#acOn').checked && $('#acTime').value) { lsSet(AC_KEY, $('#acTime').value); renderAutoClose(); } });
+$('#bkBannerBtn').addEventListener('click', async () => {
+  if (!(await abAllow())) { toast('未有權限寫入備份檔。', true); return; }
+  try { await abWrite(); bkPending(false); toast(`已備份去「${AB.handle.name}」。`); } catch (e) { toast('未能寫入備份檔，請去「匯入・設定」再揀儲存位置。', true); }
+});
+// 揀／改儲存位置: say where first, then the Save box opens (inside the click, as the browser requires)
+$('#abPick').addEventListener('click', () => {
+  openModal('備份存喺邊？', `${bkWhereHtml(AB.where || 'pc')}<p class="hint">揀好之後會打開儲存視窗。之後每次日結都會寫入同一個檔案。</p>`, async fd => {
+    if (!(await abPick(fd.get('bkWhere')))) throw new Error('未揀到資料夾，可以再按一次。');
+    toast(`日結時會備份去「${AB.handle.name}」（${BK_WHERE[AB.where].label}）。`);
+  }, { ok: '揀資料夾…' });
+});
 $('#abNow').addEventListener('click', async () => {
   if (!(await abAllow())) { toast('未有權限寫入備份檔。', true); return; }
-  try { await abWrite(); toast(`已備份去「${AB.handle.name}」。`); } catch (e) { toast('未能寫入備份檔，請按「改儲存位置…」再揀一次。', true); }
+  try { await abWrite(); bkPending(false); toast(`已備份去「${AB.handle.name}」。`); } catch (e) { toast('未能寫入備份檔，請按「改儲存位置…」再揀一次。', true); }
 });
 $('#abOff').addEventListener('click', async () => { AB.off = true; await abPut('backupOff', true).catch(() => {}); renderAutoBk(); toast('已停用日結自動備份。'); });
 $('#bkFile').addEventListener('change', restoreBackup);
@@ -5599,7 +5634,8 @@ if (!window.claude && 'serviceWorker' in navigator && document.querySelector('li
 let unsubDay = null;
 function watchDay() {
   if (unsubDay) unsubDay();
-  unsubDay = state.store.onDay(state.today, applyDay, err => { console.error(err); setStatus('bad', '未能更新'); });
+  const day = state.today;
+  unsubDay = state.store.onDay(day, d => { applyDay(d); if (state.today === day) { state.dayLoaded = day; setTimeout(autoCloseCheck, 1500); } }, err => { console.error(err); setStatus('bad', '未能更新'); });
 }
 function switchDay(day) {
   if (day === state.today && unsubDay) return;
@@ -5622,6 +5658,7 @@ function tick() {
   $('#clockTime').textContent = hm; $('#clockTimeM').textContent = hm;
   $('#clockDate').textContent = d.toLocaleDateString('zh-HK', { month: 'long', day: 'numeric', weekday: 'short' });
   renderDayNote();
+  autoCloseCheck();
 }
 setInterval(tick, 1000);
 function dayLabel(day) { return parseDay(day).toLocaleDateString('zh-HK', { month: 'long', day: 'numeric', weekday: 'short' }); }
@@ -5633,10 +5670,10 @@ function renderDayNote() {
   if (behind) el.textContent = `已經過咗午夜，銷售仍然記入 ${dayLabel(state.today)} 嘅營業日。收工時老闆按「日結」。`;
   const lc = state.lastClose;
   $('#reopenBar').hidden = !(lc && state.unlocked && lc.next === state.today);
-  if (lc) $('#reopenText').textContent = `已日結 ${dayLabel(lc.day)}，而家係 ${dayLabel(lc.next)} 嘅營業日。`;
+  if (lc) $('#reopenText').textContent = `已${lc.auto ? '自動' : ''}日結 ${dayLabel(lc.day)}，而家係 ${dayLabel(lc.next)} 嘅營業日。`;
 }
-function closeDay() {
-  if (!state.unlocked || !state.canWrite) return;
+// the numbers a 日結 records and shows
+function daySummary() {
   const day = state.today, s = summarize(state.lines);
   const txs = new Set(); let loose = 0, voided = 0;
   const rets = new Set(); let retAmt = 0, acctSales = 0;
@@ -5651,7 +5688,31 @@ function closeDay() {
   voided += Object.values(state.receipts).filter(r => r && r.void).length;
   const pus = Object.values(state.purchases).filter(p => p && !p.void);
   const puCost = pus.reduce((t, p) => t + (num(p.total) || 0), 0);
+  return { day, s, txs, loose, voided, rets, retAmt, acctSales, acctPaid, pus, puCost };
+}
+// closes the business day and opens the next one
+async function finishDay(m, auto) {
+  const { day, s, txs, loose, pus, puCost } = m;
+  const at = new Date().toISOString();
+  const next = [dayKey(new Date()), addDays(day, 1)].sort().pop();
+  const closed = { at, sales: round3(s.sales), cost: round3(s.cost), profit: round3(s.profit), qty: round3(s.qty), receipts: txs.size + loose, missingCost: s.missing, purchases: pus.length, purchaseCost: round3(puCost) };
+  if (auto) closed.auto = true;
+  await state.store.patchDay(day, { day, closed });
+  await state.store.patchMeta('session', { day: next, openedAt: at, prev: day });
+  state.lastClose = { day, next, auto: !!auto, prevOpenedAt: state.session && state.session.openedAt };
+  state.session = { day: next, openedAt: at, prev: day };
+  switchDay(next);
+}
+function closeDay() {
+  if (!state.unlocked || !state.canWrite) return;
+  // after an early (or automatic) 日結 the next business day has not started yet: closing it would skip a day
+  if (state.today > dayKey(new Date())) {
+    toast(`${dayLabel(addDays(state.today, -1))} 已經日結咗，${dayLabel(state.today)} 嘅營業日未開始，唔使再日結。`);
+    return;
+  }
+  const m = daySummary(), { day, s, txs, loose, voided, rets, retAmt, acctSales, acctPaid, pus, puCost } = m;
   const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
+  const autoTxt = !acAllowed() ? '' : acTime() ? `每日 ${acTime()} 會自動日結（要開住 app）。` : lsGet(AC_KEY) === 'off' ? '' : '確認之後，以後每日晚上 8:00 會自動日結（要開住 app）。';
   openModal(`日結 · ${dayLabel(day)}`, `
     <table class="sumtable"><tbody>
       ${row('交易', `${txs.size + loose} 單`)}
@@ -5668,27 +5729,80 @@ function closeDay() {
       ${pus.length ? row('入貨單', `${pus.length} 張 · 成本 ${money(puCost)}`) : ''}
     </tbody></table>
     <p class="hint">確認之後，收銀頁嘅營業額同利潤會歸零，開始新一日。今日嘅紀錄會保留，喺「報表」可以再睇。</p>
-    ${!abSupported() || AB.off ? '' : `<p class="hint">${AB.handle ? `會自動備份去「${esc(AB.handle.name)}」，取代上一個備份。` : '會自動備份。第一次會問你將備份檔存喺邊，之後每日都寫入同一個檔案。'}</p>`}`, async () => {
-    const bk = abBegin();   // before anything else waits: the file picker and permission need this click
-    const at = new Date().toISOString();
-    const next = [dayKey(new Date()), addDays(day, 1)].sort().pop();
-    const closed = { at, sales: round3(s.sales), cost: round3(s.cost), profit: round3(s.profit), qty: round3(s.qty), receipts: txs.size + loose, missingCost: s.missing, purchases: pus.length, purchaseCost: round3(puCost) };
-    await state.store.patchDay(day, { day, closed });
-    await state.store.patchMeta('session', { day: next, openedAt: at, prev: day });
-    state.lastClose = { day, next, prevOpenedAt: state.session && state.session.openedAt };
-    state.session = { day: next, openedAt: at, prev: day };
-    switchDay(next);
+    ${!abSupported() || AB.off ? '' : AB.handle ? `<p class="hint">會自動備份去「${esc(AB.handle.name)}」${BK_WHERE[AB.where] ? `（${BK_WHERE[AB.where].label}）` : ''}，取代上一個備份。</p>`
+      : `<p class="hint">會自動備份。揀存喺邊，確認之後會打開儲存視窗，之後每日都寫入同一個檔案：</p>${bkWhereHtml('pc')}`}
+    ${autoTxt ? `<p class="hint">${autoTxt}</p>` : ''}`, async fd => {
+    const bk = abBegin(fd.get('bkWhere'));   // before anything else waits: the file picker and permission need this click
+    await finishDay(m, false);
+    // the owner's first 日結 by hand turns on the evening one
+    if (acAllowed() && !lsGet(AC_KEY)) { lsSet(AC_KEY, '20:00'); renderAutoClose(); }
     let note = '', bad = false;
     if (bk) {
-      if (await bk) { try { await abWrite(); note = ' 備份已更新。'; } catch (e) { note = ' 但備份未能寫入，請去「匯入・設定」再揀儲存位置。'; bad = true; } }
+      if (await bk) { try { await abWrite(); note = ' 備份已更新。'; bkPending(false); } catch (e) { note = ' 但備份未能寫入，請去「匯入・設定」再揀儲存位置。'; bad = true; } }
       else { note = ' 今次未有備份。'; bad = true; }
     }
     toast(`已日結 ${dayLabel(day)}。營業額 ${money(s.sales)}，利潤 ${money(s.profit)}。${note}`, bad);
   }, { ok: '確認日結' });
+  state.modal.dayClose = true;
+}
+
+/* ---------- 自動日結: every evening at the set time (20:00 unless changed), while the app is open ----------
+   Starts after the owner's first 日結 by hand. If the app was closed at that time, the next opening does it.
+   Only the installed app does this; a page inside Claude is left to the owner. */
+const AC_KEY = 'tf-autoclose', AC_HOLD = 'tf-autoclose-hold';
+const acAllowed = () => !window.claude && state.mode === 'local';
+const acTime = () => { const v = lsGet(AC_KEY); return /^\d{2}:\d{2}$/.test(v) ? v : ''; };
+let acBusy = false;
+function autoCloseDue() {
+  const t = acTime();
+  if (!t || !acAllowed() || !state.canWrite || !state.session || state.dayLoaded !== state.today) return false;
+  const [h, mi] = t.split(':').map(Number), due = parseDay(state.today);
+  due.setHours(h, mi, 0, 0);
+  if (Date.now() < due.getTime()) return false;
+  // a day re-opened by hand (or just closed by another window) is left alone until the calendar moves on
+  return !(lsGet(AC_HOLD) === state.today && dayKey(new Date()) === state.today);
+}
+async function autoCloseCheck() {
+  if (acBusy || !autoCloseDue()) return;
+  if (!$('#modal').hidden && state.modal && state.modal.dayClose) return;   // the owner is closing it by hand right now
+  acBusy = true;
+  const m = daySummary();
+  lsSet(AC_HOLD, m.day);
+  try {
+    await finishDay(m, true);
+    let note = '';
+    if (abSupported() && AB.handle && !AB.off) {
+      let ok = false;
+      try { ok = (await AB.handle.queryPermission({ mode: 'readwrite' })) === 'granted'; } catch (e) {}
+      if (ok) { try { await abWrite(); note = '備份已更新。'; bkPending(false); } catch (e) { bkPending(true); } }
+      else bkPending(true);
+      if (!note) note = '備份要你撳一下先寫到。';
+    }
+    toast(`已自動日結 ${dayLabel(m.day)}。營業額 ${money(m.s.sales)}，利潤 ${money(m.s.profit)}。${note}`);
+  } catch (e) { lsSet(AC_HOLD, ''); writeFailed(e); }
+  finally { acBusy = false; }
+}
+// after a restart Windows may want one click before the app writes the backup file again
+function bkPending(on) {
+  lsSet('tf-backup-pending', on ? '1' : '');
+  $('#bkBanner').hidden = !on;
+}
+function renderAutoClose() {
+  const ok = acAllowed(), t = acTime(), off = lsGet(AC_KEY) === 'off';
+  $('#acRow').hidden = !ok;
+  $('#acOn').checked = !!t;
+  if (t) $('#acTime').value = t;
+  $('#acState').textContent = !ok ? '呢個版本用唔到' : t ? `開咗 · ${t}` : off ? '停咗' : '未開';
+  $('#acState').className = 'chip' + (t && ok ? ' ok' : '');
+  $('#acInfo').textContent = !ok ? '自動日結要喺安裝咗嘅 Tak Fat Hardware app 先用到。'
+    : t ? `每日 ${t} 系統會自己日結，唔使撳掣，「日結」掣照樣可以用。要開住 app；如果嗰陣冇開，下次開 app 會即刻補做。`
+    : off ? '已停用。剔返就會每日自動日結。'
+    : '老闆第一次自己按「日結」之後，系統就會每日晚上 8:00 自動日結。都可以而家剔低。';
 }
 async function reopenDay() {
   const lc = state.lastClose;
   if (!lc || !state.unlocked) return;
+  lsSet(AC_HOLD, lc.day);   // don't close it again by itself this evening
   try {
     await state.store.patchMeta('session', { day: lc.day, openedAt: lc.prevOpenedAt || new Date().toISOString(), prev: null });
     await state.store.patchDay(lc.day, { day: lc.day, closed: { reopenedAt: new Date().toISOString() } });
@@ -5750,6 +5864,8 @@ async function start() {
     }
   }
   $('#aAdviceCard').hidden = !state.sample;
+  renderAutoClose();
+  $('#bkBanner').hidden = !(abSupported() && lsGet('tf-backup-pending'));
   if (!$('#view-purchases').hidden) loadPurchases(true);
   fixKpis();
   state.store.getMeta('shop').then(d => applyShop(d && d.name, d && d.logo)).catch(() => {});
