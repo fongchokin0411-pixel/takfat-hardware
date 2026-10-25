@@ -396,6 +396,18 @@ tr.grp td .muted { margin-left: 8px; }
 .need .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .cart { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); display: grid; }
 .cart-head { display: flex; align-items: center; gap: 10px; padding: 14px var(--card-pad); border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.cust { padding: 0 8px; border-radius: 999px; background: var(--pill-info-bg); color: var(--pill-info-ink); font-size: 13px; line-height: 22px; font-weight: 500; }
+.btn kbd { font: 500 11px/15px var(--mono); padding: 0 4px; border-radius: 4px; border: 1px solid var(--control); color: var(--muted); background: var(--surface); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:disabled:active { transform: none; }
+.held { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px var(--card-pad); border-bottom: 1px solid var(--rule); background: var(--well); }
+.held-k { font-size: 13px; color: var(--muted); }
+.held-list { display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.hs { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: 1px solid var(--control); border-radius: var(--radius-control); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; transition: background-color .15s ease; }
+.hs:hover { background: var(--raised); }
+.hs b { font-weight: 600; }
+.hs[aria-current="true"] { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); cursor: default; }
+.hs[aria-current="true"]:hover { background: var(--surface); }
 .cart-empty { display: grid; gap: 4px; padding: 22px var(--card-pad) 24px; color: var(--muted); }
 .cart-empty strong { color: var(--text); font-weight: 500; }
 .cart-list { list-style: none; margin: 0; padding: 0; }
@@ -600,7 +612,7 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
   .ci-name { grid-column: 1 / -1; }
   .ci-price input { width: 64px; }
   .card, .till, .scan, .last { padding-left: 16px; padding-right: 16px; }
-  .cart-head, .cart-empty { padding-left: 16px; padding-right: 16px; }
+  .cart-head, .cart-empty, .held { padding-left: 16px; padding-right: 16px; }
   h1, .vtitle { font-size: 22px; }
   .kpi .v, .kpi.lead .v { font-size: 24px; line-height: 30px; }
   .till-total .v { font-size: 34px; line-height: 38px; }
@@ -608,7 +620,7 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
   .p-hint { text-align: left; }
   .pinfo { grid-template-columns: minmax(0, 1fr); }
 }
-@media (hover: none) { .tab kbd { display: none; } }
+@media (hover: none) { .tab kbd, .btn kbd { display: none; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -705,7 +717,8 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
         </form>
 
         <div class="cart" id="cart">
-          <div class="cart-head"><h2>目前交易</h2><span class="muted num" id="cartCount"></span><span style="flex:1"></span><button id="cartClear" class="btn small ghost" type="button" hidden>清除呢張單</button></div>
+          <div class="cart-head"><h2>目前交易</h2><span class="cust" id="cartCust" hidden></span><span class="muted num" id="cartCount"></span><span style="flex:1"></span><button id="cartClear" class="btn small ghost" type="button" hidden>清除呢張單</button><button id="newSale" class="btn small" type="button" title="留住呢張單，開一張新單俾下一位客人" disabled>新客人<kbd>F5</kbd></button></div>
+          <div class="held" id="held" hidden><span class="held-k">未完成嘅單</span><div class="held-list" id="heldList" role="group" aria-label="未完成嘅單"></div></div>
           <div id="cartEmpty" class="cart-empty"><strong>呢張單未有貨品</strong>輸入貨號或者掃描條碼，貨品就會加入。客人買幾多件都可以逐件加入，最後一次過收錢。</div>
           <ul class="cart-list" id="cartList"></ul>
         </div>
@@ -2040,6 +2053,55 @@ function loadCart() {
     const d = JSON.parse(localStorage.getItem(CART_KEY) || 'null');
     if (d && Array.isArray(d.items)) { state.cart = d.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = d.paid || ''; }
   } catch (e) {}
+  loadHeld();
+}
+
+/* ---------- customers waiting: F5 keeps this sale aside and opens an empty one for the next customer ---------- */
+const HELD_KEY = 'tf-held-v1';
+state.held = []; state.saleNo = 1;   // the sales kept aside, and the customer number of the sale on the till
+function saveHeld() { try { localStorage.setItem(HELD_KEY, JSON.stringify({ held: state.held, no: state.saleNo })); } catch (e) {} }
+function loadHeld() {
+  try {
+    const d = JSON.parse(localStorage.getItem(HELD_KEY) || 'null');
+    if (d && Array.isArray(d.held)) state.held = d.held.filter(h => h && h.id && num(h.no) > 0 && Array.isArray(h.items) && h.items.length);
+    if (d && num(d.no) > 0) state.saleNo = num(d.no);
+  } catch (e) {}
+  if (state.held.some(h => h.no === state.saleNo)) state.saleNo = freeNo();
+}
+function freeNo() { let n = 1; while (state.held.some(h => h.no === n)) n++; return n; }
+const itemsTotal = items => items.reduce((s, c) => s + (num(c.qty) || 0) * (num(c.price) || 0), 0);
+const keepCurrent = () => state.held.push({ id: newId(), no: state.saleNo, items: state.cart, paid: $('#paid').value, at: new Date().toISOString() });
+function holdSale() {
+  if (!state.cart.length) { closeNeed(); clearScan(); showMsg('呢張單仲係空嘅，直接輸入下一位客人嘅貨品就得。'); return; }
+  const no = state.saleNo;
+  keepCurrent();
+  state.cart = []; $('#paid').value = ''; state.saleNo = freeNo();
+  closeNeed(); clearScan();
+  saveCart(); saveHeld(); renderCart();
+  toast(`客 ${no} 嘅單已經留住。而家係客 ${state.saleNo}。`);
+}
+function resumeSale(id) {
+  const h = state.held.find(x => x.id === id); if (!h) return;
+  state.held = state.held.filter(x => x !== h);
+  if (state.cart.length) keepCurrent();   // an empty sale is simply dropped
+  state.cart = h.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = h.paid || ''; state.saleNo = h.no;
+  closeNeed(); clearScan();
+  saveCart(); saveHeld(); renderCart();
+}
+function renderHeld() {
+  const on = state.held.length > 0;
+  $('#held').hidden = !on;
+  $('#cartCust').hidden = !on; $('#cartCust').textContent = `客 ${state.saleNo}`;
+  $('#newSale').disabled = !state.cart.length;
+  if (!on) { $('#heldList').innerHTML = ''; return; }
+  const all = [...state.held, { no: state.saleNo, items: state.cart, cur: true }].sort((a, b) => a.no - b.no);
+  $('#heldList').innerHTML = all.map(s => {
+    const n = round3(s.items.reduce((t, c) => t + (num(c.qty) || 0), 0));
+    const sum = s.items.length ? `${qtyFmt(n)} 件 · ${money(itemsTotal(s.items))}` : '';
+    return s.cur
+      ? `<button type="button" class="hs" aria-current="true"><b>客 ${s.no}</b><span class="muted num">${sum ? '而家 · ' + sum : '而家'}</span></button>`
+      : `<button type="button" class="hs" data-held="${esc(s.id)}" title="轉去客 ${s.no} 嘅單"><b>客 ${s.no}</b><span class="muted num">${sum}</span></button>`;
+  }).join('');
 }
 function cartTotal() { return state.cart.reduce((s, c) => s + (num(c.qty) || 0) * (num(c.price) || 0), 0); }
 function addToCart(code, qty, price) {
@@ -2083,9 +2145,10 @@ async function checkout() {
   const receipt = { at, no, total, paid, change: round3(paid - total), items: state.cart.length };
   state.receipts[rid] = receipt;
   state.lastRid = rid;
-  state.cart = []; $('#paid').value = ''; saveCart();
+  state.cart = []; $('#paid').value = ''; state.saleNo = freeNo(); saveCart(); saveHeld();
   renderCart(); renderSell();
   $('#scan').focus();
+  if (state.held.length) toast(`交易完成。${state.held.map(h => '客 ' + h.no).join('、')} 嘅單仲等緊，撳上面就可以繼續。`);
   try {
     await Promise.all([
       state.store.patchDay(state.today, { day: state.today, receipts: { [rid]: receipt }, lines }),
@@ -2144,6 +2207,7 @@ function renderPay() {
   out.innerHTML = ['note', 'coin'].map(k => parts.filter(p => p.kind === k)).filter(r => r.length).map(r => `<div class="den-row">${r.map(den).join('')}</div>`).join('');
   out.setAttribute('aria-label', parts.length ? '找續：' + parts.map(p => `${denLabel(p.v)} ${p.n} 個`).join('、') : '');
   $('#checkout').disabled = !state.cart.length || !state.canWrite;
+  renderHeld();
 }
 
 function askInfo(code, p) {
@@ -4462,6 +4526,14 @@ $$('.tab').forEach(b => b.addEventListener('click', () => showView(b.dataset.vie
 document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) showView(g.dataset.goto); });
 const FKEYS = { F2: 'sell', F7: 'products', F8: 'today', F9: 'receive' };
 document.addEventListener('keydown', e => {
+  if (e.key === 'F5' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    e.preventDefault();   // F5 would reload the page; at this till it means "next customer" (Ctrl+F5 still reloads)
+    if ($('#app').inert) return;
+    if (!$('#modal').hidden) closeModal();
+    if ($('#view-sell').hidden) showView('sell');
+    holdSale();
+    return;
+  }
   const v = FKEYS[e.key];
   if (!v || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
   e.preventDefault();
@@ -4524,6 +4596,8 @@ $('#quickPay').addEventListener('click', e => {
   saveCart(); renderPay();
 });
 $('#checkout').addEventListener('click', checkout);
+$('#newSale').addEventListener('click', holdSale);
+$('#heldList').addEventListener('click', e => { const b = e.target.closest('[data-held]'); if (b) resumeSale(b.dataset.held); });
 $('#cartClear').addEventListener('click', () => {
   const b = $('#cartClear');
   if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '再按一次清除'; setTimeout(() => { if (b.dataset.armed) { b.dataset.armed = ''; b.textContent = '清除呢張單'; } }, 3000); return; }
