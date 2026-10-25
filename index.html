@@ -562,6 +562,48 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .set-label { display: grid; gap: 6px; align-content: start; padding-top: 6px; }
 .set-label p { color: var(--muted); max-width: 46ch; }
 .set-label p strong { color: var(--text); font-weight: 500; }
+/* 掛數 / 月結 */
+.acct-on { display: grid; gap: 6px; justify-items: start; }
+.acct-who { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.acct-who strong { font-size: 22px; line-height: 28px; font-weight: 600; }
+.ac-card { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); }
+.ac-pay { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding-top: 4px; }
+.ac-stmt { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.ac-stmt h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.ac-stmt input[type="month"] { height: 30px; }
+.ac-log { list-style: none; margin: 0; padding: 0; display: grid; }
+.ac-log li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.ac-log li:first-child { border-top: 0; }
+.ac-log .what { min-width: 0; }
+.ac-log .amt { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.ac-log .sub { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+.ac-log li.edge { color: var(--muted); }
+.ac-log li.edge .amt { color: var(--text); }
+#acBody tr { cursor: pointer; }
+#acBody tr:hover td { background: var(--well); }
+#acBody tr[aria-selected="true"] td { background: var(--hue-tint); }
+#apQ { width: 100%; }
+.ap-list { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; gap: 4px; max-height: 260px; overflow-y: auto; }
+.ap-list button { display: flex; justify-content: space-between; gap: 12px; width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; align-items: center; }
+.ap-list button:hover, .ap-list button:focus-visible { background: var(--raised); }
+tr.rcpt.acct td.sum strong.who { font-weight: 600; }
+/* 退貨 */
+.ret-rcpts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 300px; overflow-y: auto; }
+.ret-rcpts button { display: grid; grid-template-columns: 76px 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background-color .15s ease; }
+.ret-rcpts button:hover { background: var(--raised); }
+.ret-rcpts button[aria-current="true"] { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+.ret-rcpts .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.ret-slip { container: cart / inline-size; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); }
+.ret-slip .cart-list { margin: 0 calc(var(--card-pad) * -1); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.ret-slip .cart-list:empty { display: none; }
+.ret-slip .row-wrap { flex-wrap: nowrap; }
+.ret-slip .done { flex: 1; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--text); }
+tr.rcpt.ret td { background: var(--pill-warning-bg); }
+.autobk { display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+.autobk-t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.autobk-t strong { font-weight: 500; }
 .set-panel { background: var(--well); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; display: grid; gap: 16px; min-width: 0; align-content: start; align-self: start; }
 .steps { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
 .opts { display: grid; gap: 8px; }
@@ -644,6 +686,8 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-sell" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="9" rx="1.5"/><path d="M6 11V4.5h9V11"/><path d="M8.5 7.5h4"/><path d="M7 15.5h2M11 15.5h2M15 15.5h2"/></symbol>
   <symbol id="i-today" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-return" viewBox="0 0 24 24"><path d="M9.5 5.5 5 10l4.5 4.5"/><path d="M5.5 10H15a4.5 4.5 0 0 1 0 9h-4"/></symbol>
+  <symbol id="i-accounts" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><path d="M16 7h5M16 11h5M17.5 15h3.5"/></symbol>
   <symbol id="i-receive" viewBox="0 0 24 24"><path d="M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16z"/><path d="M3.5 8 12 12.5 20.5 8M12 12.5v8"/></symbol>
   <symbol id="i-purchases" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="1.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h3M7.5 17h6"/></symbol>
   <symbol id="i-products" viewBox="0 0 24 24"><path d="M3.5 12V4.5h7.5l9.5 9.5-7.5 7.5z"/><circle cx="8" cy="9" r="1.6"/></symbol>
@@ -678,7 +722,9 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
   <nav class="tabs" role="tablist" aria-label="分頁" aria-orientation="vertical">
     <div class="group-label" role="presentation">營業</div>
     <button class="tab" role="tab" id="tab-sell" data-view="sell" aria-selected="true"><svg class="i"><use href="#i-sell"/></svg><span class="lbl">收銀</span><kbd>F2</kbd></button>
+    <button class="tab" role="tab" id="tab-returns" data-view="returns" aria-selected="false"><svg class="i"><use href="#i-return"/></svg><span class="lbl">退貨</span><kbd>F3</kbd></button>
     <button class="tab" role="tab" id="tab-today" data-view="today" aria-selected="false"><svg class="i"><use href="#i-today"/></svg><span class="lbl">今日銷售</span><kbd>F8</kbd></button>
+    <button class="tab" role="tab" id="tab-accounts" data-view="accounts" aria-selected="false"><svg class="i"><use href="#i-accounts"/></svg><span class="lbl">月結客戶</span></button>
     <button class="tab" role="tab" id="tab-receive" data-view="receive" aria-selected="false"><svg class="i"><use href="#i-receive"/></svg><span class="lbl">入貨</span><kbd>F9</kbd></button>
     <button class="tab" role="tab" id="tab-purchases" data-view="purchases" aria-selected="false"><svg class="i"><use href="#i-purchases"/></svg><span class="lbl">入貨記錄</span></button>
     <button class="tab" role="tab" id="tab-products" data-view="products" aria-selected="false"><svg class="i"><use href="#i-products"/></svg><span class="lbl">貨品</span><kbd>F7</kbd></button>
@@ -758,10 +804,15 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
       <aside class="sell-side">
         <div class="till" aria-label="收錢">
           <div class="till-total"><span class="k">合計</span><span class="v" id="cartTotal">$0.00</span></div>
-          <div class="pay-in">
+          <div class="pay-in" id="payIn">
             <label for="paid" class="k">客人付款</label>
             <div class="paid-row"><span class="cur">$</span><input id="paid" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"></div>
-            <div class="quick" id="quickPay"><button type="button" class="fchip" data-q="exact">剛好</button><button type="button" class="fchip" data-q="100">$100</button><button type="button" class="fchip" data-q="500">$500</button><button type="button" class="fchip" data-q="1000">$1,000</button></div>
+            <div class="quick" id="quickPay"><button type="button" class="fchip" data-q="exact">剛好</button><button type="button" class="fchip" data-q="100">$100</button><button type="button" class="fchip" data-q="500">$500</button><button type="button" class="fchip" data-q="1000">$1,000</button><button type="button" class="fchip" id="acctBtn">掛數…</button></div>
+          </div>
+          <div class="acct-on" id="acctOn" hidden>
+            <span class="k">掛數（記入月結）</span>
+            <div class="acct-who"><strong id="acctName"></strong><span class="muted num" id="acctBal"></span></div>
+            <button type="button" class="linkbtn" id="acctOff">唔掛數，改收現金</button>
           </div>
           <div class="pay-row change idle" id="changeRow"><span class="k" id="changeLabel">找續</span><span class="v" id="changeAmt">–</span></div>
           <div class="notes-out" id="changeNotes" aria-live="polite"></div>
@@ -773,6 +824,85 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
   </section>
 
   <!-- 今日銷售 -->
+  <!-- 退貨 -->
+  <section id="view-returns" class="view" role="tabpanel" aria-labelledby="tab-returns" hidden>
+    <div class="title-row">
+      <div><h2 class="vtitle">退貨</h2><p class="sub">客人攞貨返嚟退：搵返原本張單，揀要退嘅貨品，退錢之後存量會加返。</p></div>
+    </div>
+    <div class="cols">
+      <div class="stack">
+        <div class="card">
+          <div class="card-head"><h2>搵返原本張單</h2><span class="hint">收據上面有日期同單號</span></div>
+          <form class="row-wrap" id="retFind" autocomplete="off">
+            <label class="field"><span>日期</span><input id="retDay" type="date"></label>
+            <label class="field"><span>單號</span><input id="retNo" type="number" min="1" step="1" inputmode="numeric" placeholder="例如 5"></label>
+            <button class="btn" type="submit">搵</button>
+          </form>
+          <ul class="ret-rcpts" id="retRcpts" aria-label="嗰日嘅單"></ul>
+          <p class="hint" id="retRcptsNote"></p>
+        </div>
+        <div class="card" id="retOrig" hidden>
+          <div class="card-head"><h2 id="retOrigTitle"></h2><div class="actions"><button id="retAll" class="btn small" type="button">全部退</button></div></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>貨號</th><th>貨品</th><th class="r">買咗</th><th class="r">已退</th><th class="r">單價</th><th></th></tr></thead>
+            <tbody id="retOrigBody"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>冇單據？直接輸入貨號</h2></div>
+          <form class="row-wrap" id="retManual" autocomplete="off">
+            <label class="field"><span>貨號、條碼或簡碼</span><input id="retCode" type="text" spellcheck="false" autocapitalize="characters" placeholder="4002020"></label>
+            <label class="field"><span>數量</span><input id="retQty" type="number" inputmode="decimal" step="any" min="0" value="1" style="width:88px"></label>
+            <label class="field"><span>退款單價 ($)</span><input id="retPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="原價" style="width:120px"></label>
+            <button class="btn" type="submit">加入</button>
+          </form>
+        </div>
+      </div>
+      <div class="card ret-slip">
+        <div class="card-head"><h2>退貨單</h2><span class="hint" id="retFrom"></span></div>
+        <ul class="cart-list" id="retList"></ul>
+        <p class="hint" id="retEmpty">喺左邊揀要退嘅貨品，佢哋會喺呢度列出。</p>
+        <label class="check"><input type="checkbox" id="retRestock" checked> 放返貨架（存量加返）</label>
+        <label class="field"><span>原因（可以唔填）</span><input id="retNote" type="text" placeholder="例如 壞貨、唔啱尺寸"></label>
+        <div class="till-total"><span class="k" id="retTotalK">退返客人</span><span class="v" id="retTotal">$0.00</span></div>
+        <div class="row-wrap"><button id="retClear" class="btn ghost" type="button" hidden>清除</button><button id="retDo" class="btn primary done" type="button" disabled>確認退貨</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 月結客戶 -->
+  <section id="view-accounts" class="view" role="tabpanel" aria-labelledby="tab-accounts" hidden>
+    <div class="title-row">
+      <div><h2 class="vtitle">月結客戶</h2><p class="sub">熟客同師傅攞貨先記數（掛數），月尾一次過找數。</p></div>
+      <div class="actions"><button id="acAdd" class="btn primary" type="button">新增客戶</button></div>
+    </div>
+    <div class="stack">
+      <div class="kpis" id="acKpis"></div>
+      <div class="cols">
+        <div class="stack">
+          <div class="toolbar"><input id="acSearch" type="search" placeholder="搜尋客戶名或電話" aria-label="搜尋客戶"><span class="spacer"></span><span class="hint" id="acNoteTop"></span></div>
+          <div class="table-wrap" id="acWrap"><table>
+            <thead><tr><th>客戶</th><th>電話</th><th class="r">本月掛數</th><th class="r">未收</th><th class="r">最後交易</th></tr></thead>
+            <tbody id="acBody"></tbody></table></div>
+          <div class="empty" id="acEmpty" hidden><strong>未有月結客戶</strong>按「新增客戶」加入熟客或者師傅。收銀時按「掛數…」就可以將張單記落佢哋度。</div>
+        </div>
+        <div class="card ac-card" id="acCard" hidden>
+          <div class="card-head"><h2 id="acName"></h2><div class="actions"><button id="acEdit" class="btn small ghost" type="button">修改</button></div></div>
+          <p class="hint" id="acInfo"></p>
+          <div class="till-total"><span class="k" id="acBalK">未收</span><span class="v" id="acBal">$0.00</span></div>
+          <form class="ac-pay" id="acPay" autocomplete="off">
+            <label class="field"><span>收款 ($)</span><input id="acAmt" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0"></label>
+            <label class="field"><span>備註（可以唔填）</span><input id="acPayNote" type="text" placeholder="例如 現金、支票、轉數快"></label>
+            <button class="btn primary" type="submit">記錄收款</button>
+          </form>
+          <div class="ac-stmt">
+            <div class="card-head"><h3>月結單</h3><div class="actions"><input id="acMonth" type="month" aria-label="月份"><button id="acPrint" class="btn small print-only" type="button">列印</button></div></div>
+            <ul class="ac-log" id="acLog"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="view-today" class="view" role="tabpanel" aria-labelledby="tab-today" hidden>
     <div class="title-row">
       <div><h2 class="vtitle">今日銷售</h2><p class="sub" id="todayLabel"></p></div>
@@ -1108,6 +1238,11 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
             <input id="bkFile" class="vh" type="file" accept=".json,application/json">
           </div>
           <p class="hint" id="bkInfo"></p>
+          <div class="autobk" id="autoBk">
+            <div class="autobk-t"><strong>日結自動備份</strong><span class="chip" id="abState">未設定</span></div>
+            <p class="hint" id="abInfo">每次按「日結」，系統會將備份寫入呢部電腦嘅同一個檔案。新備份會取代舊嗰個，唔會越積越多。</p>
+            <div class="row-wrap" id="abBtns"><button id="abPick" class="btn" type="button">揀儲存位置…</button><button id="abNow" class="btn ghost" type="button" hidden>而家備份一次</button><button id="abOff" class="btn ghost" type="button" hidden>停用</button></div>
+          </div>
         </div>
       </div>
 
@@ -1879,7 +2014,7 @@ function makeDbStore(db) {
     async dumpAll() {
       const out = {};
       for (const col of ['catalog', 'days', 'hist']) { const s = await db.collection(col).limit(1000).get(); for (const d of s.docs) out[col + '/' + d.id] = d.data(); }
-      for (const id of ['suppliers', 'aliases', 'session', 'histInfo', 'shop']) { const s = await db.doc('meta/' + id).get(); if (s.exists) out['meta/' + id] = s.data(); }
+      for (const id of ['suppliers', 'aliases', 'session', 'histInfo', 'shop', 'customers']) { const s = await db.doc('meta/' + id).get(); if (s.exists) out['meta/' + id] = s.data(); }
       return out;
     },
     async restoreAll(map) { for (const [k, v] of Object.entries(map)) { if (!BACKUP_KEY.test(k) || !isObj(v) || k === 'meta/settings') continue; await db.doc(k).set(v); } },
@@ -1996,7 +2131,9 @@ function applyDay(data) {
   state.lines = lines;
   state.receipts = data && isObj(data.receipts) ? { ...data.receipts } : {};
   state.purchases = data && isObj(data.purchases) ? { ...data.purchases } : {};
+  state.acctPay = data && isObj(data.acctPay) ? { ...data.acctPay } : {};
   renderSell(); renderRcvToday();
+  if (!$('#view-accounts').hidden) renderAccounts();
 }
 
 /* ---------- selling ---------- */
@@ -2072,11 +2209,11 @@ function trySell(raw) {
 /* ---------- current order ---------- */
 const round3 = n => Math.round(n * 1000) / 1000;
 const CART_KEY = 'tf-cart-v1';
-function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify({ items: state.cart, paid: $('#paid').value })); } catch (e) {} }
+function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify({ items: state.cart, paid: $('#paid').value, acct: state.cartAcct })); } catch (e) {} }
 function loadCart() {
   try {
     const d = JSON.parse(localStorage.getItem(CART_KEY) || 'null');
-    if (d && Array.isArray(d.items)) { state.cart = d.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = d.paid || ''; }
+    if (d && Array.isArray(d.items)) { state.cart = d.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = d.paid || ''; state.cartAcct = d.acct && d.acct.id ? d.acct : null; }
   } catch (e) {}
   loadHeld();
 }
@@ -2103,11 +2240,12 @@ const slotSale = no => state.held.find(h => h.no === no);
 const itemsTotal = items => items.reduce((s, c) => s + (num(c.qty) || 0) * (num(c.price) || 0), 0);
 function switchCustomer(no) {
   if (no === state.saleNo) { $('#scan').focus(); return; }
-  if (state.cart.length) state.held.push({ no: state.saleNo, items: state.cart, paid: $('#paid').value, at: new Date().toISOString() });
+  if (state.cart.length) state.held.push({ no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, at: new Date().toISOString() });
   const h = slotSale(no);
   state.held = state.held.filter(x => x !== h);
   state.cart = h ? h.items.filter(x => x && x.code && num(x.qty) > 0) : [];
   $('#paid').value = h ? h.paid || '' : '';
+  state.cartAcct = h && h.acct && h.acct.id ? h.acct : null;
   state.saleNo = no;
   closeNeed(); clearScan();
   saveCart(); saveHeld(); renderCart();
@@ -2134,19 +2272,20 @@ function addToCart(code, qty, price) {
   state.flashKey = row.key;
   clearScan(); saveCart(); renderCart();
 }
+const nextReceiptNo = () => Object.values(state.receipts).reduce((m, r) => Math.max(m, num(r && r.no) || 0), 0) + 1;
 async function checkout() {
   hideMsg();
   if (!state.cart.length) { showMsg('呢張單未有貨品。'); $('#scan').focus(); return; }
   if (!state.canWrite) { showMsg('你只可以查看，不可以記錄銷售。'); return; }
   if (state.busy) { showMsg('正在匯入貨品，請等匯入完成後再完成交易。'); return; }
-  const total = round3(cartTotal());
+  const total = round3(cartTotal()), acct = state.cartAcct;
   const paidIn = num($('#paid').value);
   // an empty payment box is not "exact": the cashier has to type what the customer handed over (or press 剛好)
-  if (paidIn === null && total > 0) { showMsg(`未輸入客人付款。合計 ${money(total)}，請輸入收咗幾多錢，或者按「剛好」。`); $('#paid').focus(); return; }
+  if (!acct && paidIn === null && total > 0) { showMsg(`未輸入客人付款。合計 ${money(total)}，請輸入收咗幾多錢，或者按「剛好」。`); $('#paid').focus(); return; }
   const paid = paidIn === null ? total : paidIn;
-  if (paid < total - 0.0001) { showMsg(`客人付款唔夠，仲差 ${money(total - paid)}。`); $('#paid').focus(); return; }
+  if (!acct && paid < total - 0.0001) { showMsg(`客人付款唔夠，仲差 ${money(total - paid)}。`); $('#paid').focus(); return; }
   const at = new Date().toISOString(), rid = newId();
-  const no = Object.values(state.receipts).reduce((m, r) => Math.max(m, num(r && r.no) || 0), 0) + 1;
+  const no = nextReceiptNo();
   const lines = {}, chunkPatch = new Map();
   let n = 0;   // each line's place on the receipt
   for (const c of state.cart) {
@@ -2164,12 +2303,13 @@ async function checkout() {
     lines[id] = { at, kind: 'sale', rid, n: n++, code: c.code, name: c.name || '', unit: c.unit || '', qty: q, price: num(c.price) || 0, cost: it ? num(it.cost) : null, stockAfter: after };
     state.lines.unshift({ id, ...lines[id] });
   }
-  const receipt = { at, no, total, paid, change: round3(paid - total), items: state.cart.length };
+  const receipt = acct ? { at, no, total, items: state.cart.length, acct: acct.id, acctName: acct.name } : { at, no, total, paid, change: round3(paid - total), items: state.cart.length };
   state.receipts[rid] = receipt;
   state.lastRid = rid;
-  state.cart = []; $('#paid').value = ''; saveCart(); saveHeld();
+  state.cart = []; $('#paid').value = ''; state.cartAcct = null; saveCart(); saveHeld();
   renderCart(); renderSell();
   $('#scan').focus();
+  if (acct) toast(`已記入 ${acct.name} 嘅月結數：${money(total)}。`);
   if (state.held.length) toast(`交易完成。${state.held.map(h => h.no).sort((x, y) => x - y).map(n => '客 ' + n).join('、')} 仲未埋單，按 F5 或者撳左邊轉過去。`);
   try {
     await Promise.all([
@@ -2229,6 +2369,15 @@ function renderPay() {
   out.innerHTML = ['note', 'coin'].map(k => parts.filter(p => p.kind === k)).filter(r => r.length).map(r => `<div class="den-row">${r.map(den).join('')}</div>`).join('');
   out.setAttribute('aria-label', parts.length ? '找續：' + parts.map(p => `${denLabel(p.v)} ${p.n} 個`).join('、') : '');
   $('#checkout').disabled = !state.cart.length || !state.canWrite;
+  const acct = state.cartAcct;
+  $('#payIn').hidden = !!acct; $('#acctOn').hidden = !acct;
+  if (acct) {
+    $('#acctName').textContent = acct.name;
+    const b = acctBalance(acct.id);
+    $('#acctBal').textContent = b === null ? '' : b > 0 ? `而家欠 ${money(b)}` : '冇欠數';
+    row.hidden = true; out.innerHTML = '';
+  } else row.hidden = false;
+  $('#checkout').textContent = acct ? `記入 ${acct.name} 月結` : '完成交易';
   renderSlots();
 }
 
@@ -2273,13 +2422,13 @@ async function voidLine(id) {
   l.void = true;
   const writes = [state.store.patchDay(state.today, { day: state.today, lines: { [id]: { void: true, voidAt: new Date().toISOString() } } })];
   const it = state.catalog.get(l.code);
-  if (it && l.kind === 'sale') {
+  if (it && l.kind === 'sale' && l.restock !== false) {
     const s = Math.round(((num(it.stock) ?? 0) + (num(l.qty) || 0)) * 1000) / 1000;
     it.stock = s;
     writes.push(state.store.patchChunk(state.codeChunk.get(l.code), { items: { [l.code]: { stock: s } } }));
   }
   renderSell();
-  toast(`已作廢 ${l.code} 嘅銷售，存量已加返。`);
+  toast(l.ret ? `已作廢 ${l.code} 嘅退貨${l.restock === false ? '' : '，存量已減返'}。` : `已作廢 ${l.code} 嘅銷售，存量已加返。`);
   try { await Promise.all(writes); } catch (e) { writeFailed(e); }
 }
 // Voids a whole sales receipt (stock goes back up) or a whole delivery note (stock comes back down).
@@ -2292,7 +2441,7 @@ async function voidGroup(key) {
   for (const l of ls) {
     l.void = true; linePatch[l.id] = { void: true, voidAt: at };
     const it = state.catalog.get(l.code);
-    const d = l.kind === 'sale' ? (num(l.qty) || 0) : l.kind === 'in' ? -(num(l.qty) || 0) : 0;
+    const d = l.kind === 'sale' ? (l.restock === false ? 0 : num(l.qty) || 0) : l.kind === 'in' ? -(num(l.qty) || 0) : 0;
     if (it && d) {
       const s = round3((num(it.stock) ?? 0) + d);
       it.stock = s;
@@ -2306,7 +2455,7 @@ async function voidGroup(key) {
   if (r) book[key] = { ...r, void: true };
   if (isPurchase) { state.pu = null; state.puIdxDirty = true; }
   renderSell(); renderCart(); renderRcvToday();
-  toast(isPurchase ? '已作廢呢張入貨單，存量已減返。' : `已作廢${r ? `第 ${r.no} 單` : '呢張單'}，存量已加返。`);
+  toast(isPurchase ? '已作廢呢張入貨單，存量已減返。' : r && r.ret ? `已作廢退貨（第 ${r.no} 單），存量已減返。` : `已作廢${r ? `第 ${r.no} 單` : '呢張單'}，存量已加返。`);
   try {
     await Promise.all([
       state.store.patchDay(state.today, { day: state.today, [isPurchase ? 'purchases' : 'receipts']: { [key]: { void: true, voidAt: at } }, lines: linePatch }),
@@ -2316,7 +2465,7 @@ async function voidGroup(key) {
 }
 function editLine(id) {
   const l = state.lines.find(x => x.id === id);
-  if (!l || l.void || l.kind !== 'sale') return;
+  if (!l || l.void || l.kind !== 'sale' || l.ret) return;
   openModal(`修改銷售 · ${l.code}`, `
     <p class="hint">${esc(l.name)}</p>
     <div class="fields">
@@ -2477,7 +2626,7 @@ function renderSell() {
   $('#tProfit').textContent = money(s.profit);
   $('#tQty').textContent = qtyFmt(s.qty);
   const txs = new Set(); let loose = 0;
-  for (const l of state.lines) if (l.kind === 'sale' && !l.void) { if (l.rid) txs.add(l.rid); else loose++; }
+  for (const l of state.lines) if (l.kind === 'sale' && !l.void && !l.ret) { if (l.rid) txs.add(l.rid); else loose++; }
   $('#tLines').textContent = txs.size + loose;
   $('#mTx').textContent = txs.size + loose;
   $('#mQty').textContent = qtyFmt(round3(s.qty));
@@ -2507,7 +2656,7 @@ function renderSell() {
       return `<tr class="move${l.void ? ' void' : ''}"><td class="num">${time}</td><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name)}</td><td colspan="3">${label}</td><td class="priv"></td><td class="r">${stockCell(l.stockAfter)}</td><td></td></tr>`;
     }
     const profit = c === null ? '<span class="chip warn">未有來價</span>' : `<span class="${(p - c) < 0 ? 'loss' : 'gain'}">${money(q * (p - c))}</span>`;
-    const act = l.void ? '<span class="chip">已作廢</span>' : state.canWrite ? `<button class="linkbtn" data-edit="${esc(l.id)}" type="button">修改</button><button class="linkbtn danger" data-void="${esc(l.id)}" type="button">作廢</button>` : '';
+    const act = l.void ? '<span class="chip">已作廢</span>' : state.canWrite ? (l.ret ? '' : `<button class="linkbtn" data-edit="${esc(l.id)}" type="button">修改</button>`) + `<button class="linkbtn danger" data-void="${esc(l.id)}" type="button">作廢</button>` : '';
     return `<tr class="${l.void ? 'void' : ''}${inReceipt ? ' inr' : ''}"><td class="num">${time}</td><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name)}</td><td class="r">${qtyFmt(q)}</td><td class="r">${p === null ? '–' : money(p)}</td><td class="r">${money(q * (p || 0))}</td><td class="r priv">${profit}</td><td class="r">${stockCell(l.stockAfter)}</td><td class="act">${act}</td></tr>`;
   };
   const gkey = l => l.rid || l.pid || null;
@@ -2531,10 +2680,12 @@ function renderSell() {
       rows.push(`<tr class="rcpt in${allVoid ? ' void' : ''}"><td class="num">${timeOf(pu.at || l.at)}</td><td colspan="5" class="sum"><strong>入貨單</strong> · ${esc(pu.supplier || '未填供應商')}${pu.ref ? ` · 單號 ${esc(pu.ref)}` : ''} · ${live.length} 款${state.unlocked ? ` · 成本 <strong>${money(amt)}</strong>` : ''}</td><td class="priv"></td><td></td><td class="act">${act}</td></tr>`);
     } else {
       const r = state.receipts[k] || {}, s = sumOf(ls);
-      const pay = num(r.paid) !== null ? ` · 收 ${money(num(r.paid))} · 找 ${money(num(r.change) || 0)}` : '';
+      const pay = r.acct && !r.ret ? ` · 掛數 <strong class="who">${esc(r.acctName || '')}</strong>` : r.ret ? (r.acct ? ` · 扣 ${esc(r.acctName || '')} 月結數` : '') : num(r.paid) !== null ? ` · 收 ${money(num(r.paid))} · 找 ${money(num(r.change) || 0)}` : '';
       const prof = s.known ? `<span class="${s.profit < 0 ? 'loss' : 'gain'}">${money(s.profit)}</span>` : '<span class="muted">–</span>';
       const act = allVoid ? '<span class="chip">已作廢</span>' : `<button class="linkbtn print-only" data-print-rid="${esc(k)}" type="button">列印</button>` + (state.canWrite ? `<button class="linkbtn danger" data-vr="${esc(k)}" data-label="作廢整單" type="button">作廢整單</button>` : '');
-      rows.push(`<tr class="rcpt${allVoid ? ' void' : ''}"><td class="num">${timeOf(r.at || l.at)}</td><td colspan="5" class="sum"><strong>第 ${esc(r.no ?? '–')} 單</strong> · ${qtyFmt(round3(s.qty))} 件 · 合計 <strong>${money(s.amt)}</strong>${pay}</td><td class="r priv">${allVoid ? '' : prof}</td><td></td><td class="act">${act}</td></tr>`);
+      const what = r.ret ? `<strong>退貨 · 第 ${esc(r.no ?? '–')} 單</strong>${r.from ? ` · 原單 ${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單` : ''} · ${qtyFmt(round3(-s.qty))} 件 · 退 <strong>${money(-s.amt)}</strong>${pay}${r.note ? ` · ${esc(r.note)}` : ''}`
+        : `<strong>第 ${esc(r.no ?? '–')} 單</strong> · ${qtyFmt(round3(s.qty))} 件 · 合計 <strong>${money(s.amt)}</strong>${pay}`;
+      rows.push(`<tr class="rcpt${r.ret ? ' ret' : ''}${allVoid ? ' void' : ''}"><td class="num">${timeOf(r.at || l.at)}</td><td colspan="5" class="sum">${what}</td><td class="r priv">${allVoid ? '' : prof}</td><td></td><td class="act">${act}</td></tr>`);
     }
     for (const x of ls) rows.push(lineRow(x, true));
   }
@@ -2565,7 +2716,7 @@ function renderSell() {
   // running low
   const seen = new Set(), low = [];
   for (const l of state.lines) {
-    if (l.kind !== 'sale' || seen.has(l.code)) continue;
+    if (l.kind !== 'sale' || l.ret || seen.has(l.code)) continue;
     seen.add(l.code);
     const it = state.catalog.get(l.code);
     if (it && num(it.stock) !== null && num(it.stock) <= LOW_STOCK) low.push([l.code, it]);
@@ -2574,7 +2725,7 @@ function renderSell() {
   $('#lowBox').hidden = !low.length;
   // the counter's own memory: what sold today, newest first, one click to sell again
   const rec = [], rs = new Set();
-  for (const l of state.lines) { if (l.kind !== 'sale' || l.void || rs.has(l.code)) continue; const it = state.catalog.get(l.code); if (!it) continue; rs.add(l.code); rec.push([l.code, it]); if (rec.length >= 12) break; }
+  for (const l of state.lines) { if (l.kind !== 'sale' || l.void || l.ret || rs.has(l.code)) continue; const it = state.catalog.get(l.code); if (!it) continue; rs.add(l.code); rec.push([l.code, it]); if (rec.length >= 12) break; }
   renderRecent(rec);
   renderTodayChart();
 }
@@ -2630,7 +2781,7 @@ function drawBars(hostSel, data) {
 function renderTodayChart() {
   const key = state.unlocked || !T_SERIES[state.tSeries].money ? state.tSeries : 'tx';
   const S = T_SERIES[key];
-  const sales = state.lines.filter(l => l.kind === 'sale' && !l.void);
+  const sales = state.lines.filter(l => l.kind === 'sale' && !l.void && !l.ret);
   // after midnight the business day carries on: those hours count on past 24:00
   const hourOf = l => { const t = new Date(l.at); if (isNaN(t)) return null; const h = t.getHours(); return dayKey(t) > state.today && h < 6 ? h + 24 : h; };
   const hours = sales.map(hourOf).filter(h => h !== null);
@@ -3078,6 +3229,7 @@ async function runReport() {
   for (const d of docs) for (const [id, l] of Object.entries(d.lines || {})) lines.push({ id, day: d.day, ...l });
   lines.sort((a, b) => String(a.at).localeCompare(String(b.at)));
   const sum = summarize(lines);
+  const retAmt = lines.reduce((t, l) => t + (l.kind === 'sale' && l.ret && !l.void ? -(num(l.qty) || 0) * (num(l.price) || 0) : 0), 0);
   const byDay = new Map(), byProd = new Map();
   for (const l of lines) {
     if (l.kind !== 'sale' || l.void) continue;
@@ -3093,7 +3245,7 @@ async function runReport() {
   const cell = (k, v) => `<div class="kpi"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   $('#rKpis').innerHTML = tab('sales', '營業額', money(sum.sales), 'money lead') + tab('profit', '利潤', money(sum.profit), 'money') + tab('cost', '成本', money(sum.cost), 'money') +
     cell('毛利率', sum.margin === null ? '–' : Math.round(sum.margin * 100) + '%') + tab('qty', '售出件數', qtyFmt(round3(sum.qty))) +
-    (sum.missing ? cell('未有來價嘅銷售', `${sum.missing}<small>筆</small>`) : '');
+    (retAmt ? cell('退貨（已扣除）', money(retAmt)) : '') + (sum.missing ? cell('未有來價嘅銷售', `${sum.missing}<small>筆</small>`) : '');
   state.rByDay = { from, to, byDay }; fixKpis();
   drawChart(from, to, byDay);
   const prods = [...byProd.values()].sort((a, b) => b.profit - a.profit || b.sales - a.sales);
@@ -3124,7 +3276,7 @@ async function exportCsv() {
   const cell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const rows = r.lines.map(l => {
     const q = num(l.qty) || 0, p = num(l.price), c = num(l.cost);
-    return [l.day, timeOf(l.at), l.kind === 'sale' ? '銷售' : l.kind === 'in' ? '入貨' : '盤點調整', l.code, l.name, q, p ?? '', c ?? '',
+    return [l.day, timeOf(l.at), l.kind === 'sale' ? (l.ret ? '退貨' : '銷售') : l.kind === 'in' ? '入貨' : '盤點調整', l.code, l.name, q, p ?? '', c ?? '',
       l.kind === 'sale' ? (q * (p || 0)).toFixed(2) : '', l.kind === 'sale' && c !== null ? (q * ((p || 0) - c)).toFixed(2) : '', l.stockAfter ?? '', l.void ? '是' : ''].map(cell).join(',');
   });
   const csv = '﻿' + [head.join(','), ...rows].join('\r\n');
@@ -3785,10 +3937,13 @@ function receiptHtml(r, lines) {
     return `<div class="it"><div class="nm">${esc(l.name || l.code)}</div><div class="ln"><span>${esc(l.code)} · ${qtyFmt(q)}${l.unit ? ' ' + esc(l.unit) : ''} × ${money(p)}</span><span>${money(q * p)}</span></div></div>`;
   }).join('');
   const logo = state.logo || DEFAULT_LOGO;
-  return `<div class="pr-receipt w${esc(w)}">${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ''}<div class="shop">${esc(shop)}</div><div class="c">收據 · 第 ${esc(r.no ?? '–')} 單</div>
+  const foot = r.ret ? `<div class="ln tot"><span>${r.acct ? `扣返 ${esc(r.acctName || '')} 月結數` : '退款'}</span><span>${money(-total)}</span></div>${r.from ? `<div class="c">原單：${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單</div>` : ''}${r.note ? `<div class="c">原因：${esc(r.note)}</div>` : ''}`
+    : r.acct ? `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div><div class="ln"><span>掛數</span><span>${esc(r.acctName || '')}</span></div><div class="c">記入月結，月尾找數</div>`
+    : `<div class="ln tot"><span>合計</span><span>${money(total)}</span></div>
+    ${paid !== null ? `<div class="ln"><span>收</span><span>${money(paid)}</span></div><div class="ln"><span>找續</span><span>${money(Math.max(0, paid - total))}</span></div>` : ''}`;
+  return `<div class="pr-receipt w${esc(w)}">${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ''}<div class="shop">${esc(shop)}</div><div class="c">${r.ret ? '退貨單' : '收據'} · 第 ${esc(r.no ?? '–')} 單</div>
     <div class="c">${isNaN(at) ? '' : at.toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' })}</div><hr>${items}<hr>
-    <div class="ln tot"><span>合計</span><span>${money(total)}</span></div>
-    ${paid !== null ? `<div class="ln"><span>收</span><span>${money(paid)}</span></div><div class="ln"><span>找續</span><span>${money(Math.max(0, paid - total))}</span></div>` : ''}
+    ${foot}
     <hr><div class="c">${esc(lsGet(PR.footer) || '多謝惠顧')}</div></div>`;
 }
 function printReceipt(rid, auto) {
@@ -3800,13 +3955,13 @@ function printReceipt(rid, auto) {
 function printToday() {
   const sales = state.lines.filter(l => l.kind === 'sale' && !l.void);
   if (!sales.length) { toast('今日未有銷售可以列印。'); return; }
-  const s = summarize(state.lines), txs = new Set(sales.map(l => l.rid || l.id));
+  const s = summarize(state.lines), txs = new Set(sales.filter(l => !l.ret).map(l => l.rid || l.id));
   const rows = [], done = new Set();
   const ordered = [...sales].reverse().sort((a, b) => String(a.at).localeCompare(String(b.at)) || (a.n ?? 0) - (b.n ?? 0));
   for (const l of ordered) {
     const k = l.rid || l.id;
     if (!done.has(k) && l.rid) { done.add(k); const r = state.receipts[l.rid] || {}; const ls = sales.filter(x => x.rid === l.rid); const amt = ls.reduce((t, x) => t + (num(x.qty) || 0) * (num(x.price) || 0), 0);
-      rows.push(`<tr class="grp"><td>${timeOf(r.at || l.at)}</td><td colspan="4">第 ${esc(r.no ?? '–')} 單 · ${ls.length} 款</td><td class="r">${money(amt)}</td><td class="r priv"></td></tr>`); }
+      rows.push(`<tr class="grp"><td>${timeOf(r.at || l.at)}</td><td colspan="4">${r.ret ? '退貨 · ' : ''}第 ${esc(r.no ?? '–')} 單 · ${ls.length} 款</td><td class="r">${money(amt)}</td><td class="r priv"></td></tr>`); }
     const q = num(l.qty) || 0, p = num(l.price) || 0, c = num(l.cost);
     rows.push(`<tr><td>${l.rid ? '' : timeOf(l.at)}</td><td><span class="tag">${esc(l.code)}</span></td><td>${esc(l.name)}</td><td class="r">${qtyFmt(q)}</td><td class="r">${money(p)}</td><td class="r">${money(q * p)}</td><td class="r priv">${c === null ? '–' : money(q * (p - c))}</td></tr>`);
   }
@@ -4403,13 +4558,15 @@ async function saveShop() {
   if (!n) { $('#bkInfo').textContent = '請輸入店舖名稱。'; return; }
   try { await state.store.patchMeta('shop', { name: n }); applyShop(n, state.logo); toast('店名已儲存。'); } catch (e) { writeFailed(e); }
 }
+async function backupJson() {
+  const docs = await state.store.dumpAll();
+  return { n: Object.keys(docs).length, data: JSON.stringify({ format: 'tf-pos-backup', version: 1, shop: $('#shopTitle').textContent, exportedAt: new Date().toISOString(), docs }) };
+}
 async function downloadBackup() {
   if (!state.store || !state.downloads) { toast('呢度未能儲存檔案。', true); return; }
   $('#bkInfo').textContent = '準備緊備份…';
   try {
-    const docs = await state.store.dumpAll();
-    const n = Object.keys(docs).length;
-    const data = JSON.stringify({ format: 'tf-pos-backup', version: 1, shop: $('#shopTitle').textContent, exportedAt: new Date().toISOString(), docs });
+    const { n, data } = await backupJson();
     const slug = $('#shopTitle').textContent.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'shop';
     await state.downloads.save({ filename: `${slug}-backup-${dayKey(new Date())}.json`, data });
     $('#bkInfo').textContent = `已下載備份（${n} 份資料，${Math.round(data.length / 1024).toLocaleString()} KB）。`;
@@ -4426,7 +4583,7 @@ async function restoreBackup() {
   openModal('還原備份', `<p>備份來自「${esc(obj.shop || '')}」，日期 ${esc(String(obj.exportedAt || '').slice(0, 10))}，有 ${items.toLocaleString()} 件貨品、${n} 份資料。</p><p class="hint">還原會用備份取代而家嘅貨品、存量同銷售紀錄。密碼唔會改變。</p>`, async () => {
     $('#bkInfo').textContent = '還原緊…';
     await state.store.restoreAll(obj.docs);
-    state.analysis = null; state.cart = []; saveCart(); renderCart();
+    state.analysis = null; state.acct.past = null; state.cart = []; state.cartAcct = null; saveCart(); renderCart();
     const shop = obj.docs['meta/shop']; applyShop(shop && shop.name, shop && shop.logo);
     $('#bkInfo').textContent = `已還原 ${items.toLocaleString()} 件貨品。`;
     toast('備份已還原。');
@@ -4438,6 +4595,67 @@ $('#logoClear').addEventListener('click', async () => {
   try { await state.store.patchMeta('shop', { name: $('#shopTitle').textContent, logo: '' }); applyShop($('#shopTitle').textContent, ''); toast('已移除標誌。'); } catch (e) { writeFailed(e); }
 });
 $('#bkDown').addEventListener('click', downloadBackup);
+
+/* ---------- 日結 auto-backup: one file on this computer, written over each day ----------
+   The file is picked once (showSaveFilePicker); its handle is kept in IndexedDB so later 日結 write to the same file. */
+const AB = { db: null, handle: null, last: '', off: false };
+const abSupported = () => !window.claude && typeof window.showSaveFilePicker === 'function' && window.self === window.top;
+function abDb() {
+  return AB.db || (AB.db = new Promise((res, rej) => { const r = indexedDB.open('tf-files', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+}
+async function abGet(k) { const db = await abDb(); return new Promise((res, rej) => { const q = db.transaction('h').objectStore('h').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function abPut(k, v) {
+  const db = await abDb();
+  return new Promise((res, rej) => { const t = db.transaction('h', 'readwrite'), st = t.objectStore('h'); if (v === undefined) st.delete(k); else st.put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
+}
+async function abLoad() {
+  if (abSupported()) try { AB.handle = (await abGet('backup')) || null; AB.last = (await abGet('backupAt')) || ''; AB.off = !!(await abGet('backupOff')); } catch (e) {}
+  renderAutoBk();
+}
+function renderAutoBk() {
+  const ok = abSupported(), on = ok && !!AB.handle && !AB.off;
+  $('#abBtns').hidden = !ok;
+  $('#abState').textContent = !ok ? '呢個版本用唔到' : on ? '開咗' : AB.off ? '停咗' : '未設定';
+  $('#abState').className = 'chip' + (on ? ' ok' : '');
+  $('#abPick').textContent = AB.handle ? '改儲存位置…' : '揀儲存位置…';
+  $('#abNow').hidden = !on; $('#abOff').hidden = !on;
+  const when = AB.last ? new Date(AB.last).toLocaleString('zh-HK', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  $('#abInfo').textContent = !ok ? '自動備份要喺安裝咗嘅 Tak Fat Hardware app（Edge）先用到。呢度可以用上面「下載備份」。'
+    : on ? `每次日結會寫入「${AB.handle.name}」，取代上一個備份。${when ? `上次備份：${when}。` : '未備份過。'}`
+    : '每次按「日結」，系統會將備份寫入呢部電腦嘅同一個檔案。新備份會取代舊嗰個，唔會越積越多。第一次日結會問你存喺邊。';
+}
+async function abPick() {
+  try {
+    const h = await window.showSaveFilePicker({ suggestedName: 'TakFat-備份.json', types: [{ description: '備份檔', accept: { 'application/json': ['.json'] } }] });
+    AB.handle = h; AB.off = false;
+    await abPut('backup', h); await abPut('backupOff', undefined);
+    renderAutoBk();
+    return true;
+  } catch (e) { if (!e || e.name !== 'AbortError') toast('未能揀儲存位置。', true); return false; }
+}
+// Windows asks whether the app may write to the file; asking needs the click that started it, so call this first thing.
+async function abAllow() {
+  const h = AB.handle; if (!h) return false;
+  try { const o = { mode: 'readwrite' }; return (await h.queryPermission(o)) === 'granted' || (await h.requestPermission(o)) === 'granted'; }
+  catch (e) { return false; }
+}
+async function abWrite() {
+  const { data } = await backupJson();
+  const w = await AB.handle.createWritable(); await w.write(data); await w.close();
+  AB.last = new Date().toISOString(); abPut('backupAt', AB.last).catch(() => {});
+  renderAutoBk();
+}
+// at 日結: pick the file the first time, then make sure it may be written (runs inside the 確認日結 click)
+function abBegin() {
+  if (!abSupported() || AB.off) return null;
+  return AB.handle ? abAllow() : abPick().then(ok => ok && abAllow());
+}
+$('#abPick').addEventListener('click', async () => { if (await abPick()) toast(`日結時會備份去「${AB.handle.name}」。`); });
+$('#abNow').addEventListener('click', async () => {
+  if (!(await abAllow())) { toast('未有權限寫入備份檔。', true); return; }
+  try { await abWrite(); toast(`已備份去「${AB.handle.name}」。`); } catch (e) { toast('未能寫入備份檔，請按「改儲存位置…」再揀一次。', true); }
+});
+$('#abOff').addEventListener('click', async () => { AB.off = true; await abPut('backupOff', true).catch(() => {}); renderAutoBk(); toast('已停用日結自動備份。'); });
 $('#bkFile').addEventListener('change', restoreBackup);
 
 /* ---------- owner lock: hides sales totals, profit and costs from staff ---------- */
@@ -4506,7 +4724,7 @@ function toast(t, bad) { const el = $('#toast'); el.textContent = t; el.classNam
 function setStatus(cls, text) { const s = $('#status'); s.className = 'status ' + cls; s.textContent = text; }
 
 /* ---------- views ---------- */
-const VIEWS = ['sell', 'today', 'receive', 'purchases', 'products', 'reports', 'import'];
+const VIEWS = ['sell', 'returns', 'today', 'accounts', 'receive', 'purchases', 'products', 'reports', 'import'];
 function showView(v) {
   if (!VIEWS.includes(v) || (!state.unlocked && (v === 'reports' || v === 'import'))) v = 'sell';
   VIEWS.forEach(x => { $('#view-' + x).hidden = x !== v; $('#tab-' + x).setAttribute('aria-selected', String(x === v)); });
@@ -4515,6 +4733,8 @@ function showView(v) {
   if (v === 'products') renderProducts();
   if (v === 'receive') { renderRcvToday(); loadRcvRecent(); }
   if (v === 'purchases') loadPurchases(false);
+  if (v === 'returns') openReturns();
+  if (v === 'accounts') openAccounts();
   if (v === 'import') applyPrint();
   $('#whereName').textContent = $('#tab-' + v + ' .lbl').textContent;
   retitle(v);
@@ -4543,10 +4763,392 @@ function navSet(open) {
   if (open) $('#navClose').focus();
 }
 
+/* ---------- 退貨: find the sale, pick what comes back, refund it; the stock goes back on the shelf ----------
+   A return is kept like a sale with negative quantities (kind 'sale', ret: true), so takings, profit and reports net it off. */
+state.ret = { day: '', rcpts: [], open: null, from: null, items: [], returned: new Map() };
+function openReturns() {
+  const d = $('#retDay');
+  d.max = state.today;
+  if (!d.value || d.value > state.today) d.value = state.today;
+  retLoadDay(d.value);
+  renderRetSlip();
+  const n = $('#retNo'); n.focus(); n.select();
+}
+async function retLoadDay(day) {
+  const R = state.ret; R.day = day; R.open = null;
+  if (!day || !state.store) { R.rcpts = []; renderRetDay(); return; }
+  $('#retRcptsNote').textContent = '讀緊…';
+  let doc = null, later = [];
+  try {
+    doc = day === state.today ? { receipts: state.receipts, lines: Object.fromEntries(state.lines.map(l => [l.id, l])) } : await getDayDoc(day);
+    if (day < state.today) later = await state.store.getDays(day, addDays(state.today, -1));
+  } catch (e) { $('#retRcptsNote').textContent = '未能讀取嗰日嘅紀錄，請再試。'; return; }
+  if (R.day !== day) return;   // another day was picked meanwhile
+  const receipts = (doc && doc.receipts) || {};
+  const lines = Object.entries((doc && doc.lines) || {}).map(([id, l]) => ({ ...l, id }));
+  R.rcpts = Object.entries(receipts).filter(([, r]) => r && !r.void && !r.ret)
+    .map(([rid, r]) => ({ rid, r, lines: lines.filter(l => l.rid === rid && l.kind === 'sale' && !l.void).sort((a, b) => (a.n ?? 0) - (b.n ?? 0)) }))
+    .filter(x => x.lines.length).sort((a, b) => (num(b.r.no) || 0) - (num(a.r.no) || 0));
+  // what has already come back from that day's sales, on any day since
+  R.returned = new Map();
+  const count = l => { if (l && l.ret && !l.void && l.from && l.from.line) R.returned.set(l.from.line, round3((R.returned.get(l.from.line) || 0) - (num(l.qty) || 0))); };
+  for (const d of later) for (const l of Object.values(d.lines || {})) count(l);
+  for (const l of state.lines) count(l);
+  renderRetDay();
+}
+function renderRetDay() {
+  const R = state.ret;
+  $('#retRcpts').innerHTML = R.rcpts.map(x => {
+    const amt = x.lines.reduce((t, l) => t + (num(l.qty) || 0) * (num(l.price) || 0), 0);
+    return `<li><button type="button" data-rid="${esc(x.rid)}"${x.rid === R.open ? ' aria-current="true"' : ''}><strong>第 ${esc(x.r.no ?? '–')} 單</strong><span class="muted num">${timeOf(x.r.at)}</span><span class="muted">${x.lines.length} 款${x.r.acct ? ` · 掛數 ${esc(x.r.acctName || '')}` : ''}</span><span class="amt">${money(amt)}</span></button></li>`;
+  }).join('');
+  $('#retRcptsNote').textContent = !R.day ? '' : R.rcpts.length ? `${dayLabel(R.day)}有 ${R.rcpts.length} 張單，撳一張睇入面嘅貨品。` : `${dayLabel(R.day)}冇銷售紀錄。`;
+  renderRetOrig();
+}
+// how many of a line on the old receipt can still come back: bought, less returned before, less what is on this slip
+function retLeft(l) {
+  const R = state.ret, onSlip = R.items.filter(i => i.src === l.id).reduce((t, i) => t + (num(i.qty) || 0), 0);
+  return round3((num(l.qty) || 0) - (R.returned.get(l.id) || 0) - onSlip);
+}
+function renderRetOrig() {
+  const R = state.ret, x = R.rcpts.find(y => y.rid === R.open);
+  $('#retOrig').hidden = !x; if (!x) return;
+  $('#retOrigTitle').textContent = `${dayLabel(R.day)} · 第 ${x.r.no ?? '–'} 單${x.r.acct ? ` · 掛數 ${x.r.acctName || ''}` : ''}`;
+  let anyLeft = false;
+  $('#retOrigBody').innerHTML = x.lines.map(l => {
+    const back = R.returned.get(l.id) || 0, left = retLeft(l);
+    if (left > 0) anyLeft = true;
+    return `<tr><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name || l.code)}</td><td class="r">${qtyFmt(num(l.qty) || 0)}</td><td class="r">${back ? qtyFmt(back) : '<span class="muted">–</span>'}</td><td class="r">${money(num(l.price) || 0)}</td>
+      <td class="act">${left > 0 ? `<button class="btn small" type="button" data-retline="${esc(l.id)}">退</button>` : `<span class="chip">${back ? '已退晒' : '已放入退貨單'}</span>`}</td></tr>`;
+  }).join('');
+  $('#retAll').disabled = !anyLeft;
+}
+function retSameReceipt(x) {
+  const F = state.ret.from;
+  if (F && F.rid !== x.rid) { toast('一張退貨單只可以退一張單嘅貨品。請先確認或者清除而家嘅退貨單。', true); return false; }
+  return true;
+}
+function retAddLine(x, l) {
+  const R = state.ret, left = retLeft(l);
+  if (left <= 0) return false;
+  R.from = { day: R.day, rid: x.rid, no: x.r.no, acct: x.r.acct || '', acctName: x.r.acctName || '' };
+  const have = R.items.find(i => i.src === l.id);
+  if (have) have.qty = round3((num(have.qty) || 0) + left);
+  else R.items.push({ key: newId(), code: l.code, name: l.name || '', unit: l.unit || '', qty: left, price: num(l.price) || 0, cost: num(l.cost), src: l.id, max: round3((num(l.qty) || 0) - (R.returned.get(l.id) || 0)) });
+  return true;
+}
+function retAddManual() {
+  const raw = normCode($('#retCode').value);
+  if (!raw) { $('#retCode').focus(); return; }
+  const code = lookup(raw);
+  if (!code) { toast(`搵唔到貨號「${raw}」。`, true); $('#retCode').select(); return; }
+  const it = state.catalog.get(code);
+  const q = $('#retQty').value.trim() === '' ? 1 : num($('#retQty').value);
+  if (!(q > 0)) { toast('數量要大過 0。', true); $('#retQty').select(); return; }
+  const p = $('#retPrice').value.trim() === '' ? num(it.price) : num($('#retPrice').value);
+  if (p === null || p < 0) { toast('請輸入退款單價。', true); $('#retPrice').focus(); return; }
+  state.ret.items.push({ key: newId(), code, name: it.name || '', unit: it.unit || '', qty: q, price: p, cost: num(it.cost), src: null, max: null });
+  $('#retCode').value = ''; $('#retQty').value = '1'; $('#retPrice').value = '';
+  renderRetSlip();
+  $('#retCode').focus();
+}
+function renderRetSlip() {
+  const R = state.ret;
+  if (!R.items.some(i => i.src)) R.from = null;
+  $('#retList').innerHTML = R.items.map(c => {
+    const q = num(c.qty) || 0, p = num(c.price) || 0;
+    return `<li class="ci" data-key="${esc(c.key)}">
+      <div class="ci-name"><span class="tag">${esc(c.code)}</span> <span class="nm">${esc(c.name)}</span>${c.max !== null ? `<div class="hint">原單買咗，最多退 ${qtyFmt(c.max)}</div>` : '<div class="hint">冇原單</div>'}</div>
+      <div class="ci-qty"><button type="button" data-dec aria-label="減一件"><svg class="i"><use href="#i-minus"/></svg></button><input type="number" data-qty inputmode="decimal" step="any" min="0" value="${esc(q)}" aria-label="退幾多"><button type="button" data-inc aria-label="加一件"><svg class="i"><use href="#i-plus"/></svg></button></div>
+      <label class="ci-price"><span class="muted">@ $</span><input type="number" data-price inputmode="decimal" step="0.1" min="0" value="${esc(p)}" aria-label="退款單價"></label>
+      <div class="ci-amt num" data-amt>${money(q * p)}</div>
+      <button type="button" class="ci-x" data-rm aria-label="唔退呢件"><svg class="i"><use href="#i-x"/></svg></button></li>`;
+  }).join('');
+  $('#retEmpty').hidden = !!R.items.length;
+  $('#retClear').hidden = !R.items.length;
+  $('#retFrom').textContent = R.from ? `原單：${dayLabel(R.from.day)} 第 ${R.from.no} 單` : '';
+  retTotals();
+  renderRetOrig();
+}
+function retTotals() {
+  const R = state.ret, total = R.items.reduce((t, c) => t + (num(c.qty) || 0) * (num(c.price) || 0), 0);
+  const acct = R.from && R.from.acct;
+  $('#retTotal').textContent = money(total);
+  $('#retTotalK').textContent = acct ? `扣返 ${R.from.acctName || '客戶'} 月結數` : '退返客人';
+  const b = $('#retDo');
+  b.disabled = !R.items.length || !state.canWrite;
+  b.textContent = !R.items.length ? '確認退貨' : acct ? `確認退貨（扣月結數 ${money(total)}）` : `確認退貨（退 ${money(total)}）`;
+}
+async function doReturn() {
+  const R = state.ret;
+  if (!R.items.length) return;
+  if (!state.canWrite) { toast('你只可以查看，不可以記錄退貨。', true); return; }
+  for (const c of R.items) {
+    const q = num(c.qty), p = num(c.price);
+    if (!(q > 0)) { toast(`${c.code} 嘅數量要大過 0。`, true); return; }
+    if (c.max !== null && q > c.max + 0.0001) { toast(`${c.code} 最多只可以退 ${qtyFmt(c.max)}。`, true); return; }
+    if (p === null || p < 0) { toast(`請輸入 ${c.code} 嘅退款單價。`, true); return; }
+  }
+  const restock = $('#retRestock').checked, note = $('#retNote').value.trim(), F = R.from;
+  const at = new Date().toISOString(), rid = newId(), no = nextReceiptNo();
+  const lines = {}, chunkPatch = new Map();
+  let n = 0, total = 0;
+  for (const c of R.items) {
+    const q = num(c.qty), p = num(c.price), it = state.catalog.get(c.code);
+    let after = it ? num(it.stock) : null;
+    if (it && restock) {
+      after = round3((num(it.stock) ?? 0) + q); it.stock = after;
+      const ch = state.codeChunk.get(c.code);
+      if (!chunkPatch.has(ch)) chunkPatch.set(ch, {});
+      chunkPatch.get(ch)[c.code] = { stock: after };
+    }
+    const id = newId();
+    // goods that cannot go back on the shelf are a loss, so no cost comes back with them
+    lines[id] = { at, kind: 'sale', ret: true, rid, n: n++, code: c.code, name: c.name, unit: c.unit, qty: -q, price: p, cost: restock ? (c.cost ?? null) : 0, stockAfter: after };
+    if (!restock) lines[id].restock = false;
+    if (c.src && F) lines[id].from = { day: F.day, rid: F.rid, no: F.no, line: c.src };
+    state.lines.unshift({ id, ...lines[id] });
+    total += q * p;
+  }
+  total = round3(total);
+  const receipt = { at, no, ret: true, total: -total, items: R.items.length };
+  if (F) receipt.from = { day: F.day, rid: F.rid, no: F.no };
+  if (F && F.acct) { receipt.acct = F.acct; receipt.acctName = F.acctName; }
+  if (note) receipt.note = note;
+  if (!restock) receipt.restock = false;
+  state.receipts[rid] = receipt;
+  for (const c of R.items) if (c.src) R.returned.set(c.src, round3((R.returned.get(c.src) || 0) + num(c.qty)));
+  R.items = []; R.from = null;
+  $('#retNote').value = ''; $('#retRestock').checked = true;
+  renderRetSlip(); renderSell(); renderCart();
+  toast(`已退貨（第 ${no} 單）。${receipt.acct ? `已扣返 ${receipt.acctName} 月結數 ${money(total)}` : `退返客人 ${money(total)}`}${restock ? '，存量已加返' : ''}。`);
+  try {
+    await Promise.all([
+      state.store.patchDay(state.today, { day: state.today, receipts: { [rid]: receipt }, lines }),
+      ...[...chunkPatch].map(([ch, items]) => state.store.patchChunk(ch, { items })),
+    ]);
+    if (state.mode === 'live' && state.canWrite) setStatus('live', '已儲存 · 即時更新');
+  } catch (e) { writeFailed(e); }
+  if (canPrint() && lsGet(PR.auto) === '1') printReceipt(rid, true);
+}
+
+/* ---------- 月結客戶: sales put on a customer's account (掛數), payments, monthly statements ----------
+   Customers live in meta/customers. A sale on account is an ordinary receipt carrying `acct`; a payment sits in its day's
+   acctPay. Balances are worked out from the day records, so voiding a sale or a payment corrects them by itself. */
+state.customers = new Map(); state.cartAcct = null; state.acctPay = {};
+state.acct = { past: null, busy: null, sel: null, month: '' };
+function applyCustomers(d) {
+  const list = (d && isObj(d.list) && d.list) || {};
+  state.customers = new Map(Object.entries(list).filter(([, c]) => isObj(c) && c.name && !c.removed).map(([id, c]) => [id, { ...c, id }]));
+  if (!$('#view-accounts').hidden) renderAccounts();
+}
+// one day record's account entries: sales and returns on account (from their lines), and payments
+function acctEntriesOf(day, receipts, lines, pays) {
+  const out = [], byRid = new Map();
+  for (const l of lines) {
+    if (!l || l.kind !== 'sale' || l.void || !l.rid) continue;
+    const r = receipts && receipts[l.rid];
+    if (!r || !r.acct || r.void) continue;
+    let e = byRid.get(l.rid);
+    if (!e) byRid.set(l.rid, e = { kind: r.ret ? 'ret' : 'sale', day, at: r.at || l.at, acct: r.acct, rid: l.rid, no: r.no, amount: 0, items: [] });
+    const q = num(l.qty) || 0, pr = num(l.price) || 0;
+    e.amount += q * pr; e.items.push({ n: l.n ?? 0, name: l.name || l.code, qty: q, price: pr });
+  }
+  for (const e of byRid.values()) { e.amount = round3(e.amount); e.items.sort((a, b) => a.n - b.n); out.push(e); }
+  for (const [pid, pay] of Object.entries(pays || {})) if (pay && !pay.void && pay.acct) out.push({ kind: 'pay', day, at: pay.at, acct: pay.acct, pid, amount: -round3(num(pay.amount) || 0), note: pay.note || '' });
+  return out;
+}
+// days before the business day are read once; today's entries come straight from what is on screen
+function loadAcctPast() {
+  const A = state.acct;
+  if (!state.store) return Promise.reject(new Error('no store'));
+  if (A.past) return Promise.resolve();
+  if (A.busy) return A.busy;
+  const today = state.today;
+  A.busy = state.store.getDays('0000-01-01', addDays(today, -1)).then(docs => {
+    const past = [];
+    for (const d of docs) if (d.day < today) past.push(...acctEntriesOf(d.day, d.receipts, Object.values(d.lines || {}), d.acctPay));
+    if (state.today === today) A.past = past;
+  }).finally(() => { A.busy = null; });
+  return A.busy;
+}
+const acctEntries = () => [...(state.acct.past || []), ...acctEntriesOf(state.today, state.receipts, state.lines, state.acctPay)];
+function acctBalance(id) {
+  if (!state.acct.past) return null;
+  return round3(acctEntries().reduce((t, e) => t + (e.acct === id ? e.amount : 0), 0));
+}
+function acctStatement(id, month, entries) {
+  const mine = entries.filter(e => e.acct === id).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const rows = mine.filter(e => e.day.slice(0, 7) === month);
+  const add = (ls, k) => round3(ls.filter(e => e.kind === k).reduce((t, e) => t + e.amount, 0));
+  const open = round3(mine.filter(e => e.day < month + '-01').reduce((t, e) => t + e.amount, 0));
+  return { open, rows, sales: add(rows, 'sale'), rets: -add(rows, 'ret'), paid: -add(rows, 'pay'), close: round3(open + rows.reduce((t, e) => t + e.amount, 0)) };
+}
+async function openAccounts() {
+  const A = state.acct;
+  if (!A.month) A.month = state.today.slice(0, 7);
+  $('#acMonth').value = A.month;
+  renderAccounts();
+  if (A.past) return;
+  $('#acNoteTop').textContent = '計緊數…';
+  try { await loadAcctPast(); $('#acNoteTop').textContent = ''; } catch (e) { $('#acNoteTop').textContent = '未能讀取過往紀錄，請再試。'; }
+  renderAccounts();
+}
+function renderAccounts() {
+  const A = state.acct, ready = !!A.past, entries = ready ? acctEntries() : [];
+  const month = state.today.slice(0, 7), per = new Map();
+  for (const e of entries) {
+    const x = per.get(e.acct) || { bal: 0, month: 0, paid: 0, last: '' };
+    x.bal = round3(x.bal + e.amount);
+    if (e.day.slice(0, 7) === month) { if (e.kind === 'pay') x.paid -= e.amount; else x.month += e.amount; }
+    if (e.kind !== 'pay' && e.day > x.last) x.last = e.day;
+    per.set(e.acct, x);
+  }
+  let owed = 0, mSales = 0, mPaid = 0;
+  for (const c of state.customers.values()) { const x = per.get(c.id); if (x) { owed += x.bal; mSales += x.month; mPaid += x.paid; } }
+  const kp = (k, v, cls = '') => `<div class="kpi ${cls}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const dots = '<span class="muted">…</span>';
+  $('#acKpis').innerHTML = kp('月結客戶', `${state.customers.size}<small>個</small>`) + kp('未收總數', ready ? money(owed) : dots, 'money lead') + kp('本月掛數', ready ? money(mSales) : dots, 'money') + kp('本月收款', ready ? money(mPaid) : dots, 'money');
+  fixKpis();
+  $('#acEmpty').hidden = state.customers.size > 0; $('#acWrap').hidden = !state.customers.size;
+  const q = $('#acSearch').value.trim().toLowerCase();
+  const list = [...state.customers.values()].filter(c => !q || c.name.toLowerCase().includes(q) || String(c.phone || '').includes(q))
+    .sort((a, b) => ((per.get(b.id) || {}).bal || 0) - ((per.get(a.id) || {}).bal || 0) || a.name.localeCompare(b.name, 'zh-Hant'));
+  $('#acBody').innerHTML = list.map(c => {
+    const x = per.get(c.id) || { bal: 0, month: 0, last: '' };
+    return `<tr data-ac="${esc(c.id)}" aria-selected="${A.sel === c.id}"><td class="nm"><strong>${esc(c.name)}</strong>${c.note ? `<div class="hint">${esc(c.note)}</div>` : ''}</td><td>${esc(c.phone || '')}</td>
+      <td class="r">${ready ? money(x.month) : dots}</td><td class="r">${!ready ? dots : x.bal > 0.004 ? `<strong>${money(x.bal)}</strong>` : `<span class="muted">${money(x.bal)}</span>`}</td><td class="r">${x.last ? esc(dayLabel(x.last)) : '<span class="muted">–</span>'}</td></tr>`;
+  }).join('') || (q ? `<tr><td colspan="5" class="muted" style="text-align:center;padding:16px">搵唔到「${esc(q)}」。</td></tr>` : '');
+  renderAcctCard(entries, per);
+}
+function renderAcctCard(entries, per) {
+  const A = state.acct, c = A.sel && state.customers.get(A.sel);
+  $('#acCard').hidden = !c; if (!c) return;
+  const ready = !!A.past;
+  $('#acName').textContent = c.name;
+  $('#acInfo').textContent = [c.phone ? '電話 ' + c.phone : '', c.note || ''].filter(Boolean).join(' · ') || '未有電話';
+  const bal = (per.get(c.id) || { bal: 0 }).bal;
+  $('#acBalK').textContent = ready && bal < -0.004 ? '客戶有餘額（下次扣）' : '未收';
+  $('#acBal').textContent = ready ? money(Math.abs(bal)) : '…';
+  if (!ready) { $('#acLog').innerHTML = '<li class="edge"><span class="what">計緊數…</span></li>'; return; }
+  const st = acctStatement(c.id, A.month, entries), ml = monthLabel(A.month);
+  const what = e => e.kind === 'pay' ? `收款${e.note ? `（${esc(e.note)}）` : ''}` : `${e.kind === 'ret' ? '退貨 · ' : ''}第 ${esc(e.no ?? '–')} 單`;
+  $('#acLog').innerHTML = [
+    `<li class="edge"><span class="what">${ml}之前結欠</span><span class="amt">${money(st.open)}</span></li>`,
+    ...st.rows.map(e => `<li><span class="what">${esc(dayLabel(e.day))} · ${what(e)}</span><span class="amt">${money(e.amount)}</span>${e.kind === 'pay'
+      ? (state.canWrite ? `<span class="sub"><button class="linkbtn danger" type="button" data-unpay="${esc(e.pid)}" data-day="${esc(e.day)}">作廢呢筆收款</button></span>` : '')
+      : `<span class="sub">${esc(e.items.map(i => `${i.name} × ${qtyFmt(Math.abs(i.qty))}`).join('、'))}</span>`}</li>`),
+    st.rows.length ? '' : `<li class="edge"><span class="what">${ml}冇紀錄</span><span class="amt"></span></li>`,
+    `<li class="edge"><span class="what"><strong>${ml}結欠</strong></span><span class="amt">${money(st.close)}</span></li>`,
+  ].join('');
+}
+function printStatement() {
+  const A = state.acct, c = A.sel && state.customers.get(A.sel);
+  if (!c || !A.past) return;
+  const st = acctStatement(c.id, A.month, acctEntries());
+  let run = st.open;
+  const rows = st.rows.map(e => {
+    run = round3(run + e.amount);
+    const what = e.kind === 'pay' ? `收款${e.note ? `（${esc(e.note)}）` : ''}` : `${e.kind === 'ret' ? '退貨 · ' : ''}第 ${esc(e.no ?? '–')} 單`;
+    const items = e.kind === 'pay' ? '' : e.items.map(i => `${esc(i.name)} × ${qtyFmt(Math.abs(i.qty))} @ ${money(i.price)}`).join('<br>');
+    return `<tr><td>${esc(e.day)}</td><td>${what}</td><td>${items}</td><td class="r">${money(e.amount)}</td><td class="r">${money(run)}</td></tr>`;
+  });
+  runPrint('report', `<div class="pr-report"><h1>${esc($('#shopTitle').textContent)} · 月結單</h1><p class="sub">客戶：${esc(c.name)}${c.phone ? ` · 電話 ${esc(c.phone)}` : ''} · ${monthLabel(A.month)}</p>
+    ${printFigs([['上月結欠', money(st.open)], ['本月掛數', money(st.sales)], ...(st.rets ? [['本月退貨', money(st.rets)]] : []), ['本月收款', money(st.paid)], ['結欠', money(st.close)]])}
+    <table><thead><tr><th>日期</th><th>單號</th><th>貨品</th><th class="r">金額</th><th class="r">結欠</th></tr></thead><tbody>
+    <tr><td></td><td colspan="2">上月結欠</td><td></td><td class="r">${money(st.open)}</td></tr>${rows.join('')}</tbody></table>
+    <p class="foot">多謝惠顧。 · ${printedAt()}</p></div>`);
+}
+async function saveCustomer(id, data) {
+  state.customers.set(id, { ...(state.customers.get(id) || {}), ...data, id });
+  await state.store.patchMeta('customers', { list: { [id]: data } });
+}
+function customerForm(c) {
+  openModal(c ? `修改客戶 · ${c.name}` : '新增月結客戶', `
+    <div class="fields">
+      <label class="field req"><span>客戶名稱</span><input name="name" type="text" value="${esc(c ? c.name : '')}" placeholder="例如 陳師傅"></label>
+      <label class="field"><span>電話</span><input name="phone" type="tel" value="${esc(c ? c.phone || '' : '')}"></label>
+    </div>
+    <div class="fields" style="margin-top:12px"><label class="field"><span>備註</span><input name="note" type="text" value="${esc(c ? c.note || '' : '')}" placeholder="例如 裝修公司、地址"></label></div>`, async fd => {
+    const name = String(fd.get('name') || '').trim();
+    if (!name) throw new Error('請輸入客戶名稱。');
+    if ([...state.customers.values()].some(x => x.name === name && (!c || x.id !== c.id))) throw new Error(`已經有客戶叫「${name}」。`);
+    const id = c ? c.id : 'k' + newId(), data = { name, phone: String(fd.get('phone') || '').trim(), note: String(fd.get('note') || '').trim() };
+    if (!c) data.at = new Date().toISOString();
+    await saveCustomer(id, data);
+    state.acct.sel = id; renderAccounts();
+    toast(c ? '客戶資料已更新。' : `已新增客戶「${name}」。`);
+  }, { ok: c ? '儲存' : '新增', extra: c ? { label: '刪除客戶', confirm: '再按確認刪除', fn: async () => {
+    const b = acctBalance(c.id);
+    if (b === null || Math.abs(b) > 0.004) { toast(b === null ? '計緊數，請等一陣再試。' : `${c.name} 仲欠 ${money(b)}，找清數先可以刪除。`, true); throw Object.assign(new Error(''), { quiet: true }); }
+    await saveCustomer(c.id, { removed: true });
+    state.customers.delete(c.id); state.acct.sel = null; renderAccounts();
+    toast(`已刪除客戶「${c.name}」。`);
+  } } : null });
+}
+async function recordPay(e) {
+  e.preventDefault();
+  const A = state.acct, c = A.sel && state.customers.get(A.sel);
+  if (!c) return;
+  if (!state.canWrite) { toast('你只可以查看，不可以記錄收款。', true); return; }
+  const amt = num($('#acAmt').value);
+  if (!(amt > 0)) { toast('請輸入收咗幾多錢。', true); $('#acAmt').focus(); return; }
+  const pid = newId(), pay = { at: new Date().toISOString(), acct: c.id, acctName: c.name, amount: round3(amt) };
+  const note = $('#acPayNote').value.trim(); if (note) pay.note = note;
+  state.acctPay[pid] = pay;
+  $('#acAmt').value = ''; $('#acPayNote').value = '';
+  renderAccounts();
+  const b = acctBalance(c.id);
+  toast(`已記錄 ${c.name} 收款 ${money(amt)}。${b === null ? '' : b > 0.004 ? `仲欠 ${money(b)}。` : '已經找清。'}`);
+  try { await state.store.patchDay(state.today, { day: state.today, acctPay: { [pid]: pay } }); } catch (err) { writeFailed(err); }
+}
+async function voidPay(pid, day) {
+  if (day === state.today) { if (state.acctPay[pid]) state.acctPay[pid] = { ...state.acctPay[pid], void: true }; }
+  else if (state.acct.past) state.acct.past = state.acct.past.filter(e => e.pid !== pid);
+  renderAccounts();
+  toast('已作廢呢筆收款。');
+  try { await state.store.patchDay(day, { day, acctPay: { [pid]: { void: true, voidAt: new Date().toISOString() } } }); } catch (e) { writeFailed(e); }
+}
+// the till's 掛數 button: pick (or add) the customer this sale goes on
+function pickAcct() {
+  openModal('掛數 · 揀月結客戶', `
+    <input type="search" id="apQ" placeholder="搜尋客戶名或電話" autocomplete="off" aria-label="搜尋客戶">
+    <ul class="ap-list" id="apList"></ul>
+    <p class="hint">新客戶？填低名，按「新增並揀選」。</p>
+    <div class="fields"><label class="field"><span>新客戶名稱</span><input name="name" type="text" placeholder="例如 陳師傅"></label><label class="field"><span>電話</span><input name="phone" type="tel"></label></div>`, async fd => {
+    const name = String(fd.get('name') || '').trim();
+    if (!name) throw new Error('請喺上面揀一位客戶，或者填新客戶名稱。');
+    let c = [...state.customers.values()].find(x => x.name === name);
+    if (!c) { const id = 'k' + newId(); await saveCustomer(id, { name, phone: String(fd.get('phone') || '').trim(), note: '', at: new Date().toISOString() }); c = state.customers.get(id); }
+    setCartAcct(c);
+  }, { ok: '新增並揀選' });
+  drawPick();
+  const q = $('#apQ');
+  q.addEventListener('input', drawPick);
+  q.addEventListener('keydown', e => {
+    if (!isEnter(e)) return;
+    e.preventDefault(); e.stopPropagation();
+    const b = $('#apList [data-pick]'); if (b) { setCartAcct(state.customers.get(b.dataset.pick)); closeModal(); }
+  });
+  loadAcctPast().then(() => { if ($('#apList')) drawPick(); renderPay(); }).catch(() => {});
+}
+function drawPick() {
+  const box = $('#apList'); if (!box) return;
+  const q = ($('#apQ').value || '').trim().toLowerCase();
+  const list = [...state.customers.values()].filter(c => !q || c.name.toLowerCase().includes(q) || String(c.phone || '').includes(q)).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  box.innerHTML = list.map(c => { const b = acctBalance(c.id); return `<li><button type="button" data-pick="${esc(c.id)}"><span><strong>${esc(c.name)}</strong>${c.phone ? ` <span class="muted">${esc(c.phone)}</span>` : ''}</span><span class="muted num">${b !== null && b > 0.004 ? '欠 ' + money(b) : ''}</span></button></li>`; }).join('')
+    || `<li class="hint">${state.customers.size ? `搵唔到「${esc(q)}」。` : '未有月結客戶，喺下面新增。'}</li>`;
+}
+function setCartAcct(c) {
+  if (!c) return;
+  state.cartAcct = { id: c.id, name: c.name };
+  hideMsg(); saveCart(); renderPay();
+}
+
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
 document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) showView(g.dataset.goto); });
-const FKEYS = { F2: 'sell', F7: 'products', F8: 'today', F9: 'receive' };
+const FKEYS = { F2: 'sell', F3: 'returns', F7: 'products', F8: 'today', F9: 'receive' };
 document.addEventListener('keydown', e => {
   if (e.key === 'F5' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
     e.preventDefault();   // F5 would reload the page; at this till it means "next customer" (Ctrl+F5 still reloads)
@@ -4618,11 +5220,78 @@ $('#quickPay').addEventListener('click', e => {
   saveCart(); renderPay();
 });
 $('#checkout').addEventListener('click', checkout);
+// 退貨
+$('#retFind').addEventListener('submit', async e => {
+  e.preventDefault();
+  const day = $('#retDay').value, no = num($('#retNo').value);
+  if (!day) { $('#retDay').focus(); return; }
+  if (state.ret.day !== day) await retLoadDay(day);
+  if (no === null) return;
+  const x = state.ret.rcpts.find(y => num(y.r.no) === no);
+  if (!x) { toast(`${dayLabel(day)}搵唔到第 ${no} 單。`, true); $('#retNo').select(); return; }
+  state.ret.open = x.rid; renderRetDay();
+});
+$('#retDay').addEventListener('change', () => retLoadDay($('#retDay').value));
+$('#retRcpts').addEventListener('click', e => { const b = e.target.closest('[data-rid]'); if (b) { state.ret.open = b.dataset.rid; renderRetDay(); } });
+$('#retOrigBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-retline]'); if (!b) return;
+  const R = state.ret, x = R.rcpts.find(y => y.rid === R.open), l = x && x.lines.find(y => y.id === b.dataset.retline);
+  if (l && retSameReceipt(x) && retAddLine(x, l)) renderRetSlip();
+});
+$('#retAll').addEventListener('click', () => {
+  const R = state.ret, x = R.rcpts.find(y => y.rid === R.open);
+  if (!x || !retSameReceipt(x)) return;
+  let any = false;
+  for (const l of x.lines) if (retAddLine(x, l)) any = true;
+  if (any) renderRetSlip();
+});
+$('#retManual').addEventListener('submit', e => { e.preventDefault(); retAddManual(); });
+$('#retCode').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); if ($('#retCode').value.trim()) { $('#retQty').focus(); $('#retQty').select(); } } });
+$('#retQty').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); $('#retPrice').focus(); $('#retPrice').select(); } });
+$('#retList').addEventListener('click', e => {
+  const li = e.target.closest('.ci'); if (!li) return;
+  const R = state.ret, c = R.items.find(x => x.key === li.dataset.key); if (!c) return;
+  if (e.target.closest('[data-inc]')) c.qty = round3(Math.min((num(c.qty) || 0) + 1, c.max ?? Infinity));
+  else if (e.target.closest('[data-dec]')) { c.qty = round3((num(c.qty) || 0) - 1); if (c.qty <= 0) R.items = R.items.filter(x => x !== c); }
+  else if (e.target.closest('[data-rm]')) R.items = R.items.filter(x => x !== c);
+  else return;
+  renderRetSlip();
+});
+$('#retList').addEventListener('input', e => {
+  const li = e.target.closest('.ci'); if (!li) return;
+  const c = state.ret.items.find(x => x.key === li.dataset.key); if (!c) return;
+  if (e.target.matches('[data-qty]')) c.qty = num(e.target.value) ?? 0;
+  if (e.target.matches('[data-price]')) c.price = num(e.target.value) ?? 0;
+  li.querySelector('[data-amt]').textContent = money((num(c.qty) || 0) * (num(c.price) || 0));
+  retTotals();
+});
+$('#retList').addEventListener('change', e => {
+  if (!e.target.matches('[data-qty], [data-price]')) return;
+  const R = state.ret;
+  for (const c of R.items) if (c.max !== null && num(c.qty) > c.max) { c.qty = c.max; toast(`${c.code} 最多只可以退 ${qtyFmt(c.max)}。`); }
+  R.items = R.items.filter(c => (num(c.qty) || 0) > 0);
+  renderRetSlip();
+});
+$('#retList').addEventListener('keydown', e => { if (isEnter(e) && e.target.matches('input')) { e.preventDefault(); e.target.blur(); } });
+$('#retClear').addEventListener('click', () => { state.ret.items = []; state.ret.from = null; renderRetSlip(); });
+$('#retDo').addEventListener('click', doReturn);
+// 月結客戶
+$('#acctBtn').addEventListener('click', pickAcct);
+$('#acctOff').addEventListener('click', () => { state.cartAcct = null; saveCart(); renderPay(); $('#paid').focus(); });
+$('#modalBody').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) { setCartAcct(state.customers.get(b.dataset.pick)); closeModal(); } });
+$('#acAdd').addEventListener('click', () => customerForm(null));
+$('#acEdit').addEventListener('click', () => { const c = state.customers.get(state.acct.sel); if (c) customerForm(c); });
+$('#acSearch').addEventListener('input', renderAccounts);
+$('#acBody').addEventListener('click', e => { const tr = e.target.closest('[data-ac]'); if (tr) { state.acct.sel = tr.dataset.ac; renderAccounts(); $('#acAmt').focus(); } });
+$('#acPay').addEventListener('submit', recordPay);
+$('#acMonth').addEventListener('change', () => { if ($('#acMonth').value) { state.acct.month = $('#acMonth').value; renderAccounts(); } });
+$('#acPrint').addEventListener('click', printStatement);
+$('#acLog').addEventListener('click', e => { const b = e.target.closest('[data-unpay]'); if (b) arm(b, '作廢呢筆收款', () => voidPay(b.dataset.unpay, b.dataset.day)); });
 $('#slots').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (b) switchCustomer(num(b.dataset.slot)); });
 $('#cartClear').addEventListener('click', () => {
   const b = $('#cartClear');
   if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '再按一次清除'; setTimeout(() => { if (b.dataset.armed) { b.dataset.armed = ''; b.textContent = '清除呢張單'; } }, 3000); return; }
-  state.cart = []; $('#paid').value = ''; saveCart(); renderCart(); $('#scan').focus();
+  state.cart = []; $('#paid').value = ''; state.cartAcct = null; saveCart(); renderCart(); $('#scan').focus();
 });
 $('#scan').addEventListener('input', () => {
   hideMsg(); if (state.scanPick) resetPick();
@@ -4864,7 +5533,7 @@ $('#modal').addEventListener('keydown', e => { if (e.key === 'Escape') closeModa
 $('#modalExtra').addEventListener('click', async () => {
   const ex = $('#modalExtra'), md = state.modal; if (!md || !md.extra) return;
   if (!ex.dataset.armed) { ex.dataset.armed = '1'; ex.textContent = md.extra.confirm || '再按確認'; return; }
-  try { await md.extra.fn(); closeModal(); } catch (err) { writeFailed(err); }
+  try { await md.extra.fn(); closeModal(); } catch (err) { if (!err || !err.quiet) writeFailed(err); }
 });
 
 /* ---------- access code for the web-hosted app ----------
@@ -4934,7 +5603,7 @@ function watchDay() {
 }
 function switchDay(day) {
   if (day === state.today && unsubDay) return;
-  state.today = day; state.lines = []; state.receipts = {}; state.purchases = {}; state.lastRid = null;
+  state.today = day; state.lines = []; state.receipts = {}; state.purchases = {}; state.acctPay = {}; state.lastRid = null; state.acct.past = null;
   watchDay(); renderSell(); renderRcvToday();
 }
 // Until the first 日結 there is no session record and the business day follows the calendar.
@@ -4970,9 +5639,13 @@ function closeDay() {
   if (!state.unlocked || !state.canWrite) return;
   const day = state.today, s = summarize(state.lines);
   const txs = new Set(); let loose = 0, voided = 0;
+  const rets = new Set(); let retAmt = 0, acctSales = 0;
+  const acctPaid = Object.values(state.acctPay || {}).reduce((t, p) => t + (p && !p.void ? num(p.amount) || 0 : 0), 0);
+  for (const l of state.lines) { const r = l.rid && state.receipts[l.rid]; if (l.kind === 'sale' && !l.void && r && r.acct && !r.void) acctSales += (num(l.qty) || 0) * (num(l.price) || 0); }
   for (const l of state.lines) {
     if (l.kind !== 'sale') continue;
     if (l.void) { if (!l.rid) voided++; continue; }
+    if (l.ret) { rets.add(l.rid || l.id); retAmt -= (num(l.qty) || 0) * (num(l.price) || 0); continue; }
     if (l.rid) txs.add(l.rid); else loose++;
   }
   voided += Object.values(state.receipts).filter(r => r && r.void).length;
@@ -4988,10 +5661,15 @@ function closeDay() {
       ${row('利潤', `<span class="${s.profit < 0 ? 'loss' : 'gain'}">${money(s.profit)}</span>`)}
       ${row('毛利率', s.margin === null ? '–' : Math.round(s.margin * 100) + '%')}
       ${s.missing ? row('未有來價嘅銷售', `${s.missing} 筆（未計入利潤）`) : ''}
+      ${rets.size ? row('退貨', `${rets.size} 單 · 退 ${money(retAmt)}（已喺營業額扣除）`) : ''}
+      ${acctSales ? row('掛數', `${money(acctSales)}（未收錢）`) : ''}
+      ${acctPaid ? row('收月結數', money(acctPaid)) : ''}
       ${voided ? row('作廢', `${voided} 單`) : ''}
       ${pus.length ? row('入貨單', `${pus.length} 張 · 成本 ${money(puCost)}`) : ''}
     </tbody></table>
-    <p class="hint">確認之後，收銀頁嘅營業額同利潤會歸零，開始新一日。今日嘅紀錄會保留，喺「報表」可以再睇。</p>`, async () => {
+    <p class="hint">確認之後，收銀頁嘅營業額同利潤會歸零，開始新一日。今日嘅紀錄會保留，喺「報表」可以再睇。</p>
+    ${!abSupported() || AB.off ? '' : `<p class="hint">${AB.handle ? `會自動備份去「${esc(AB.handle.name)}」，取代上一個備份。` : '會自動備份。第一次會問你將備份檔存喺邊，之後每日都寫入同一個檔案。'}</p>`}`, async () => {
+    const bk = abBegin();   // before anything else waits: the file picker and permission need this click
     const at = new Date().toISOString();
     const next = [dayKey(new Date()), addDays(day, 1)].sort().pop();
     const closed = { at, sales: round3(s.sales), cost: round3(s.cost), profit: round3(s.profit), qty: round3(s.qty), receipts: txs.size + loose, missingCost: s.missing, purchases: pus.length, purchaseCost: round3(puCost) };
@@ -5000,7 +5678,12 @@ function closeDay() {
     state.lastClose = { day, next, prevOpenedAt: state.session && state.session.openedAt };
     state.session = { day: next, openedAt: at, prev: day };
     switchDay(next);
-    toast(`已日結 ${dayLabel(day)}。營業額 ${money(s.sales)}，利潤 ${money(s.profit)}。`);
+    let note = '', bad = false;
+    if (bk) {
+      if (await bk) { try { await abWrite(); note = ' 備份已更新。'; } catch (e) { note = ' 但備份未能寫入，請去「匯入・設定」再揀儲存位置。'; bad = true; } }
+      else { note = ' 今次未有備份。'; bad = true; }
+    }
+    toast(`已日結 ${dayLabel(day)}。營業額 ${money(s.sales)}，利潤 ${money(s.profit)}。${note}`, bad);
   }, { ok: '確認日結' });
 }
 async function reopenDay() {
@@ -5040,7 +5723,7 @@ async function start() {
     state.maxPhotos = (lim && lim.images && lim.images.maxCount) || 1;
   }
   $('#rcvPhotoRow').hidden = !state.canPhoto;
-  applyPrint();
+  applyPrint(); abLoad();
   if (!window.claude) applyReader();
   else if (!state.canPhoto) setRcvBusy(false, '呢度用唔到影相讀單（請喺 Claude 開啟呢頁）。可以用下面「自己逐件輸入」。');
   if (db) {
@@ -5075,6 +5758,7 @@ async function start() {
   state.store.getMeta('settings').then(d => { if (d && typeof d.pinHash === 'string' && d.pinHash) state.pinHash = d.pinHash; }).catch(() => {});
   state.store.getMeta('aliases').then(d => { state.aliases = d && isObj(d.map) ? { ...d.map } : {}; }).catch(() => {});
   state.store.getMeta('suppliers').then(d => { state.suppliers = d && Array.isArray(d.list) ? d.list : []; fillSuppliers(); }).catch(() => {});
+  state.store.onMeta('customers', applyCustomers, err => console.error(err));
   let first = true;
   state.store.onMeta('session', d => {
     state.session = d && /^\d{4}-\d{2}-\d{2}$/.test(String(d.day || '')) ? d : null;
