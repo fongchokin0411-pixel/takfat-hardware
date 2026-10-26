@@ -143,7 +143,7 @@ button, input, select { font: inherit; color: inherit; }
 .tab .lbl { flex: 1; white-space: nowrap; }
 .tab:hover { background: var(--raised); color: var(--text); }
 .tab[aria-selected="true"] { background: var(--active); color: var(--text); }
-.tab kbd, .keylist kbd, .hint kbd, .slots-k kbd { font: 500 12px/16px var(--mono); padding: 0 5px; border-radius: 4px; border: 1px solid var(--control); color: var(--muted); background: var(--surface); }
+.tab kbd, .keylist kbd, .hint kbd, .slots-k kbd, .btn kbd, .pick-bar kbd { font: 500 12px/16px var(--mono); padding: 0 5px; border-radius: 4px; border: 1px solid var(--control); color: var(--muted); background: var(--surface); }
 .side-foot { margin-top: auto; display: grid; gap: 8px; padding: 16px 8px 0; }
 .status { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); line-height: 16px; color: var(--muted); }
 .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
@@ -597,6 +597,12 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .set-label { display: grid; gap: 6px; align-content: start; padding-top: 6px; }
 .set-label p { color: var(--muted); max-width: 46ch; }
 .set-label p strong { color: var(--text); font-weight: 500; }
+/* 入貨: find a product by name while entering a delivery note */
+.rcv-add { align-items: end; }
+.rcv-find { position: relative; flex: 1 1 320px; max-width: 560px; min-width: 0; }
+.rcv-find .field { width: 100%; }
+.rcv-find .suggest { left: 0; right: 0; top: 100%; margin-top: 4px; }
+.pick-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: var(--gap); }
 /* 總覽 */
 .bs-periods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
 .bs-p { display: grid; gap: 6px; align-content: start; padding: 18px var(--card-pad); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); }
@@ -790,7 +796,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
   .p-hint { text-align: left; }
   .pinfo { grid-template-columns: minmax(0, 1fr); }
 }
-@media (hover: none) { .tab kbd, .slots-k { display: none; } }
+@media (hover: none) { .tab kbd, .slots-k, .btn kbd { display: none; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -1205,9 +1211,13 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
         </div>
         <p class="hint">單上單位同貨品單位唔同（例如 1 盒 = 10 支），請改「入貨數量」。唔想入嘅行，剔走左邊個格。</p>
         <ul class="rlines" id="rcvLines"></ul>
-        <div class="row-wrap">
-          <label class="field">加一行貨品<input id="rcvAddCode" type="text" placeholder="輸入貨號" autocapitalize="characters"></label>
+        <div class="row-wrap rcv-add">
+          <div class="rcv-find">
+            <label class="field">加一行貨品<input id="rcvAddCode" type="text" placeholder="輸入貨號，或者打名搵（例如 WD-40）" autocapitalize="characters" autocomplete="off" spellcheck="false" role="combobox" aria-controls="rcvSuggest" aria-autocomplete="list" aria-expanded="false"></label>
+            <ul id="rcvSuggest" class="suggest" role="listbox" aria-label="搵到嘅貨品" hidden></ul>
+          </div>
           <button id="rcvAdd" class="btn" type="button">加入</button>
+          <button id="rcvFind" class="btn ghost" type="button">去「貨品」搵 <kbd>F7</kbd></button>
         </div>
         <label class="check"><input type="checkbox" id="rcvUpdCost" checked><span>用送貨單嘅單價更新貨品來價</span></label>
         <div class="rcv-sum"><span class="k">入貨成本合計</span><span class="v" id="rcvSum">$0.00</span></div>
@@ -1274,6 +1284,10 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       <div><h2 class="vtitle">貨品</h2><p class="sub" id="pCount"></p></div>
       <div class="actions"><button id="addProduct" class="btn primary" type="button">新增貨品</button></div>
     </div>
+    <div class="notice info pick-bar" id="pickBar" hidden>
+      <span><strong>揀緊貨品加入「入貨」送貨單。</strong>搵到之後撳嗰件貨品，再按 <kbd>Enter</kbd>（或者撳兩下），就會帶返去入貨。</span>
+      <span class="row-wrap" style="gap:8px"><button class="btn small" id="pickBack" type="button">返回入貨</button><button class="linkbtn" id="pickOff" type="button">唔係，用嚟收銀</button></span>
+    </div>
     <div class="stack">
       <div class="utabs" id="pChips" role="group" aria-label="篩選">
         <button class="fchip" type="button" data-f="all" aria-pressed="true">全部</button>
@@ -1285,7 +1299,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       <div class="toolbar">
         <input id="pSearch" type="search" placeholder="貨號、名稱、品牌或類別" aria-label="搜尋貨品" aria-describedby="pHint">
         <select id="pType" aria-label="類別"><option value="">所有類別</option></select>
-        <p class="hint p-hint" id="pHint">打貨號或者簡碼會跳去嗰件貨品。撳一下揀選，用 <kbd>↑</kbd><kbd>↓</kbd> 移動，按 <kbd>Enter</kbd> 加入收銀單。</p>
+        <p class="hint p-hint" id="pHint" data-sell="1">打貨號或者簡碼會跳去嗰件貨品。撳一下揀選，用 <kbd>↑</kbd><kbd>↓</kbd> 移動，按 <kbd>Enter</kbd> 加入收銀單。</p>
       </div>
       <div class="card pinfo" id="pInfo" aria-live="polite"></div>
       <div class="table-wrap prodlist" id="pWrap" tabindex="0" aria-label="貨品列表，按 Enter 將揀選嘅貨品加入收銀單">
@@ -2413,14 +2427,16 @@ function showNearby(center, idx = -1) {
   const at = idx >= 0 ? Math.max(0, hits.findIndex(h => h.code >= center)) : -1;
   showSuggest(hits, at, { exact, caption: `${center} 附近嘅貨號 · 用 ↑↓ 揀選，Enter 加入` });
 }
+// dashes, dots and spaces don't matter: "WD-40" finds "WD40", "1/2" finds "1/2"
+const squash = t => t.replace(/[\s\-_.·]/g, '');
 function search(q, limit = 8) {
   const terms = String(q).toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
-  const out = [];
+  const out = [], loose = terms.map(squash);
   for (const [code, it] of state.catalog) {
     const c = code.toLowerCase();
     const hay = c + ' ' + (it.name || '').toLowerCase() + ' ' + (it.brand || '').toLowerCase() + ' ' + (it.type || '').toLowerCase() + ' ' + (it.barcode || '').toLowerCase() + ' ' + (it.short || '').toLowerCase();
-    if (!terms.every(t => hay.includes(t))) continue;
+    if (!terms.every(t => hay.includes(t)) && !loose.every(t => t && squash(hay).includes(t))) continue;
     const score = c.startsWith(terms[0]) ? 0 : c.includes(terms[0]) ? 1 : 2;
     out.push({ code, it, score });
   }
@@ -3130,7 +3146,7 @@ function renderTypeFilter() {
 // typing a code scrolls to it (or to the next code after it), and a name filters the list.
 function renderProducts() {
   const raw = $('#pSearch').value.trim(), q = raw.toLowerCase();
-  const terms = q.split(/\s+/).filter(Boolean);
+  const terms = q.split(/\s+/).filter(Boolean), loose = terms.map(squash);
   const type = $('#pType').value, f = state.pFilter;
   const pass = it => !((type && it.type !== type) || (f === 'nocost' && num(it.cost) !== null) || (f === 'noprice' && num(it.price) !== null)
     || (f === 'low' && !(num(it.stock) !== null && num(it.stock) <= LOW_STOCK)) || (f === 'uncounted' && num(it.stock) !== null));
@@ -3141,7 +3157,7 @@ function renderProducts() {
     if (!it || !pass(it)) return false;
     if (center || !terms.length) return true;
     const hay = (code + ' ' + (it.name || '') + ' ' + (it.brand || '') + ' ' + (it.type || '') + ' ' + (it.barcode || '') + ' ' + (it.supplier || '') + ' ' + (it.short || '')).toLowerCase();
-    return terms.every(t => hay.includes(t));
+    return terms.every(t => hay.includes(t)) || loose.every(t => t && squash(hay).includes(t));
   });
   const key = [q, type, f].join('\u0001'), fresh = key !== state.pKey;
   state.pKey = key; state.pRows = rows; state.pVer = (state.pVer || 0) + 1;
@@ -3448,6 +3464,32 @@ function sellProduct(code) {
   if (!code || !state.catalog.has(code)) return;
   showView('sell'); hideSuggest(); trySell(code);
 }
+// From a delivery note being entered, 貨品 is a place to look a product up: Enter takes it back to 入貨.
+state.pickFor = null;
+function useProduct(code) {
+  if (state.pickFor === 'receive' && state.rcv) pickToReceive(code); else sellProduct(code);
+}
+function pickToReceive(code) {
+  if (!code || !state.catalog.has(code)) return;
+  state.pickFor = null;
+  showView('receive');
+  $('#rcvAddCode').value = code;
+  addRcvLine();
+  toast(`已加入 ${code} ${state.catalog.get(code).name || ''}，打數量就得。`);
+}
+// the bar and the hint on 貨品 say where Enter sends the product
+function syncPick(onProducts) {
+  $('#pickBar').hidden = !(onProducts && state.pickFor);
+  const h = $('#pHint');
+  if (!h.dataset.orig) h.dataset.orig = h.innerHTML;
+  h.innerHTML = state.pickFor ? h.dataset.orig.replace('加入收銀單', '加入入貨單') : h.dataset.orig;
+}
+function startPick() {
+  if (!state.rcv) return;
+  state.pickFor = 'receive';
+  showView('products');
+  const s = $('#pSearch'); s.focus(); s.select();
+}
 function productKeys(e) {
   const rows = state.pRows || [], w = $('#pWrap'), inList = e.currentTarget === w;
   if (e.altKey || e.ctrlKey || e.metaKey || !rows.length) return;
@@ -3460,7 +3502,7 @@ function productKeys(e) {
     selectProduct(rows[i < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, i + step))], true);
     return;
   }
-  if (e.key === 'Enter' && !e.target.closest('button')) { if (state.pSel) { e.preventDefault(); sellProduct(state.pSel); } return; }
+  if (e.key === 'Enter' && !e.target.closest('button')) { if (state.pSel) { e.preventDefault(); useProduct(state.pSel); } return; }
   // typing while the list has focus starts a new search
   if (inList && e.key.length === 1 && e.target === w) { e.preventDefault(); const s = $('#pSearch'); s.value = e.key; s.focus(); renderProducts(); }
 }
@@ -5026,6 +5068,11 @@ const VIEWS = ['sell', 'returns', 'today', 'accounts', 'orders', 'receive', 'pur
 const BOSS_VIEWS = ['boss', 'reports', 'payables', 'import'];
 function showView(v) {
   if (!VIEWS.includes(v) || (!state.unlocked && BOSS_VIEWS.includes(v))) v = 'sell';
+  // going from a delivery note to 貨品 means looking a product up for it
+  const from = VIEWS.find(x => !$('#view-' + x).hidden);
+  if (v === 'products' && from === 'receive' && state.rcv) state.pickFor = 'receive';
+  else if (v !== 'products') state.pickFor = null;
+  syncPick(v === 'products');
   VIEWS.forEach(x => { $('#view-' + x).hidden = x !== v; $('#tab-' + x).setAttribute('aria-selected', String(x === v)); });
   try { history.replaceState(null, '', '#' + v); } catch (e) {}
   if (v === 'sell') $('#scan').focus();
@@ -6211,10 +6258,40 @@ const addRcvLine = () => {
   const q = $$('#rcvLines .rl').at(-1)?.querySelector('[data-qty]');
   if (q) { q.focus(); q.select(); }   // then Enter: quantity → cost → back to 加一行貨品
 };
-$('#rcvAdd').addEventListener('click', addRcvLine);
+$('#rcvAdd').addEventListener('click', () => { const S = state.rcvSug; if (S.idx >= 0 && S.hits[S.idx]) $('#rcvAddCode').value = S.hits[S.idx].code; hideRcvSuggest(); addRcvLine(); });
+$('#rcvFind').addEventListener('click', startPick);
+$('#pickBack').addEventListener('click', () => { state.pickFor = null; showView('receive'); $('#rcvAddCode').focus(); });
+$('#pickOff').addEventListener('click', () => { state.pickFor = null; syncPick(true); });
+// 入貨: the 加一行貨品 box finds products by code or by name; ↑↓ choose, Enter adds
+state.rcvSug = { hits: [], idx: -1 };
+function rcvSuggest() {
+  const q = $('#rcvAddCode').value.trim(), S = state.rcvSug, exact = q ? lookup(normCode(q)) : null;
+  S.hits = q.length >= 2 ? search(q, 8) : [];
+  if (exact) S.hits = [{ code: exact, it: state.catalog.get(exact) }, ...S.hits.filter(h => h.code !== exact)].slice(0, 8);
+  S.idx = S.hits.length ? 0 : -1;
+  drawRcvSuggest();
+}
+function drawRcvSuggest() {
+  const S = state.rcvSug, ul = $('#rcvSuggest');
+  ul.hidden = !S.hits.length; $('#rcvAddCode').setAttribute('aria-expanded', String(!!S.hits.length));
+  ul.innerHTML = S.hits.map((h, i) => `<li role="option" data-code="${esc(h.code)}" aria-selected="${i === S.idx}"><span class="tag">${esc(h.code)}</span><span class="nm">${esc(h.it.name || '')}</span><span class="num muted">存 ${num(h.it.stock) === null ? '–' : qtyFmt(num(h.it.stock))}${h.it.unit ? ' ' + esc(h.it.unit) : ''}</span></li>`).join('');
+  const sel = ul.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+function hideRcvSuggest() { state.rcvSug = { hits: [], idx: -1 }; $('#rcvSuggest').hidden = true; $('#rcvAddCode').setAttribute('aria-expanded', 'false'); }
+$('#rcvAddCode').addEventListener('input', rcvSuggest);
+$('#rcvAddCode').addEventListener('blur', () => setTimeout(hideRcvSuggest, 150));
+$('#rcvSuggest').addEventListener('mousedown', e => {
+  const li = e.target.closest('[data-code]'); if (!li) return;
+  e.preventDefault();
+  $('#rcvAddCode').value = li.dataset.code; hideRcvSuggest(); addRcvLine();
+});
 $('#rcvAddCode').addEventListener('keydown', e => {
+  const S = state.rcvSug;
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && S.hits.length) { e.preventDefault(); S.idx = (S.idx + (e.key === 'ArrowDown' ? 1 : -1) + S.hits.length) % S.hits.length; drawRcvSuggest(); return; }
+  if (e.key === 'Escape' && S.hits.length) { e.preventDefault(); hideRcvSuggest(); return; }
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
   e.preventDefault();
+  if (S.idx >= 0 && S.hits[S.idx]) { $('#rcvAddCode').value = S.hits[S.idx].code; hideRcvSuggest(); addRcvLine(); return; }
   // an empty box means the note is done: Enter goes to 確認入貨 (press Enter again to confirm)
   if (!$('#rcvAddCode').value.trim()) { const b = $('#rcvConfirm'); if (!b.disabled) b.focus(); else renderRcvSum(); return; }
   addRcvLine();
@@ -6302,7 +6379,7 @@ $('#pBody').addEventListener('dblclick', e => {
   const tr = e.target.closest('tr[data-code]');
   if (!tr || e.target.closest('button, input')) return;
   try { window.getSelection().removeAllRanges(); } catch (err) {}
-  sellProduct(tr.dataset.code);
+  useProduct(tr.dataset.code);
 });
 $('#pWrap').addEventListener('scroll', () => { if (!state.pRaf) state.pRaf = requestAnimationFrame(() => { state.pRaf = 0; drawProducts(); }); }, { passive: true });
 $('#pWrap').addEventListener('keydown', productKeys);
