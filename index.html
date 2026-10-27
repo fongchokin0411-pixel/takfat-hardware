@@ -318,6 +318,25 @@ tr.grp td .muted { margin-left: 8px; }
 .pi-recs li { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto auto; gap: 12px; font-variant-numeric: tabular-nums; }
 .pi-recs li .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pi-recs .hint { margin: 0; }
+/* 每月賣出 ("shelf ledger"): twelve months standing on one shelf line; the best month's number in full ink,
+   this month hatched because it isn't over, a month with nothing sold a dash on the shelf, a dashed line at the average */
+.pi-sold { grid-column: 1 / -1; min-width: 0; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 13px; }
+.pi-sold .pi-rh strong { color: var(--text); font-weight: 600; }
+.pi-sold > .hint { margin: 6px 0 0; }
+.ms { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 6px; }
+.ms.has-avg { padding-right: 56px; }
+.ms::after { content: ""; position: absolute; left: 0; right: 0; top: 62px; height: 1px; background: color-mix(in srgb, var(--text) 38%, transparent); }
+.ms li { display: grid; grid-template-rows: 18px 44px 18px; justify-items: center; font-variant-numeric: tabular-nums; }
+.ms .q { font-size: 14px; line-height: 18px; font-weight: 500; color: color-mix(in srgb, var(--text) 80%, transparent); white-space: nowrap; }
+.ms li.peak .q { color: var(--text); font-weight: 700; }
+.ms li.zero .q { color: var(--control); font-weight: 400; }
+.ms .b { align-self: end; width: 100%; max-width: 40px; height: calc(var(--h) * 1%); background: var(--chart-1); border-radius: 3px 3px 0 0; }
+.ms li.cur .b { background: repeating-linear-gradient(135deg, var(--chart-1) 0 1.5px, transparent 1.5px 4.5px); box-shadow: inset 0 0 0 1px var(--chart-1); }
+.ms li.zero .b { width: 12px; height: 2px; border-radius: 1px; background: var(--control); box-shadow: none; }
+.ms .m { align-self: end; font-size: 12px; line-height: 16px; color: var(--muted); }
+.ms li.cur .m { color: var(--text); font-weight: 600; }
+.ms .avg { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed color-mix(in srgb, var(--text) 50%, transparent); pointer-events: none; }
+.ms .avg span { position: absolute; right: 0; top: -9px; padding-left: 6px; background: var(--surface); font-size: 11px; line-height: 16px; font-weight: 500; color: color-mix(in srgb, var(--text) 80%, transparent); white-space: nowrap; }
 .prodlist tbody td { height: 44px; padding-block: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prodlist tbody tr.vpad td { height: auto; padding: 0; border: 0; }
 .prodlist tbody tr[data-code] { cursor: default; }
@@ -2598,7 +2617,7 @@ async function checkout() {
   }
   const receipt = acct ? { at, no, total, items: state.cart.length, acct: acct.id, acctName: acct.name } : { at, no, total, paid, change: round3(paid - due), items: state.cart.length };
   if (ord) { receipt.order = ord.id; receipt.orderNo = ord.no; receipt.deposit = dep; }
-  state.receipts[rid] = receipt;
+  state.receipts[rid] = receipt; state.soldDirty = true;
   state.lastRid = rid;
   if (ord) orderCollected(ord.id, rid, no, at);
   state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; saveCart(); saveHeld();
@@ -2722,7 +2741,7 @@ function closeNeed() { state.pending = null; $('#needForm').hidden = true; hideM
 async function voidLine(id) {
   const l = state.lines.find(x => x.id === id);
   if (!l || l.void) return;
-  l.void = true;
+  l.void = true; if (l.kind === 'sale') state.soldDirty = true;
   const writes = [state.store.patchDay(state.today, { day: state.today, lines: { [id]: { void: true, voidAt: new Date().toISOString() } } })];
   const it = state.catalog.get(l.code);
   if (it && l.kind === 'sale' && l.restock !== false) {
@@ -2757,7 +2776,7 @@ async function voidGroup(key) {
   const r = book[key];
   if (r) book[key] = { ...r, void: true };
   if (r && r.order) orderReopen(r.order);
-  if (isPurchase) { state.pu = null; state.puIdxDirty = true; }
+  if (isPurchase) { state.pu = null; state.puIdxDirty = true; } else state.soldDirty = true;
   renderSell(); renderCart(); renderRcvToday();
   toast(isPurchase ? '已作廢呢張入貨單，存量已減返。' : r && r.ret ? `已作廢退貨（第 ${r.no} 單），存量已減返。` : `已作廢${r ? `第 ${r.no} 單` : '呢張單'}，存量已加返。`);
   try {
@@ -3214,7 +3233,7 @@ function renderProducts() {
   if (!rows.length) empty.innerHTML = '<strong>搵唔到符合嘅貨品</strong>試下其他搜尋字或者篩選。';
   state.pDrawn = null;
   drawProducts(); renderPInfo();
-  if (!$('#view-products').hidden && (!state.puIdx || state.puIdxDirty)) loadPuIndex();
+  if (!$('#view-products').hidden && (!state.puIdx || state.puIdxDirty || state.soldDirty)) loadPuIndex();
 }
 const mdDay = d => d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : '';
 function productRow(code, i) {
@@ -3307,11 +3326,33 @@ async function saveShort(code, raw) {
 }
 
 /* buying records: every stock-in line ever entered, by product (newest first) */
+// the old system's sales history: 12 months per product, counted back from the month it was imported
+async function loadHistSold() {
+  if (state.histSold) return state.histSold;
+  const [hdocs, info] = await Promise.all([state.store.getHist().catch(() => []), state.store.getMeta('histInfo').catch(() => null)]);
+  const map = new Map();
+  for (const h of hdocs) for (const [c, it] of Object.entries(h.items || {})) if (it && Array.isArray(it.q)) map.set(c, it.q);
+  const hd = info && info.asOf ? parseDay(info.asOf) : null;
+  return state.histSold = { map, base: hd ? hd.getFullYear() * 12 + hd.getMonth() : null };
+}
+const SOLD_MONTHS = 12;
 async function loadPuIndex(force) {
-  if (!state.store || state.puIdxBusy || (state.puIdx && !state.puIdxDirty && !force)) return;
-  state.puIdxBusy = true;
-  let docs;
-  try { docs = await state.store.getDays('0000-01-01', '9999-12-31'); } catch (e) { state.puIdxBusy = false; return; }
+  if (!state.store || state.puIdxBusy || (state.puIdx && !state.puIdxDirty && !state.soldDirty && !force)) return;
+  state.puIdxBusy = true; state.soldDirty = false;
+  let docs, hist;
+  try { [docs, hist] = await Promise.all([state.store.getDays('0000-01-01', '9999-12-31'), loadHistSold()]); } catch (e) { state.puIdxBusy = false; return; }
+  // sold per product per month (0 = this month), net of returns: the old history plus this system's sales
+  const now = new Date(), cur = now.getFullYear() * 12 + now.getMonth(), sold = new Map();
+  const addSold = (code, i, q) => { if (i < 0 || i >= SOLD_MONTHS || !q) return; let a = sold.get(code); if (!a) sold.set(code, a = new Array(SOLD_MONTHS).fill(0)); a[i] += q; };
+  const saleLine = l => { if (!l || l.kind !== 'sale' || l.void) return; const dt = new Date(l.at); if (!isNaN(dt)) addSold(l.code, cur - (dt.getFullYear() * 12 + dt.getMonth()), num(l.qty) || 0); };
+  let firstSale = '';
+  for (const d of docs) {
+    if (d.day === state.today) continue;   // today's sales are taken from memory below, so a sale just made counts at once
+    for (const l of Object.values(isObj(d.lines) ? d.lines : {})) { if (l && l.kind === 'sale' && (!firstSale || d.day < firstSale)) firstSale = d.day; saleLine(l); }
+  }
+  for (const l of state.lines) { if (l.kind === 'sale' && (!firstSale || state.today < firstSale)) firstSale = state.today; saleLine(l); }
+  if (hist.base !== null) { const shift = cur - hist.base; for (const [c, q] of hist.map) for (let j = 0; j < q.length; j++) addSold(c, j + shift, num(q[j]) || 0); }
+  state.soldIdx = sold; state.soldHasHist = hist.base !== null && hist.map.size > 0; state.soldFrom = firstSale;
   const by = new Map();
   for (const d of docs) {
     const pus = isObj(d.purchases) ? d.purchases : {};
@@ -3344,7 +3385,30 @@ function renderPInfo() {
       <span class="muted">${it.short ? `簡碼 ${esc(it.short)}` : '未有簡碼'}</span></div>
     <div class="pi-figs">${fig('來價', c === null ? '未有' : money(c), '貨品資料', 'priv')}${fig('平均來價', st.avg === null ? '–' : money(st.avg), st.n ? `${st.n} 次入貨` : '未有入貨紀錄', 'priv')}${fig('最近來價', st.lastCost === null ? '–' : money(st.lastCost), st.lastCostDay ? shortDay(st.lastCostDay) : '', 'priv')}${fig('零售價', p === null ? '未有' : money(p), state.unlocked && c !== null && p ? '毛利率 ' + Math.round((p - c) / p * 100) + '%' : '')}${fig('存量', it.stock === null || it.stock === undefined ? '未點' : qtyFmt(num(it.stock)), esc(it.unit || ''))}</div>
     <div class="pi-recs"><div class="pi-rh"><span>入貨紀錄</span>${st.n ? `<button class="linkbtn" data-precs="${esc(code)}" type="button">全部 ${st.n} 次</button>` : ''}</div>
-      ${!state.puIdx ? '<p class="hint">讀緊入貨紀錄…</p>' : recs ? `<ul>${recs}</ul>` : '<p class="hint">喺呢個系統未有入貨紀錄。</p>'}</div>`;
+      ${!state.puIdx ? '<p class="hint">讀緊入貨紀錄…</p>' : recs ? `<ul>${recs}</ul>` : '<p class="hint">喺呢個系統未有入貨紀錄。</p>'}</div>
+    ${soldHtml(code, it)}`;
+}
+// 每月賣出: the last 12 months on one shelf line, oldest on the left. The average (dashed) counts only finished months
+// the records fully cover: all of them once the old system's history is imported, otherwise the months since the first sale here.
+function soldHtml(code, it) {
+  if (!state.soldIdx) return '<div class="pi-sold"><p class="hint">計緊每月賣出…</p></div>';
+  const q = (state.soldIdx.get(code) || new Array(SOLD_MONTHS).fill(0)).map(round3), now = new Date();
+  const total = round3(q.reduce((t, v) => t + v, 0)), top = Math.max(0, ...q), peak = top > 0 ? q.indexOf(top) : -1;
+  const from = state.soldHasHist ? null : state.soldFrom ? parseDay(state.soldFrom) : now;
+  const full = [];
+  for (let i = 1; i < SOLD_MONTHS; i++) if (!from || new Date(now.getFullYear(), now.getMonth() - i, 1) >= from) full.push(q[i]);
+  const avg = full.length >= 2 && top > 0 ? full.reduce((t, v) => t + v, 0) / full.length : null;
+  const unit = esc(it.unit || '件');
+  const bars = q.map((v, i) => ({ v, i, d: new Date(now.getFullYear(), now.getMonth() - i, 1) })).reverse().map(({ v, i, d }) => {
+    const cls = [i === 0 ? 'cur' : '', v > 0 ? '' : 'zero', i === peak ? 'peak' : ''].filter(Boolean).join(' ');
+    return `<li${cls ? ` class="${cls}"` : ''} title="${d.getFullYear()}年${d.getMonth() + 1}月${i === 0 ? '（未完）' : ''}：賣出 ${qtyFmt(v)} ${unit}">
+      <span class="q">${v > 0 ? qtyFmt(v) : '–'}</span><i class="b" style="--h:${v > 0 ? Math.max(5, Math.round(v / top * 100)) : 0}"></i><span class="m">${d.getMonth() + 1}月</span></li>`;
+  }).join('');
+  const avgTxt = avg === null ? '' : avg >= 10 ? String(Math.round(avg)) : qtyFmt(Math.round(avg * 10) / 10);
+  const line = avg === null ? '' : `<div class="avg" style="top:${(18 + 44 * (1 - avg / top)).toFixed(1)}px"><span>平均 ${avgTxt}</span></div>`;
+  const note = state.soldHasHist ? '' : `<p class="hint">未匯入舊系統銷售紀錄，只計${state.soldFrom ? ` ${shortDay(state.soldFrom)} 開始` : ''}喺呢個系統賣出嘅數。</p>`;
+  return `<div class="pi-sold"><div class="pi-rh"><span>每月賣出（${unit}）</span><span>近 12 個月共 <strong class="num">${qtyFmt(total)}</strong> ${unit}${avg === null ? '' : ` · 平均每月 <strong class="num">${avgTxt}</strong>`}</span></div>
+    <ol class="ms${line ? ' has-avg' : ''}" aria-label="每月賣出">${bars}${line}</ol>${note}</div>`;
 }
 function openProductRecords(code) {
   const it = state.catalog.get(code); if (!it) return;
@@ -4728,7 +4792,7 @@ async function saveHistory() {
     await state.store.patchMeta('histInfo', { asOf, importedAt: new Date().toISOString(), file: sc.file, records: sc.total, from: sc.minD, to: sc.maxD, roles: Object.entries(roles), chunks: ids, products: items.length });
     $('#hInfo').textContent = `完成。已儲存 ${items.length.toLocaleString()} 件貨品嘅銷售紀錄。去「報表 → 貨品分析・補貨」睇結果。`;
     $('#hTypes').hidden = true;
-    state.analysis = null;
+    state.analysis = null; state.histSold = null; state.soldDirty = true;
     toast('舊系統銷售紀錄已儲存。');
   } catch (e) { writeFailed(e); $('#hInfo').textContent = '儲存中途停咗，請再按一次「儲存銷售紀錄」。'; }
   finally { btn.disabled = false; }
@@ -5308,7 +5372,7 @@ async function doReturn() {
   if (F && F.acct) { receipt.acct = F.acct; receipt.acctName = F.acctName; }
   if (note) receipt.note = note;
   if (!restock) receipt.restock = false;
-  state.receipts[rid] = receipt;
+  state.receipts[rid] = receipt; state.soldDirty = true;
   for (const c of R.items) if (c.src) R.returned.set(c.src, round3((R.returned.get(c.src) || 0) + num(c.qty)));
   R.items = []; R.from = null;
   $('#retNote').value = ''; $('#retRestock').checked = true;
