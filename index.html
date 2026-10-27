@@ -898,7 +898,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <button type="submit" class="btn" id="sellBtn">加入</button>
           </div>
           <p class="scan-pick" id="scanPick" hidden></p>
-          <p class="hint" id="scanHint">打貨號按 <kbd>Enter</kbd>，打數量按 <kbd>Enter</kbd>，打售價按 <kbd>Enter</kbd> 就加入。唔使改就照按 <kbd>Enter</kbd>（數量 1、原價）。輸入名稱可以搜尋，<kbd>↑</kbd><kbd>↓</kbd> 揀附近貨號。加完喺空白貨號格按 <kbd>Enter</kbd> 就跳去「客人付款」。</p>
+          <p class="hint" id="scanHint">打貨號按 <kbd>Enter</kbd>，打數量按 <kbd>Enter</kbd>，打售價按 <kbd>Enter</kbd> 就加入。唔使改就照按 <kbd>Enter</kbd>（數量 1、原價）。輸入名稱可以搜尋，<kbd>↑</kbd><kbd>↓</kbd> 揀附近貨號。加完喺空白貨號格按 <kbd>Enter</kbd> 就跳去「客人付款」。喺收銀頁任何位置按 <kbd>Esc</kbd> 就返嚟打貨號。</p>
           <ul id="suggest" class="suggest" role="listbox" hidden></ul>
         </form>
 
@@ -6246,6 +6246,15 @@ $('#needForm').addEventListener('submit', e => { e.preventDefault(); submitInfo(
 $('#needSkip').addEventListener('click', () => submitInfo(true));
 $('#needCancel').addEventListener('click', closeNeed);
 $('#needForm').addEventListener('keydown', e => { if (e.key === 'Escape') closeNeed(); });
+// Esc anywhere on 收銀 (付款, an order line, a button) goes back to typing the next item number;
+// boxes that use Esc themselves (數量, 售價, a window or question) handle it first
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || e.defaultPrevented || $('#view-sell').hidden || $('#app').inert) return;
+  if (!$('#modal').hidden || !$('#confirm').hidden || e.target.closest('#modal, #confirm, #needForm')) return;
+  const s = $('#scan');
+  if (document.activeElement === s) return;   // already there: the box's own Esc clears it
+  s.focus(); s.select();
+});
 $('#undoBtn').addEventListener('click', () => {
   const l = state.lines.find(x => x.kind === 'sale' && !x.void); if (!l) return;
   if (l.rid) askVoidGroup(l.rid); else askVoidLine(l.id);
