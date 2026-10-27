@@ -27,6 +27,7 @@
   --raised: #f6f6f4;
   --well: #f8f8f7;
   --active: #e7e7e3;
+  --stripe: #ecece8;
   --border: #e3e3df;
   --rule: #efefeb;
   --control: #d2d2cd;
@@ -63,7 +64,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #0d0d0c; --surface: #171716; --raised: #1d1d1c; --well: #1d1d1c; --active: #2a2a28; --border: #262624; --rule: #20201f; --control: #3e3e3b;
+    --ground: #0d0d0c; --surface: #171716; --raised: #1d1d1c; --well: #1d1d1c; --stripe: #222221; --active: #2a2a28; --border: #262624; --rule: #20201f; --control: #3e3e3b;
     --text: #f3f3f1; --muted: #b4b4b0; --faint: #9a9a96;
     --primary: #f3f3f1; --primary-ink: #0a0a0a; --secondary: #2a2a28; --secondary-hover: #343432;
     --hue: #6ea6ff; --hue-tint: #1a2638;
@@ -78,7 +79,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --ground: #0d0d0c; --surface: #171716; --raised: #1d1d1c; --well: #1d1d1c; --active: #2a2a28; --border: #262624; --rule: #20201f; --control: #3e3e3b;
+  --ground: #0d0d0c; --surface: #171716; --raised: #1d1d1c; --well: #1d1d1c; --stripe: #222221; --active: #2a2a28; --border: #262624; --rule: #20201f; --control: #3e3e3b;
   --text: #f3f3f1; --muted: #b4b4b0; --faint: #9a9a96;
   --primary: #f3f3f1; --primary-ink: #0a0a0a; --secondary: #2a2a28; --secondary-hover: #343432;
   --hue: #6ea6ff; --hue-tint: #1a2638;
@@ -286,8 +287,8 @@ tr.grp td .muted { margin-left: 8px; }
 /* 貨品: every product in code order, drawn a screenful at a time; one fixed row height so a code's place is known */
 .prodlist { overflow: auto; overflow-anchor: none; min-height: 320px; outline: none; }
 .prodlist table { table-layout: fixed; min-width: 900px; }
-.prodlist .c-code { width: 112px; } .prodlist .c-short { width: 96px; } .prodlist .c-type { width: 104px; }
-.prodlist .c-money { width: 86px; } .prodlist .c-recent { width: 124px; } .prodlist .c-pct { width: 66px; } .prodlist .c-stock { width: 76px; } .prodlist .c-act { width: 112px; }
+.prodlist .c-code { width: 112px; } .prodlist .c-short { width: 84px; } .prodlist .c-type { width: 96px; }
+.prodlist .c-money { width: 104px; } .prodlist .c-recent { width: 142px; } .prodlist .c-pct { width: 66px; } .prodlist .c-stock { width: 76px; } .prodlist .c-act { width: 100px; }   /* money fits $43,000.00 */
 .prodlist tbody td.short { padding-inline: 6px; }
 .short-in { width: 100%; height: 30px; padding: 0 8px; font: 500 13px/1 var(--mono); text-transform: uppercase; letter-spacing: .02em; }
 .short-in::placeholder { text-transform: none; }
@@ -312,8 +313,9 @@ tr.grp td .muted { margin-left: 8px; }
 .prodlist tbody td { height: 44px; padding-block: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prodlist tbody tr.vpad td { height: auto; padding: 0; border: 0; }
 .prodlist tbody tr[data-code] { cursor: default; }
-.prodlist tbody tr[data-code]:hover td { background: var(--raised); }
-.prodlist tbody tr.sel td { background: var(--active); }
+.prodlist tbody tr.alt td { background: var(--stripe); }   /* every second product, so a row reads straight across */
+.prodlist tbody tr[data-code]:hover td { background: var(--secondary-hover); }   /* darker than both stripe colours */
+.prodlist tbody tr.sel td { background: var(--hue-tint); }   /* blue, so it never reads as a grey stripe */
 .prodlist:focus-visible tbody tr.sel { outline: 2px solid var(--hue); outline-offset: -2px; }
 .p-hint { flex: 1 1 280px; margin: 0; text-align: right; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -1304,7 +1306,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       <div class="card pinfo" id="pInfo" aria-live="polite"></div>
       <div class="table-wrap prodlist" id="pWrap" tabindex="0" aria-label="貨品列表，按 Enter 將揀選嘅貨品加入收銀單">
         <table>
-          <thead><tr><th class="c-code">貨號</th><th>貨品名稱</th><th class="c-short" title="收銀打簡碼就會加入呢件貨品">簡碼</th><th class="c-type">類別</th><th class="r priv c-money">來價</th><th class="r priv c-recent">最近來價</th><th class="r c-money">零售價</th><th class="r priv c-pct">毛利率</th><th class="r c-stock">存量</th><th class="c-act"><span class="sr-only">動作</span></th></tr></thead>
+          <thead><tr><th class="c-code">貨號</th><th>貨品名稱</th><th class="r c-money">零售價</th><th class="r c-stock">存量</th><th class="c-short" title="收銀打簡碼就會加入呢件貨品">簡碼</th><th class="c-type">類別</th><th class="r priv c-money">來價</th><th class="r priv c-recent">最近來價</th><th class="r priv c-pct">毛利率</th><th class="c-act"><span class="sr-only">動作</span></th></tr></thead>
           <tbody id="pBody"></tbody>
         </table>
       </div>
@@ -3188,15 +3190,17 @@ function renderProducts() {
   if (!$('#view-products').hidden && (!state.puIdx || state.puIdxDirty)) loadPuIndex();
 }
 const mdDay = d => d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : '';
-function productRow(code) {
+function productRow(code, i) {
   const it = state.catalog.get(code), c = num(it.cost), p = num(it.price), sel = code === state.pSel;
+  const cls = [i % 2 ? 'alt' : '', sel ? 'sel' : ''].filter(Boolean).join(' ');
   const margin = c !== null && p ? Math.round((p - c) / p * 100) + '%' : '–';
   const st = puStats(code);
   const recent = !state.puIdx ? '<span class="muted">…</span>' : st.lastCost === null ? '<span class="muted">–</span>' : `${money(st.lastCost)} <span class="muted">${mdDay(st.lastCostDay)}</span>`;
   const short = state.canWrite ? `<input class="short-in" data-short="${esc(code)}" value="${esc(it.short || '')}" maxlength="12" autocomplete="off" spellcheck="false" aria-label="${esc(code)} 嘅簡碼">` : esc(it.short || '');
-  return `<tr data-code="${esc(code)}" aria-selected="${sel}"${sel ? ' class="sel"' : ''}><td><span class="tag">${esc(code)}</span></td><td class="nm" title="${esc(it.name)}${it.brand ? ' · ' + esc(it.brand) : ''}">${esc(it.name)}${it.unit ? ` <span class="muted">/ ${esc(it.unit)}</span>` : ''}</td><td class="short">${short}</td><td>${esc(it.type)}</td>
-    <td class="r priv">${c === null ? '<span class="chip warn">未有</span>' : money(c)}</td><td class="r priv">${recent}</td><td class="r">${p === null ? '<span class="chip warn">未有</span>' : money(p)}</td>
-    <td class="r priv ${c !== null && p !== null && p < c ? 'loss' : ''}">${margin}</td><td class="r">${stockCell(it.stock)}</td>
+  return `<tr data-code="${esc(code)}" aria-selected="${sel}"${cls ? ` class="${cls}"` : ''}><td><span class="tag">${esc(code)}</span></td><td class="nm" title="${esc(it.name)}${it.brand ? ' · ' + esc(it.brand) : ''}">${esc(it.name)}${it.unit ? ` <span class="muted">/ ${esc(it.unit)}</span>` : ''}</td>
+    <td class="r">${p === null ? '<span class="chip warn">未有</span>' : money(p)}</td><td class="r">${stockCell(it.stock)}</td><td class="short">${short}</td><td>${esc(it.type)}</td>
+    <td class="r priv">${c === null ? '<span class="chip warn">未有</span>' : money(c)}</td><td class="r priv">${recent}</td>
+    <td class="r priv ${c !== null && p !== null && p < c ? 'loss' : ''}">${margin}</td>
     <td class="act">${state.canWrite ? `<button class="linkbtn" data-recv="${esc(code)}" type="button">入貨</button><button class="linkbtn" data-prod="${esc(code)}" type="button">修改</button>` : ''}</td></tr>`;
 }
 // the list fills the window below the toolbar and scrolls inside itself
@@ -3227,7 +3231,7 @@ function drawProducts() {
   state.pDrawn = { first, last, ver: state.pVer, cols };
   // keep the cursor in a shortcut box (and what is typed in it) when the rows are drawn again
   const act = document.activeElement, keep = act && act.matches && act.matches('#pBody .short-in') ? { code: act.dataset.short, value: act.value, a: act.selectionStart, b: act.selectionEnd } : null;
-  $('#pBody').innerHTML = pad(first * H) + rows.slice(first, last).map(productRow).join('') + pad((rows.length - last) * H);
+  $('#pBody').innerHTML = pad(first * H) + rows.slice(first, last).map((code, k) => productRow(code, first + k)).join('') + pad((rows.length - last) * H);
   if (keep) { const inp = [...$$('#pBody .short-in')].find(x => x.dataset.short === keep.code); if (inp) { inp.value = keep.value; inp.focus({ preventScroll: true }); try { inp.setSelectionRange(keep.a, keep.b); } catch (e) {} } }
   // measure the real row pitch once; if it differs from the estimate, redraw with it
   const trs = $$('#pBody tr[data-code]');
