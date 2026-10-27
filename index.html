@@ -455,28 +455,31 @@ tr.grp td .muted { margin-left: 8px; }
 .slot.busy { background: var(--surface); border-color: var(--control); color: var(--text); }
 .slot[aria-current="true"] { background: var(--surface); border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); color: var(--text); cursor: default; }
 .slots-k { margin: auto 0 0; padding: 0 2px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.slots-k + .slots-k { margin-top: 4px; }
 .cart-empty { display: grid; gap: 4px; padding: 22px var(--card-pad) 24px; color: var(--muted); }
 .cart-empty strong { color: var(--text); font-weight: 500; }
 .cart-list { list-style: none; margin: 0; padding: 0; }
-.ci { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 104px 32px; gap: 12px; align-items: center; min-height: 64px; padding: 10px var(--card-pad); border-top: 1px solid var(--rule); }
+.ci { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 124px 36px; gap: 14px; align-items: center; min-height: 80px; padding: 12px var(--card-pad); border-top: 1px solid var(--rule); }
 .ci:first-child { border-top: 0; }
 .ci.flash { animation: flash .8s ease-out; }
 @keyframes flash { from { background: var(--hue-tint); } to { background: transparent; } }
 .ci-name { min-width: 0; }
-.ci-name .nm { font-weight: 500; }
-.ci-name .hint { margin-top: 2px; }
+.ci-name .tag { font-size: 15px; line-height: 26px; vertical-align: 2px; }
+.ci-name .nm { font-size: 20px; line-height: 28px; font-weight: 600; }
+.ci-name .hint { margin-top: 4px; font-size: 14px; line-height: 20px; }
 .ci-qty { display: flex; align-items: center; border: 1px solid var(--control); border-radius: var(--radius-control); overflow: hidden; }
-.ci-qty button { display: inline-grid; place-items: center; border: 0; background: var(--surface); width: 32px; height: 34px; cursor: pointer; color: var(--text); transition: background-color .15s ease; }
+.ci-qty button { display: inline-grid; place-items: center; border: 0; background: var(--surface); width: 40px; height: 44px; cursor: pointer; color: var(--text); transition: background-color .15s ease; }
 .ci-qty button:hover { background: var(--active); }
-.ci-qty input { width: 48px; height: 34px; text-align: center; border: 0; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); border-radius: 0; padding: 0 2px; outline: none; font-variant-numeric: tabular-nums; }
-.ci-price { display: flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; }
-.ci-price input { width: 84px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
-.ci-amt { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
-.ci-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--radius-control); background: none; color: var(--muted); cursor: pointer; }
+.ci-qty button .i { width: 18px; height: 18px; }
+.ci-qty input { width: 64px; height: 44px; font-size: 20px; font-weight: 600; text-align: center; border: 0; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); border-radius: 0; padding: 0 2px; outline: none; font-variant-numeric: tabular-nums; }
+.ci-price { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 16px; white-space: nowrap; }
+.ci-price input { width: 100px; height: 44px; font-size: 20px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+.ci-amt { text-align: right; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ci-x { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: var(--radius-control); background: none; color: var(--muted); cursor: pointer; }
 .ci-x:hover { background: var(--pill-negative-bg); color: var(--negative); }
 /* beside the customer column the order rows put the name on its own line; a narrow order puts the customers in a row */
 @container cart (max-width: 760px) {
-  .ci { grid-template-columns: auto auto minmax(0, 1fr) 32px; gap: 8px 12px; }
+  .ci { grid-template-columns: auto auto minmax(0, 1fr) 36px; gap: 8px 12px; }
   .ci-name { grid-column: 1 / -1; }
 }
 @container cart (max-width: 560px) {
@@ -488,7 +491,7 @@ tr.grp td .muted { margin-left: 8px; }
   .slot .num { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .slots-k { display: none; }
   .ci { padding: 12px 16px; }
-  .ci-price input { width: 64px; }
+  .ci-price input { width: 80px; }
 }
 #paid::-webkit-inner-spin-button, #paid::-webkit-outer-spin-button, .ci input::-webkit-inner-spin-button, .ci input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 #paid, .ci input { -moz-appearance: textfield; appearance: textfield; }
@@ -496,7 +499,8 @@ tr.grp td .muted { margin-left: 8px; }
 .till { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--card-pad); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .till .k { color: var(--muted); }
 .till-total { display: grid; gap: 2px; padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
-.till-total .v { font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.till-total .k { font-size: 16px; font-weight: 500; }
+.till-total .v { font-size: 64px; line-height: 68px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }   /* fitBig() shrinks a long amount to its box */
 .pay-in { display: grid; gap: 8px; }
 .paid-row { display: flex; align-items: center; gap: 8px; }
 .paid-row .cur { font-size: 22px; font-weight: 500; color: var(--muted); }
@@ -749,13 +753,15 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 40;
   background: var(--primary); color: var(--primary-ink); padding: 10px 16px; border-radius: var(--radius-card); font-weight: 500; max-width: calc(100% - 32px); box-shadow: var(--float-shadow); } /* taste-skill-ignore: a toast */
 .toast.bad { background: var(--negative); color: #fff; }
+.toast-act { margin-left: 14px; padding: 2px 12px; border: 1px solid color-mix(in srgb, currentColor 45%, transparent); border-radius: 4px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.toast-act:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; } }
 
 /* ---------- narrower screens ---------- */
 @media (max-width: 1240px) {
   .sell-grid { grid-template-columns: minmax(0, 1fr) 320px; }
-  .till-total .v { font-size: 36px; line-height: 40px; }
+  .till-total .v { font-size: 56px; line-height: 60px; }
   .cols { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 900px) {
@@ -794,14 +800,14 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
   .rl-c { grid-column: 3; }
 }
 @media (max-width: 640px) {
-  .ci { grid-template-columns: auto auto minmax(0, 1fr) 32px; gap: 8px; padding: 12px 16px; }
+  .ci { grid-template-columns: auto auto minmax(0, 1fr) 36px; gap: 8px; padding: 12px 16px; }
   .ci-name { grid-column: 1 / -1; }
-  .ci-price input { width: 64px; }
+  .ci-price input { width: 80px; }
   .card, .till, .scan, .last { padding-left: 16px; padding-right: 16px; }
   .cart-head, .cart-empty { padding-left: 16px; padding-right: 16px; }
   h1, .vtitle { font-size: 22px; }
   .kpi .v, .kpi.lead .v { font-size: 24px; line-height: 30px; }
-  .till-total .v { font-size: 34px; line-height: 38px; }
+  .till-total .v { font-size: 48px; line-height: 52px; }
   .toolbar input[type="search"] { max-width: none; }
   .p-hint { text-align: left; }
   .pinfo { grid-template-columns: minmax(0, 1fr); }
@@ -919,6 +925,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <div class="slots" role="group" aria-label="客人">
               <div class="slot-list" id="slots"></div>
               <p class="slots-k"><kbd>F5</kbd> 下一位</p>
+              <p class="slots-k"><kbd>F1</kbd> 清除</p>
             </div>
             <div class="cart-items">
               <div id="cartEmpty" class="cart-empty"><strong>呢張單未有貨品</strong>輸入貨號或者掃描條碼，貨品就會加入。客人買幾多件都可以逐件加入，最後一次過收錢。</div>
@@ -2521,6 +2528,18 @@ function switchCustomer(no) {
   saveCart(); saveHeld(); renderCart();
 }
 const nextCustomer = () => switchCustomer(state.saleNo % SLOTS + 1);
+// F1: empty this customer's order at once, without asking; the toast's 復原 puts it back
+function clearSale() {
+  resetPick(); hideSuggest(); $('#scan').value = '';
+  if (!state.cart.length) { $('#scan').focus(); toast(`客 ${state.saleNo} 嘅單已經係空。`); return; }
+  const was = { no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder };
+  state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; saveCart(); renderCart(); $('#scan').focus();
+  toast(`已清除客 ${was.no} 嘅 ${was.items.length} 款貨品。`, false, { label: '復原', fn: () => {
+    if (state.saleNo !== was.no || state.cart.length) { toast(`客 ${was.no} 已經有新貨品，復原唔到。`, true); return; }
+    state.cart = was.items; $('#paid').value = was.paid; state.cartAcct = was.acct; state.cartOrder = was.order;
+    saveCart(); renderCart(); $('#scan').focus(); toast(`已復原客 ${was.no} 張單。`);
+  } });
+}
 function renderSlots() {
   $('#cartCust').textContent = `客 ${state.saleNo}`;
   const top = Math.max(SLOTS, state.saleNo, ...state.held.map(h => h.no));
@@ -2632,7 +2651,7 @@ function cashParts(amount) {
 const denLabel = v => v >= 100 ? '$' + (v / 100).toLocaleString('en-HK') : v + '¢';
 function renderPay() {
   const ord = state.cartOrder, total = ord ? cartDue() : cartTotal();
-  $('#cartTotal').textContent = money(total);
+  $('#cartTotal').textContent = money(total); fitBig($('#cartTotal'));
   $('#totalK').textContent = ord ? (total < 0 ? '要退返客人' : '尚欠（已扣訂金）') : '合計';
   $('#ordOn').hidden = !ord;
   if (ord) {
@@ -5072,7 +5091,19 @@ function openModal(title, html, onSubmit, opts = {}) {
 }
 function closeModal() { $('#modal').hidden = true; state.modal = null; if (!$('#view-sell').hidden) $('#scan').focus(); }
 let toastTimer;
-function toast(t, bad) { const el = $('#toast'); el.textContent = t; el.className = 'toast' + (bad ? ' bad' : ''); el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, bad ? 6000 : 2600); }
+// act: { label, fn } adds one button (e.g. 復原) and keeps the toast up a little longer
+function toast(t, bad, act) {
+  const el = $('#toast'); el.textContent = t; el.className = 'toast' + (bad ? ' bad' : ''); el.hidden = false;
+  if (act) { const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-act'; b.textContent = act.label; b.addEventListener('click', () => { el.hidden = true; act.fn(); }); el.append(b); }
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, act ? 8000 : bad ? 6000 : 2600);
+}
+// the big totals keep their size and shrink only when an amount is too long for the box
+function fitBig(el) {
+  el.style.fontSize = '';
+  const w = el.clientWidth, sw = el.scrollWidth;
+  if (w && sw > w) el.style.fontSize = Math.max(28, Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / sw)) + 'px';
+}
+if (window.ResizeObserver) { const ro = new ResizeObserver(es => es.forEach(e => fitBig(e.target))); $$('.till-total .v').forEach(v => ro.observe(v)); }
 function setStatus(cls, text) { const s = $('#status'); s.className = 'status ' + cls; s.textContent = text; }
 
 /* ---------- views ---------- */
@@ -5234,7 +5265,7 @@ function renderRetSlip() {
 function retTotals() {
   const R = state.ret, total = R.items.reduce((t, c) => t + (num(c.qty) || 0) * (num(c.price) || 0), 0);
   const acct = R.from && R.from.acct;
-  $('#retTotal').textContent = money(total);
+  $('#retTotal').textContent = money(total); fitBig($('#retTotal'));
   $('#retTotalK').textContent = acct ? `扣返 ${R.from.acctName || '客戶'} 月結數` : '退返客人';
   const b = $('#retDo');
   b.disabled = !R.items.length || !state.canWrite;
@@ -5390,7 +5421,7 @@ function renderAcctCard(entries, per) {
   $('#acInfo').textContent = [c.phone ? '電話 ' + c.phone : '', c.note || ''].filter(Boolean).join(' · ') || '未有電話';
   const bal = (per.get(c.id) || { bal: 0 }).bal;
   $('#acBalK').textContent = ready && bal < -0.004 ? '客戶有餘額（下次扣）' : '未收';
-  $('#acBal').textContent = ready ? money(Math.abs(bal)) : '…';
+  $('#acBal').textContent = ready ? money(Math.abs(bal)) : '…'; fitBig($('#acBal'));
   if (!ready) { $('#acLog').innerHTML = '<li class="edge"><span class="what">計緊數…</span></li>'; return; }
   const st = acctStatement(c.id, A.month, entries), ml = monthLabel(A.month);
   const what = e => e.kind === 'pay' ? `收款${e.note ? `（${esc(e.note)}）` : ''}` : `${e.kind === 'ret' ? '退貨 · ' : ''}第 ${esc(e.no ?? '–')} 單`;
@@ -5987,6 +6018,12 @@ document.addEventListener('keydown', e => {
     if (!$('#modal').hidden) closeModal();
     if ($('#view-sell').hidden) showView('sell');
     nextCustomer();
+    return;
+  }
+  if (e.key === 'F1' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    e.preventDefault();   // F1 would open the browser's help; at the till it empties this customer's order
+    if ($('#app').inert || !$('#modal').hidden || !$('#confirm').hidden || $('#view-sell').hidden) return;
+    clearSale();
     return;
   }
   const v = FKEYS[e.key];
