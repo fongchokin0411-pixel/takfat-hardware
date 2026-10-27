@@ -556,6 +556,48 @@ tr.grp td .muted { margin-left: 8px; }
 .notices { display: grid; gap: 8px; margin-bottom: var(--gap); }
 .notices:not(:has(> :not([hidden]))) { display: none; }
 .chart { position: relative; width: 100%; min-height: 180px; }
+/* 今日銷售: each sale a slip (number, time, how it was paid, the total large on the right); undo actions quiet until pointed at */
+.slips { display: grid; gap: var(--gap); }
+.slip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
+.slip-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 6px 20px; align-items: center; padding: 14px var(--card-pad); border-bottom: 1px solid var(--rule); }
+.slip-no { font-size: 20px; font-weight: 700; white-space: nowrap; }
+.slip-no small { margin-left: 10px; font-size: 14px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slip-meta { min-width: 0; font-size: 14px; color: var(--muted); }
+.slip-meta strong { color: var(--text); font-weight: 600; }
+.slip-sum { text-align: right; white-space: nowrap; }
+.slip-sum .v { display: block; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.slip-sum .p { font-size: 13px; color: var(--muted); }
+.slip-act { display: flex; gap: 6px; }
+.btn.quiet { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn.quiet:hover { color: var(--negative); border-color: var(--negative); background: var(--pill-negative-bg); }
+.btn.quiet.plain:hover { color: var(--text); border-color: var(--control); background: var(--raised); }
+.slip.acct .slip-top { background: var(--pill-info-bg); }
+.slip.ret .slip-top { background: var(--pill-negative-bg); }
+.slip.in .slip-top { background: var(--well); }
+.slip.void .slip-top > :not(.slip-act), .slip.void .slip-lines { opacity: .5; }
+.slip.void .slip-sum .v { text-decoration: line-through; }
+.slip-lines { list-style: none; margin: 0; padding: 6px 0; }
+.slip-lines li { display: grid; grid-template-columns: 96px minmax(0, 1fr) 120px 100px 96px 80px 56px; gap: 12px; align-items: center; padding: 7px var(--card-pad); font-size: 16px; font-variant-numeric: tabular-nums; }
+.slip-lines .nm { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slip-lines .r { text-align: right; white-space: nowrap; }
+.slip-lines .m { font-size: 14px; color: var(--muted); }
+.slip-lines .linkbtn { font-size: 14px; color: var(--muted); }
+.slip-lines .linkbtn:hover { color: var(--text); }
+.slip-lines li.void { color: var(--faint); }
+.slip-lines li.void .nm, .slip-lines li.void b { text-decoration: line-through; }
+.locked .slip-lines li { grid-template-columns: 96px minmax(0, 1fr) 120px 100px 80px 56px; }
+@container slip (max-width: 720px) {
+  .slip-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .slip-meta { grid-column: 1 / -1; grid-row: 2; }
+  .slip-act { grid-column: 1 / -1; justify-content: flex-end; }
+  .slip-lines li, .locked .slip-lines li { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .slip-lines li > :nth-child(3), .slip-lines li > :nth-child(5), .slip-lines li > :nth-child(6) { display: none; }
+}
+.slip { container: slip / inline-size; }
+.hours { container: hours / inline-size; }
+.hours .ms li { min-width: 0; }
+/* a narrow screen keeps the hour only, and the figures of the busiest hour and this hour */
+@container hours (max-width: 640px) { .hours .mm { display: none; } .hours .ms li:not(.peak):not(.cur) .q { visibility: hidden; } }
 .lowbox { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-card); background: var(--pill-warning-bg); border: 1px solid var(--pill-warning-line); }
 .lowbox h3 { color: var(--pill-warning-ink); }
 .low { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; }
@@ -581,30 +623,29 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--primary); color: var(--primary-ink); cursor: pointer; display: grid; place-items: center; padding: 0; }
 .thumb button .i { width: 12px; height: 12px; stroke-width: 2.2; }
-.rlines { list-style: none; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
-.rlines:empty { display: none; }
-.rl { display: grid; grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1.5fr) 104px 116px; gap: 14px; align-items: start; padding: 14px 16px; border-top: 1px solid var(--rule); background: var(--surface); }
 .rl:first-child { border-top: 0; }
-.rl.unmatched { background: var(--pill-warning-bg); }
-.rl.off > :not(.rl-inc) { opacity: .45; }
-.rl-inc { margin-top: 2px; }
-.rl-text { font-weight: 500; overflow-wrap: anywhere; }
-.rl-match { display: grid; gap: 6px; min-width: 0; }
-.rl-match select { width: 100%; }
-.rl .field { gap: 6px; font-size: var(--fs-small); font-weight: 400; color: var(--muted); }
-.rl .field input { width: 100%; }
-.rcv-sum { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 14px; border-top: 1px solid var(--rule); }
-.rcv-sum .k { color: var(--muted); }
-.rcv-sum .v { font-size: var(--fs-kpi); line-height: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 入貨: like the till: the note's details, an add bar, the lines; the total and 確認入貨 on the right */
+.slip-head { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 150px) minmax(0, 140px) auto; gap: 10px; align-items: end; padding: 16px var(--card-pad); }
+.slip-head .photo-btn { height: var(--control-height); white-space: nowrap; }
+.rcv-photo { display: grid; gap: 12px; }
+.rcv-find { position: relative; }
+.rcv-find > label { font-weight: 500; }
+.rcv-find .suggest { left: 0; right: 0; top: 100%; margin-top: 4px; }
+.rcv-status:empty { display: none; }
+.rcv-unit { margin: 0; padding: 10px var(--card-pad) 0; }
+.rci .src { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.rci .rl-match { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.rci .rl-match select { flex: 1 1 260px; min-width: 0; max-width: 100%; }
+.rci .rl-match input { flex: 0 1 160px; min-width: 0; }
+.rci.unmatched { background: var(--pill-warning-bg); }
+.rc-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.rcv-cancel { justify-self: center; }
+@media (max-width: 1100px) { .slip-head { grid-template-columns: repeat(2, minmax(0, 1fr)); } .slip-head .photo-btn { grid-column: 1 / -1; justify-self: start; } }
 .plist { list-style: none; padding: 0; display: grid; }
 .plist li { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; min-height: 44px; padding: 11px 0; border-top: 1px solid var(--rule); }
 .plist li:first-child { border-top: 0; }
 .plist li.void { color: var(--faint); text-decoration: line-through; }
 .plist a { color: var(--text); }
-.rcv-alt { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
-.tips { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
-.notes2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; }
-.notes2 .stack { align-content: start; gap: 6px; }
 @media (max-width: 760px) { .notes2 { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- 入貨記錄 ---------- */
@@ -631,10 +672,6 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .set-label p { color: var(--muted); max-width: 46ch; }
 .set-label p strong { color: var(--text); font-weight: 500; }
 /* 入貨: find a product by name while entering a delivery note */
-.rcv-add { align-items: end; }
-.rcv-find { position: relative; flex: 1 1 320px; max-width: 560px; min-width: 0; }
-.rcv-find .field { width: 100%; }
-.rcv-find .suggest { left: 0; right: 0; top: 100%; margin-top: 4px; }
 .pick-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: var(--gap); }
 /* 總覽 */
 .bs-periods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
@@ -804,6 +841,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
   /* phone: the till follows the order it totals, before the quick-add list */
   .sell-main, .sell-side { display: contents; }
   .sell-main > * { order: 1; } .sell-side > .till { order: 2; } #lastCard { order: 3; } .sell-main > .recent { order: 4; }
+  .rcv-grid .sell-side > .rcv-notes { order: 3; }
   .keys { display: none; }
   .set-row { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 24px; }
   .kpis { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1200,78 +1238,71 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       </div>
       <div class="card">
         <div class="card-head"><h2 id="tChartTitle">今日每小時交易</h2><span class="hint" id="tChartNote"></span></div>
-        <div class="chart" id="tChart"></div>
+        <div id="tChart" class="hours"></div>
       </div>
-      <div class="table-wrap" id="tapeWrap" hidden>
-        <table>
-          <thead><tr><th>時間</th><th>貨號</th><th>貨品</th><th class="r">數量</th><th class="r">單價</th><th class="r">金額</th><th class="r priv">利潤</th><th class="r">存量</th><th></th></tr></thead>
-          <tbody id="tape"></tbody>
-        </table>
-      </div>
+      <div class="slips" id="tape" hidden></div>
       <div id="tapeEmpty" class="empty"><strong>今日未有交易</strong>喺「收銀」加入貨品再按「完成交易」，就會喺呢度出現。</div>
     </div>
   </section>
 
-  <!-- 入貨 -->
+  <!-- 入貨: laid out like the till. Type item, quantity and cost; the photo reader opens from one button -->
   <section id="view-receive" class="view" role="tabpanel" aria-labelledby="tab-receive" hidden>
     <div class="title-row">
-      <div><h2 class="vtitle">入貨</h2><p class="sub">影低供應商嘅送貨單或者發票，系統讀出每行貨品同數量，配對返你嘅貨號。核對好按「確認入貨」，存量就會加上去。</p></div>
+      <div><h2 class="vtitle">入貨</h2><p class="sub">好似收銀咁：打貨號、數量、來價，逐件加入送貨單。核對好按「確認入貨」，存量即刻加上去。</p></div>
       <div class="actions"><button class="btn" type="button" data-goto="purchases">入貨記錄</button></div>
     </div>
-    <div class="stack">
-      <div class="card">
-        <div class="card-head"><h2>影送貨單</h2><span id="rcvEngine" class="chip" hidden></span></div>
-        <div class="photo-row" id="rcvPhotoRow">
-          <label class="btn primary photo-main" for="rcvFile"><svg class="i"><use href="#i-camera"/></svg>影相 / 揀相</label>
-          <input id="rcvFile" class="vh" type="file" accept="image/*" multiple>
-          <button id="rcvRead" class="btn" type="button" disabled>讀取送貨單</button>
-          <button id="rcvStop" class="btn ghost" type="button" hidden>停止</button>
-        </div>
-        <label class="dropzone" id="rcvDrop" for="rcvFile"><strong>將送貨單相片拖入呢度</strong><span>或者撳「影相 / 揀相」。幾頁就揀幾張，JPG、PNG 都得。</span><span class="thumbs" id="rcvThumbs"></span></label>
-        <p class="hint" id="rcvStatus"></p>
-        <ol class="tips">
-          <li>成張單入鏡，對正、影得光猛啲；幾頁就影幾張。</li>
-          <li>讀完逐行核對貨品、數量同每件來價，唔啱就改。</li>
-          <li>按「確認入貨」，存量即刻加上去，入貨記錄都會記低。</li>
-        </ol>
-        <p class="rcv-alt"><button id="rcvManual" class="linkbtn" type="button">唔影相，自己逐件輸入</button></p>
-      </div>
-
-      <div class="card" id="rcvReview" hidden>
-        <h2>核對送貨單</h2>
-        <div class="fields">
-          <label class="field"><span>供應商</span><input id="rcvSupplier" type="text" list="dlSuppliers"></label>
-          <label class="field"><span>單號</span><input id="rcvRef" type="text"></label>
+    <div class="sell-grid rcv-grid">
+      <div class="sell-main">
+        <div class="card slip-head" id="rcvReview">
+          <label class="field"><span>供應商</span><input id="rcvSupplier" type="text" list="dlSuppliers" autocomplete="off"></label>
+          <label class="field"><span>單號</span><input id="rcvRef" type="text" autocomplete="off"></label>
           <label class="field"><span>日期</span><input id="rcvDate" type="date"></label>
-          <label class="field"><span>單上總數 ($)</span><input id="rcvTotal" type="number" step="0.01" min="0"></label>
+          <label class="field"><span>單上總數 ($)</span><input id="rcvTotal" type="number" step="0.01" min="0" inputmode="decimal"></label>
+          <button id="rcvPhotoBtn" class="btn photo-btn" type="button" aria-expanded="false" aria-controls="rcvPhoto"><svg class="i"><use href="#i-camera"/></svg>影相讀單</button>
         </div>
-        <p class="hint">單上單位同貨品單位唔同（例如 1 盒 = 10 支），請改「入貨數量」。唔想入嘅行，剔走左邊個格。</p>
-        <ul class="rlines" id="rcvLines"></ul>
-        <div class="row-wrap rcv-add">
-          <div class="rcv-find">
-            <label class="field">加一行貨品<input id="rcvAddCode" type="text" placeholder="輸入貨號，或者打名搵（例如 WD-40）" autocapitalize="characters" autocomplete="off" spellcheck="false" role="combobox" aria-controls="rcvSuggest" aria-autocomplete="list" aria-expanded="false"></label>
-            <ul id="rcvSuggest" class="suggest" role="listbox" aria-label="搵到嘅貨品" hidden></ul>
+        <div class="card rcv-photo" id="rcvPhoto" hidden>
+          <div class="card-head"><h2>影送貨單</h2><span id="rcvEngine" class="chip" hidden></span><span style="flex:1"></span><button id="rcvPhotoClose" class="btn small ghost" type="button">收埋</button></div>
+          <div class="photo-row" id="rcvPhotoRow">
+            <label class="btn primary photo-main" for="rcvFile"><svg class="i"><use href="#i-camera"/></svg>影相 / 揀相</label>
+            <input id="rcvFile" class="vh" type="file" accept="image/*" multiple>
+            <button id="rcvRead" class="btn" type="button" disabled>讀取送貨單</button>
+            <button id="rcvStop" class="btn ghost" type="button" hidden>停止</button>
           </div>
-          <button id="rcvAdd" class="btn" type="button">加入</button>
-          <button id="rcvFind" class="btn ghost" type="button">去「貨品」搵 <kbd>F7</kbd></button>
+          <label class="dropzone" id="rcvDrop" for="rcvFile"><strong>將送貨單相片拖入呢度</strong><span>或者撳「影相 / 揀相」。幾頁就揀幾張，JPG、PNG 都得。</span><span class="thumbs" id="rcvThumbs"></span></label>
+          <p class="hint">成張單入鏡，對正、影得光猛啲。讀到嘅貨品會加入下面張單，逐行核對好先確認。<span id="rcvPhotoNote"></span></p>
         </div>
-        <label class="check"><input type="checkbox" id="rcvUpdCost" checked><span>用送貨單嘅單價更新貨品來價</span></label>
-        <div class="rcv-sum"><span class="k">入貨成本合計</span><span class="v" id="rcvSum">$0.00</span></div>
-        <p class="note warn" id="rcvCheck" hidden></p>
-        <div class="actions">
-          <button id="rcvCancel" class="btn ghost" type="button">取消</button>
-          <button id="rcvConfirm" class="btn primary" type="button">確認入貨</button>
+        <form id="rcvScan" class="scan" autocomplete="off">
+          <div class="scan-row">
+            <div class="scan-f s-code rcv-find"><label for="rcvAddCode">貨號、條碼或名稱</label><input id="rcvAddCode" type="text" placeholder="輸入貨號，或者打名搵（例如 WD-40）" autocapitalize="characters" autocomplete="off" spellcheck="false" role="combobox" aria-controls="rcvSuggest" aria-autocomplete="list" aria-expanded="false">
+              <ul id="rcvSuggest" class="suggest" role="listbox" aria-label="搵到嘅貨品" hidden></ul></div>
+            <label class="scan-f s-qty"><span>數量</span><input id="rcvAddQty" type="number" inputmode="decimal" step="any" min="0" value="1"></label>
+            <label class="scan-f s-price"><span>來價 ($)</span><input id="rcvAddCost" type="number" inputmode="decimal" step="0.01" min="0" placeholder="來價"></label>
+            <button id="rcvAdd" class="btn" type="submit">加入</button>
+          </div>
+          <p class="hint">打貨號按 <kbd>Enter</kbd>，打數量按 <kbd>Enter</kbd>，打來價按 <kbd>Enter</kbd> 就加入，同收銀一樣。唔記得貨號就打名，或者 <button id="rcvFind" class="linkbtn" type="button">按 <kbd>F7</kbd> 去「貨品」揀</button></p>
+          <p class="hint rcv-status" id="rcvStatus" aria-live="polite"></p>
+        </form>
+        <div class="cart rcv-cart">
+          <div class="cart-head"><h2>送貨單內容</h2><span class="muted num" id="rcvCount"></span><span style="flex:1"></span><button id="rcvClear" class="btn small ghost" type="button" hidden>清除呢張單</button></div>
+          <div id="rcvEmpty" class="cart-empty"><strong>送貨單未有貨品</strong>喺上面打貨號加入，或者撳「影相讀單」。</div>
+          <p class="hint rcv-unit" id="rcvUnitNote" hidden>單上單位同貨品單位唔同（例如 1 盒 = 10 支），請改數量。唔想入嘅行撳 ✕ 刪走。</p>
+          <ul class="cart-list" id="rcvLines"></ul>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-head"><h2>入貨單</h2><button class="linkbtn" type="button" data-goto="purchases">睇入貨記錄</button></div>
-        <div class="notes2">
-          <div class="stack"><h3>今日</h3><ul class="plist" id="rcvToday"></ul><p class="hint" id="rcvTodayEmpty">今日未有入貨。</p></div>
-          <div class="stack"><h3>本月較早</h3><ul class="plist" id="rcvRecent"></ul><p class="hint" id="rcvRecentEmpty">本月較早未有入貨單。</p></div>
+      <aside class="sell-side">
+        <div class="till" aria-label="確認入貨">
+          <div class="till-total"><span class="k">入貨成本合計</span><span class="v" id="rcvSum">$0.00</span></div>
+          <div class="rc-check" id="rcvMatch" hidden></div>
+          <p class="note warn" id="rcvCheck" hidden></p>
+          <label class="check"><input type="checkbox" id="rcvUpdCost" checked><span>用送貨單嘅來價更新貨品來價</span></label>
+          <button id="rcvConfirm" class="btn primary done" type="button" disabled>確認入貨</button>
+          <button id="rcvCancel" class="linkbtn rcv-cancel" type="button" hidden>取消呢張單</button>
         </div>
-      </div>
-
+        <div class="card stack rcv-notes"><div class="card-head"><h2>今日入貨單</h2><button class="linkbtn" type="button" data-goto="purchases">全部</button></div>
+          <ul class="plist" id="rcvToday"></ul><p class="hint" id="rcvTodayEmpty">今日未有入貨。</p></div>
+        <div class="card stack rcv-notes"><div class="card-head"><h2>本月較早</h2></div>
+          <ul class="plist" id="rcvRecent"></ul><p class="hint" id="rcvRecentEmpty">本月較早未有入貨單。</p></div>
+      </aside>
     </div>
   </section>
 
@@ -2809,7 +2840,7 @@ function editLine(id) {
     }
     renderSell();
     Promise.all(writes).catch(writeFailed);
-  });
+  }, state.canWrite ? { extra: { label: '作廢呢件', ask: '作廢呢筆銷售？', body: `${l.code} ${l.name || ''} × ${qtyFmt(num(l.qty) || 0)}。存量會加返。`, fn: () => voidLine(id) } } : {});
 }
 
 /* ---------- product editing ---------- */
@@ -2958,39 +2989,48 @@ function renderSell() {
   miss.hidden = !s.missing;
   miss.textContent = s.missing ? `有 ${s.missing} 筆銷售未有來價，未計入利潤。可以喺「貨品」補回來價。` : '';
 
-  $('#tapeWrap').hidden = !state.lines.length;
+  $('#tape').hidden = !state.lines.length;
   $('#tapeEmpty').hidden = !!state.lines.length;
   $('#undoBtn').disabled = !state.lines.some(l => l.kind === 'sale' && !l.void) || !state.canWrite;
-  const sumOf = ls => {
+  // a voided sale still shows what it was, struck through
+  const sumOf = (ls, withVoid) => {
     const r = { amt: 0, qty: 0, profit: 0, known: 0, missing: 0 };
     for (const x of ls) {
-      if (x.kind !== 'sale' || x.void) continue;
+      if (x.kind !== 'sale' || (x.void && !withVoid)) continue;
       const q = num(x.qty) || 0, p = num(x.price) || 0, c = num(x.cost);
       r.amt += q * p; r.qty += q;
       if (c === null) r.missing++; else { r.profit += q * (p - c); r.known++; }
     }
     return r;
   };
-  const lineRow = (l, inReceipt) => {
+  // one line inside a slip: code, name, quantity × price, amount, profit, stock left; 修改 for a sale (作廢 is inside it)
+  const lineRow = l => {
     const q = num(l.qty) || 0, p = num(l.price), c = num(l.cost);
-    const time = inReceipt ? '' : timeOf(l.at);
     if (l.kind !== 'sale') {
       const label = l.kind === 'in' ? `入貨 ${q > 0 ? '+' : ''}${qtyFmt(q)}` : `盤點調整 ${q > 0 ? '+' : ''}${qtyFmt(q)}`;
-      return `<tr class="move${l.void ? ' void' : ''}"><td class="num">${time}</td><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name)}</td><td colspan="3">${label}</td><td class="priv"></td><td class="r">${stockCell(l.stockAfter)}</td><td></td></tr>`;
+      return `<li class="${l.void ? 'void' : ''}"><span><span class="tag">${esc(l.code)}</span></span><span class="nm">${esc(l.name)}</span><span class="r m">${label}</span><span class="r"></span><span class="r m priv"></span><span class="r m">${stockCell(l.stockAfter)}</span><span class="r"></span></li>`;
     }
-    const profit = c === null ? '<span class="chip warn">未有來價</span>' : `<span class="${(p - c) < 0 ? 'loss' : 'gain'}">${money(q * (p - c))}</span>`;
-    const act = l.void ? '<span class="chip">已作廢</span>' : state.canWrite ? (l.ret ? '' : `<button class="linkbtn" data-edit="${esc(l.id)}" type="button">修改</button>`) + `<button class="linkbtn danger" data-void="${esc(l.id)}" type="button">作廢</button>` : '';
-    return `<tr class="${l.void ? 'void' : ''}${inReceipt ? ' inr' : ''}"><td class="num">${time}</td><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name)}</td><td class="r">${qtyFmt(q)}</td><td class="r">${p === null ? '–' : money(p)}</td><td class="r">${money(q * (p || 0))}</td><td class="r priv">${profit}</td><td class="r">${stockCell(l.stockAfter)}</td><td class="act">${act}</td></tr>`;
+    const profit = c === null ? '<span class="chip warn">未有來價</span>' : `利潤 <span class="${(p - c) < 0 ? 'loss' : ''}">${money(q * (p - c))}</span>`;
+    const act = l.void ? '<span class="chip">已作廢</span>' : !state.canWrite ? '' : l.ret ? `<button class="linkbtn" data-void="${esc(l.id)}" type="button">作廢</button>` : `<button class="linkbtn" data-edit="${esc(l.id)}" type="button">修改</button>`;
+    return `<li class="${l.void ? 'void' : ''}"><span><span class="tag">${esc(l.code)}</span></span><span class="nm">${esc(l.name)}</span><span class="r m">${qtyFmt(q)} × ${p === null ? '–' : money(p)}</span><span class="r"><b>${money(q * (p || 0))}</b></span><span class="r m priv">${profit}</span><span class="r m">存 ${stockCell(l.stockAfter)}</span><span class="r">${act}</span></li>`;
   };
+  const slip = (cls, no, time, meta, sum, sub, act, ls) => `<div class="slip${cls}"><div class="slip-top"><span class="slip-no">${no}<small>${time}</small></span><span class="slip-meta">${meta}</span>
+      <span class="slip-sum">${sum === null ? '' : `<span class="v">${sum}</span>`}${sub ? `<span class="p">${sub}</span>` : ''}</span><span class="slip-act">${act}</span></div>
+      <ul class="slip-lines">${ls.map(lineRow).join('')}</ul></div>`;
   const gkey = l => l.rid || l.pid || null;
   const byRid = new Map();
   for (const l of state.lines) { const k = gkey(l); if (k) { if (!byRid.has(k)) byRid.set(k, []); byRid.get(k).push(l); } }
   const rows = [], done = new Set();
   let groups = 0;
+  const quiet = (attr, label, danger) => `<button class="btn small quiet${danger ? '' : ' plain'}" ${attr} type="button">${label}</button>`;
   for (const l of state.lines) {
     if (groups >= 150) break;
     const k = gkey(l);
-    if (!k) { rows.push(lineRow(l, false)); groups++; continue; }
+    if (!k) {   // a line on its own: a quick stock-in, a count, or a sale from before receipts
+      const what = l.kind === 'in' ? '入貨' : l.kind === 'adjust' ? '盤點' : '銷售';
+      const amt = l.kind === 'sale' ? money((num(l.qty) || 0) * (num(l.price) || 0)) : null;
+      rows.push(slip(l.void ? ' void' : l.kind === 'sale' ? '' : ' in', what, timeOf(l.at), l.kind === 'sale' ? `${qtyFmt(num(l.qty) || 0)} 件` : '', amt, '', '', [l])); groups++; continue;
+    }
     if (done.has(k)) continue;
     done.add(k); groups++;
     const ls = byRid.get(k);
@@ -2999,18 +3039,20 @@ function renderSell() {
       const pu = state.purchases[k] || {};
       const live = ls.filter(x => !x.void);
       const amt = live.reduce((t, x) => t + (num(x.qty) || 0) * (num(x.cost) || 0), 0);
-      const act = allVoid ? '<span class="chip">已作廢</span>' : state.canWrite ? `<button class="linkbtn danger" data-vr="${esc(k)}" data-label="作廢入貨單" type="button">作廢入貨單</button>` : '';
-      rows.push(`<tr class="rcpt in${allVoid ? ' void' : ''}"><td class="num">${timeOf(pu.at || l.at)}</td><td colspan="5" class="sum"><strong>入貨單</strong> · ${esc(pu.supplier || '未填供應商')}${pu.ref ? ` · 單號 ${esc(pu.ref)}` : ''} · ${live.length} 款${state.unlocked ? ` · 成本 <strong>${money(amt)}</strong>` : ''}</td><td class="priv"></td><td></td><td class="act">${act}</td></tr>`);
+      const act = allVoid ? '<span class="chip">已作廢</span>' : state.canWrite ? quiet(`data-vr="${esc(k)}"`, '作廢入貨單', true) : '';
+      rows.push(slip(' in' + (allVoid ? ' void' : ''), '入貨單', timeOf(pu.at || l.at), `<strong>${esc(pu.supplier || '未填供應商')}</strong>${pu.ref ? ` · 單號 ${esc(pu.ref)}` : ''} · ${live.length} 款`,
+        state.unlocked ? money(amt) : null, state.unlocked ? '成本' : '', act, ls));
     } else {
-      const r = state.receipts[k] || {}, s = sumOf(ls);
-      const pay = r.order ? ` · 訂單 #${esc(r.orderNo)} 扣訂金 ${money(num(r.deposit) || 0)} · 收 ${money(num(r.paid) || 0)} · 找 ${money(num(r.change) || 0)}` : r.acct && !r.ret ? ` · 掛數 <strong class="who">${esc(r.acctName || '')}</strong>` : r.ret ? (r.acct ? ` · 扣 ${esc(r.acctName || '')} 月結數` : '') : num(r.paid) !== null ? ` · 收 ${money(num(r.paid))} · 找 ${money(num(r.change) || 0)}` : '';
-      const prof = s.known ? `<span class="${s.profit < 0 ? 'loss' : 'gain'}">${money(s.profit)}</span>` : '<span class="muted">–</span>';
-      const act = allVoid ? '<span class="chip">已作廢</span>' : `<button class="linkbtn print-only" data-print-rid="${esc(k)}" type="button">列印</button>` + (state.canWrite ? `<button class="linkbtn danger" data-vr="${esc(k)}" data-label="作廢整單" type="button">作廢整單</button>` : '');
-      const what = r.ret ? `<strong>退貨 · 第 ${esc(r.no ?? '–')} 單</strong>${r.from ? ` · 原單 ${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單` : ''} · ${qtyFmt(round3(-s.qty))} 件 · 退 <strong>${money(-s.amt)}</strong>${pay}${r.note ? ` · ${esc(r.note)}` : ''}`
-        : `<strong>第 ${esc(r.no ?? '–')} 單</strong> · ${qtyFmt(round3(s.qty))} 件 · 合計 <strong>${money(s.amt)}</strong>${pay}`;
-      rows.push(`<tr class="rcpt${r.ret ? ' ret' : ''}${allVoid ? ' void' : ''}"><td class="num">${timeOf(r.at || l.at)}</td><td colspan="5" class="sum">${what}</td><td class="r priv">${allVoid ? '' : prof}</td><td></td><td class="act">${act}</td></tr>`);
+      const r = state.receipts[k] || {}, s = sumOf(ls, allVoid);
+      const paid = num(r.paid) !== null ? `收 ${money(num(r.paid))} · 找 ${money(num(r.change) || 0)}` : '';
+      const meta = r.ret ? `${qtyFmt(round3(-s.qty))} 件${r.from ? ` · 原單 ${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單` : ''}${r.acct ? ` · 扣 <strong>${esc(r.acctName || '')}</strong> 月結數` : ''}${r.note ? ` · ${esc(r.note)}` : ''}`
+        : `${qtyFmt(round3(s.qty))} 件 · ${r.order ? `訂單 #${esc(r.orderNo)} 扣訂金 ${money(num(r.deposit) || 0)}${paid ? ' · ' + paid : ''}` : r.acct ? `掛數：<strong>${esc(r.acctName || '')}</strong>（月結）` : paid}`;
+      const prof = s.known && !allVoid ? `利潤 <span class="${s.profit < 0 ? 'loss' : ''}">${money(s.profit)}</span>` : '';
+      const act = (allVoid ? '<span class="chip">已作廢</span>' : quiet(`data-print-rid="${esc(k)}"`, '列印', false).replace('btn small', 'btn small print-only')
+        + (state.canWrite ? quiet(`data-vr="${esc(k)}"`, '作廢', true) : ''));
+      rows.push(slip((r.ret ? ' ret' : r.acct ? ' acct' : '') + (allVoid ? ' void' : ''), r.ret ? `退貨 · 第 ${esc(r.no ?? '–')} 單` : `第 ${esc(r.no ?? '–')} 單`, timeOf(r.at || l.at), meta,
+        r.ret ? money(-s.amt) : money(s.amt), `<span class="priv">${r.ret ? '退返客人' : prof}</span>`, act, ls));
     }
-    for (const x of ls) rows.push(lineRow(x, true));
   }
   $('#tape').innerHTML = rows.join('');
 
@@ -3122,7 +3164,11 @@ function renderTodayChart() {
   $('#tChartTitle').textContent = S.title;
   const top = values.reduce((m, v, i) => v > values[m] ? i : m, 0);
   $('#tChartNote').textContent = values[top] > 0 ? `最多：${labels[top]}–${labels[top + 1] || String((lo + top + 1) % 24).padStart(2, '0') + ':00'}` : '今日未有交易';
-  drawBars('#tChart', { labels, values: values.map(round3), money: S.money, height: 180 });
+  // one shelf of hours, read like 每月賣出 on 貨品: the figure above, the hour below, this hour hatched, the busiest hour in full ink
+  const vals = values.map(round3), topV = Math.max(0, ...vals), peak = topV > 0 ? vals.indexOf(topV) : -1, nowIdx = nowH - lo;
+  const fmt = v => S.money ? (v < 0 ? '-$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-HK') : qtyFmt(v);
+  $('#tChart').innerHTML = `<ol class="ms" style="grid-template-columns:repeat(${vals.length},minmax(0,1fr))" aria-label="${esc(S.title)}">${vals.map((v, i) =>
+    `<li class="${[i === nowIdx ? 'cur' : '', v > 0 ? '' : 'zero', i === peak ? 'peak' : ''].filter(Boolean).join(' ')}" title="${labels[i]}：${S.money ? money(v) : qtyFmt(v)}"><span class="q">${v ? fmt(v) : '–'}</span><i class="b" style="--h:${v > 0 ? Math.max(5, Math.round(v / topV * 100)) : 0}"></i><span class="m">${labels[i].slice(0, 2)}<span class="mm">${labels[i].slice(2)}</span></span></li>`).join('')}</ol>`;
 }
 
 function showMsg(t) { const m = $('#msg'); m.textContent = t; m.hidden = false; }
@@ -3562,15 +3608,14 @@ function sellProduct(code) {
 // From a delivery note being entered, 貨品 is a place to look a product up: Enter takes it back to 入貨.
 state.pickFor = null;
 function useProduct(code) {
-  if (state.pickFor === 'receive' && state.rcv) pickToReceive(code); else sellProduct(code);
+  if (state.pickFor === 'receive') pickToReceive(code); else sellProduct(code);
 }
 function pickToReceive(code) {
   if (!code || !state.catalog.has(code)) return;
   state.pickFor = null;
   showView('receive');
-  $('#rcvAddCode').value = code;
-  addRcvLine();
-  toast(`已加入 ${code} ${state.catalog.get(code).name || ''}，打數量就得。`);
+  setPickedRcv(code);
+  toast(`已揀 ${code} ${state.catalog.get(code).name || ''}，打數量同來價，按 Enter 加入。`);
 }
 // the bar and the hint on 貨品 say where Enter sends the product
 function syncPick(onProducts) {
@@ -3580,7 +3625,6 @@ function syncPick(onProducts) {
   h.innerHTML = state.pickFor ? h.dataset.orig.replace('加入收銀單', '加入入貨單') : h.dataset.orig;
 }
 function startPick() {
-  if (!state.rcv) return;
   state.pickFor = 'receive';
   showView('products');
   const s = $('#pSearch'); s.focus(); s.select();
@@ -4025,7 +4069,10 @@ async function readReceipt() {
     x.cands = x.cs.map(c => c.code);
   }
   const d = String((data && data.date) || '');
-  state.rcv = { supplier, ref: String((data && data.receiptNo) || ''), date: /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : state.today, total: num(data && data.total), rows };
+  // lines already typed stay; the photo's lines are added after them and fill in any details left blank
+  const was = state.rcv && rcvHasNote(state.rcv) ? state.rcv : null;
+  state.rcv = { supplier: (was && was.supplier) || supplier, ref: (was && was.ref) || String((data && data.receiptNo) || ''), date: /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : (was && was.date) || state.today,
+    total: was && was.total !== null ? was.total : num(data && data.total), rows: was ? [...was.rows, ...rows] : rows };
   renderRcv();
   const need = rows.filter(x => !x.code && x.cands.length);
   if (need.length) { if (state.sample && !ocr) await aiMatch(need, supplier); else localMatch(need, true); }
@@ -4053,49 +4100,60 @@ ${body}`;
     localMatch(rows);
   }
 }
-function startManual() {
-  state.rcv = { supplier: '', ref: '', date: state.today, total: null, rows: [] };
-  renderRcv();
-  $('#rcvSupplier').focus();   // supplier first, then Enter through 單號, 日期, 總數 and each line
+// 入貨 is always ready to type into; the note in hand is state.rcv, made on first use
+const rcvBlank = () => ({ supplier: '', ref: '', date: state.today, total: null, rows: [] });
+const rcvHasNote = r => !!(r && (r.rows.length || r.supplier || r.ref || r.total !== null));
+function curRcv() { return state.rcv || (state.rcv = rcvBlank()); }
+function rcvBadge(x) {
+  return !x.code ? '<span class="chip warn">請揀選貨品</span>' : x.how === 'alias' ? '<span class="chip ok">已記住</span>' : x.how === 'code' ? '<span class="chip ok">貨號相同</span>'
+    : x.how === 'ai' ? '<span class="chip ok">自動配對</span>' : x.how === 'unsure' ? '<span class="chip warn">請核對</span>' : '<span class="chip">已揀</span>';
 }
-function rowInfo(x) {
-  const badge = !x.code ? '<span class="chip warn">請揀選貨品</span>' : x.how === 'alias' ? '<span class="chip ok">已記住</span>' : x.how === 'code' ? '<span class="chip ok">貨號相同</span>' : x.how === 'ai' ? '<span class="chip ok">自動配對</span>' : x.how === 'unsure' ? '<span class="chip warn">請核對</span>' : '<span class="chip">已揀</span>';
-  const it = x.code && state.catalog.get(x.code);
-  if (!it) return badge;
+function rcvInfo(x) {
+  const it = x.code && state.catalog.get(x.code); if (!it) return '';
   const s = num(it.stock), q = num(x.qty) || 0;
-  return `${badge} ${esc(it.name || '')} · 存量 ${s === null ? '未點' : qtyFmt(s)} → <strong>${qtyFmt(round3((s ?? 0) + q))}</strong>${state.unlocked && num(it.cost) !== null ? ` · 現來價 ${money(num(it.cost))}` : ''}`;
+  return `存量 ${s === null ? '未點' : qtyFmt(s)} → <strong>${qtyFmt(round3((s ?? 0) + q))}</strong> ${esc(it.unit || '')}${state.unlocked && num(it.cost) !== null ? ` · 現來價 ${money(num(it.cost))}` : ''}`;
+}
+// one line, built like a line on the till; a line read from a photo also shows what the note said and lets you change the match
+function rcvLineHtml(x, i) {
+  const it = x.code && state.catalog.get(x.code), q = num(x.qty) || 0, c = num(x.cost);
+  const fromNote = !!(x.text || x.scode);
+  const opts = [...new Set([...(x.code ? [x.code] : []), ...x.cands])].filter(k => state.catalog.has(k));
+  const pick = fromNote && !(x.code && (x.how === 'alias' || x.how === 'code'))
+    ? `<div class="rl-match"><select data-pick aria-label="對應貨品"><option value="">— 請揀選貨品 —</option>${opts.map(k => `<option value="${esc(k)}"${k === x.code ? ' selected' : ''}>${esc(k)} ${esc(state.catalog.get(k).name || '')}</option>`).join('')}<option value="__other">其他貨號…</option></select>
+      <input type="text" data-other placeholder="輸入貨號" autocapitalize="characters" value="${esc(x.other || '')}"${x.other === undefined ? ' hidden' : ''}></div>` : '';
+  const src = fromNote ? `<div class="src">單上寫「${esc(x.text || x.scode)}」${x.text && x.scode ? ' · ' + esc(x.scode) : ''}${x.qty !== null && x.unit ? ` · ${qtyFmt(q)} ${esc(x.unit)}` : ''} ${rcvBadge(x)}</div>${x.raw ? `<div class="src">原文：${esc(x.raw)}</div>` : ''}${pick}` : '';
+  return `<li class="ci rci${x.code ? '' : ' unmatched'}${i === state.rcvFlash ? ' flash' : ''}" data-i="${i}">
+    <div class="ci-name">${it ? `<span class="tag">${esc(x.code)}</span> <span class="nm">${esc(it.name || '')}</span>` : '<span class="nm muted">未揀貨品</span>'}<div class="hint" data-info>${rcvInfo(x)}</div>${src}</div>
+    <div class="ci-qty"><button type="button" data-dec aria-label="減一件"><svg class="i"><use href="#i-minus"/></svg></button><input type="number" data-qty inputmode="decimal" step="any" min="0" value="${esc(x.qty ?? '')}" aria-label="入貨數量"><button type="button" data-inc aria-label="加一件"><svg class="i"><use href="#i-plus"/></svg></button></div>
+    <label class="ci-price"><span class="muted">@ $</span><input type="number" data-cost inputmode="decimal" step="0.01" min="0" value="${esc(x.cost ?? '')}" aria-label="每件來價"></label>
+    <div class="ci-amt num" data-amt>${c === null ? '–' : money(q * c)}</div>
+    <button type="button" class="ci-x" data-rm aria-label="刪走呢行"><svg class="i"><use href="#i-x"/></svg></button></li>`;
 }
 function renderRcv() {
-  const r = state.rcv, card = $('#rcvReview');
-  if (!r) { card.hidden = true; return; }
-  card.hidden = false;
-  $('#rcvSupplier').value = r.supplier; $('#rcvRef').value = r.ref; $('#rcvDate').value = r.date || ''; $('#rcvTotal').value = r.total ?? '';
-  $('#rcvLines').innerHTML = r.rows.map((x, i) => {
-    const opts = [...new Set([...(x.code ? [x.code] : []), ...x.cands])].filter(c => state.catalog.has(c));
-    return `<li class="rl${x.inc ? '' : ' off'}${x.inc && !x.code ? ' unmatched' : ''}" data-i="${i}">
-      <input type="checkbox" class="rl-inc" data-inc ${x.inc ? 'checked' : ''} aria-label="入呢行">
-      <div class="rl-src"><div class="hint">單上寫</div><div class="rl-text">${esc(x.text || x.scode || '（自己加入）')}</div><div class="hint">${x.scode ? esc(x.scode) + ' · ' : ''}${x.qty === null ? '' : qtyFmt(x.qty) + ' ' + esc(x.unit)}${x.cost === null ? '' : ' @ ' + money(x.cost)}</div>${x.raw ? `<div class="hint">原文：${esc(x.raw)}</div>` : ''}</div>
-      <div class="rl-match"><select data-pick aria-label="對應貨品"><option value="">— 請揀選貨品 —</option>${opts.map(c => `<option value="${esc(c)}"${c === x.code ? ' selected' : ''}>${esc(c)} ${esc(state.catalog.get(c).name || '')}</option>`).join('')}<option value="__other">其他貨號…</option></select>
-        <input type="text" data-other placeholder="輸入貨號" autocapitalize="characters" value="${esc(x.other || '')}"${x.other === undefined ? ' hidden' : ''}>
-        <div class="hint" data-info>${rowInfo(x)}</div></div>
-      <label class="field rl-q"><span>入貨數量</span><input type="number" data-qty step="any" min="0" inputmode="decimal" value="${esc(x.qty ?? '')}"></label>
-      <label class="field rl-c"><span>每件來價 ($)</span><input type="number" data-cost step="0.01" min="0" inputmode="decimal" value="${esc(x.cost ?? '')}"></label>
-    </li>`;
-  }).join('');
+  const r = state.rcv || rcvBlank();
+  const keep = id => document.activeElement && document.activeElement.id === id;
+  if (!keep('rcvSupplier')) $('#rcvSupplier').value = r.supplier;
+  if (!keep('rcvRef')) $('#rcvRef').value = r.ref;
+  if (!keep('rcvDate')) $('#rcvDate').value = r.date || '';
+  if (!keep('rcvTotal')) $('#rcvTotal').value = r.total ?? '';
+  $('#rcvLines').innerHTML = r.rows.map(rcvLineHtml).join('');
+  state.rcvFlash = null;
+  $('#rcvEmpty').hidden = !!r.rows.length;
+  $('#rcvUnitNote').hidden = !r.rows.some(x => x.text || x.scode);
+  $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(r);
   renderRcvSum();
 }
 function renderRcvSum() {
-  const r = state.rcv; if (!r) return;
-  const inc = r.rows.filter(x => x.inc);
-  const sum = inc.reduce((t, x) => t + (num(x.qty) || 0) * (num(x.cost) || 0), 0);
-  $('#rcvSum').textContent = money(sum);
-  const ready = inc.filter(x => x.code && (num(x.qty) || 0) > 0).length;
-  const missing = inc.filter(x => !x.code).length;
-  const notes = [];
-  if (missing) notes.push(`有 ${missing} 行未揀貨品。揀返貨品，或者剔走嗰行。`);
-  const tot = num($('#rcvTotal').value);
-  if (tot !== null && Math.abs(tot - sum) > 1) notes.push(`同單上總數 ${money(tot)} 差 ${money(Math.abs(tot - sum))}，請核對數量同單價。`);
-  const chk = $('#rcvCheck'); chk.hidden = !notes.length; chk.textContent = notes.join(' ');
+  const rows = state.rcv ? state.rcv.rows.filter(x => x.inc) : [];
+  const sum = rows.reduce((t, x) => t + (num(x.qty) || 0) * (num(x.cost) || 0), 0);
+  $('#rcvSum').textContent = money(sum); fitBig($('#rcvSum'));
+  const n = round3(rows.reduce((t, x) => t + (num(x.qty) || 0), 0));
+  $('#rcvCount').textContent = rows.length ? `${rows.length} 款 · ${qtyFmt(n)} 件` : '';
+  const ready = rows.filter(x => x.code && (num(x.qty) || 0) > 0).length, missing = rows.filter(x => !x.code).length;
+  const tot = num($('#rcvTotal').value), m = $('#rcvMatch');
+  m.hidden = tot === null || !rows.length;
+  if (!m.hidden) m.innerHTML = `<span>同單上總數 ${money(tot)}</span>${Math.abs(tot - sum) <= 1 ? '<span class="chip ok">啱數</span>' : `<span class="chip warn">差 ${money(Math.abs(tot - sum))}</span>`}`;
+  const chk = $('#rcvCheck'); chk.hidden = !missing; chk.textContent = missing ? `有 ${missing} 行未揀貨品。揀返貨品，或者撳 ✕ 刪走嗰行。` : '';
   const btn = $('#rcvConfirm');
   btn.textContent = ready ? `確認入貨（${ready} 款）` : '確認入貨';
   btn.disabled = !ready || !!missing || !state.canWrite;
@@ -4132,7 +4190,7 @@ async function confirmReceive() {
   Object.assign(state.aliases, aliasPatch);
   const photos = state.rcvPhotos.map(p => p.blob);
   state.rcv = null; state.pu = null; state.puIdxDirty = true; clearPhotos(); renderRcv(); renderRcvToday(); renderSell(); renderProducts(); fillSuppliers();
-  setRcvBusy(false, '');
+  setRcvBusy(false, ''); resetRcvBar(); showRcvPhoto(false);
   toast(`已入貨 ${good.length} 款，存量已加上。入錯可以喺「入貨記錄」修改。`);
   orderGoodsIn(good.map(x => x.code));
   try {
@@ -4645,8 +4703,9 @@ function applyReader(note) {
   $('#aiClear').hidden = !key;
   $('#aiOcrHint').textContent = '喺呢部機讀字，唔使錢。只適合電腦打印、影得清楚嘅單，手寫字讀唔到。讀完要逐行核對貨號同數量。' + (window.TF_OCR_BASE || ocrEmbedded() ? '' : '第一次用要上網下載辨識檔（大約 10 MB），之後就唔使。');
   renderThumbs();
-  setRcvBusy(false, note !== undefined ? note : pref === 'api' && !canApi ? '未有 Claude API key，暫時用離線文字辨識。可以喺「匯入・設定」加 key。'
-    : state.reader === 'ocr' ? '離線辨識只適合電腦打印、影得清楚嘅單。影相時成張單入鏡、對正、光猛啲。' : '');
+  // notes about the reader belong to the photo panel, not to the add bar under it
+  $('#rcvPhotoNote').textContent = note !== undefined ? note : pref === 'api' && !canApi ? '未有 Claude API key，暫時用離線文字辨識。可以喺「匯入・設定」加 key。'
+    : state.reader === 'ocr' ? '離線辨識只適合電腦打印、影得清楚嘅單。' : '';
 }
 async function saveApiKey() {
   const typed = $('#aiKey').value.trim(), key = typed || lsGet(LS_KEY);
@@ -5177,14 +5236,14 @@ function showView(v) {
   if (!VIEWS.includes(v) || (!state.unlocked && BOSS_VIEWS.includes(v))) v = 'sell';
   // going from a delivery note to 貨品 means looking a product up for it
   const from = VIEWS.find(x => !$('#view-' + x).hidden);
-  if (v === 'products' && from === 'receive' && state.rcv) state.pickFor = 'receive';
+  if (v === 'products' && from === 'receive') state.pickFor = 'receive';
   else if (v !== 'products') state.pickFor = null;
   syncPick(v === 'products');
   VIEWS.forEach(x => { $('#view-' + x).hidden = x !== v; $('#tab-' + x).setAttribute('aria-selected', String(x === v)); });
   try { history.replaceState(null, '', '#' + v); } catch (e) {}
   if (v === 'sell') $('#scan').focus();
   if (v === 'products') renderProducts();
-  if (v === 'receive') { renderRcvToday(); loadRcvRecent(); }
+  if (v === 'receive') { renderRcv(); renderRcvToday(); loadRcvRecent(); if (!state.rcvPick) $('#rcvAddCode').focus(); }
   if (v === 'purchases') loadPurchases(false);
   if (v === 'returns') openReturns();
   if (v === 'accounts') openAccounts();
@@ -6362,29 +6421,73 @@ $('#lockBtn').addEventListener('click', () => { if (state.unlocked) { setLocked(
 $('#pinBtn').addEventListener('click', changePin);
 ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, bumpIdle, { passive: true }));
 $('#rcvStop').addEventListener('click', () => { if (rcvCtl) rcvCtl.abort(); });
-$('#rcvManual').addEventListener('click', startManual);
-$('#rcvCancel').addEventListener('click', () => { state.rcv = null; renderRcv(); setRcvBusy(false, ''); });
+// 影相讀單 opens the photo panel above the add bar
+function showRcvPhoto(on) {
+  $('#rcvPhoto').hidden = !on; $('#rcvPhotoBtn').setAttribute('aria-expanded', String(on));
+  if (on) $('#rcvPhoto').scrollIntoView({ block: 'nearest' });
+}
+$('#rcvPhotoBtn').addEventListener('click', () => showRcvPhoto($('#rcvPhoto').hidden));
+$('#rcvPhotoClose').addEventListener('click', () => { showRcvPhoto(false); $('#rcvAddCode').focus(); });
+// 取消 / 清除: a note with lines asks first; an empty one just clears
+function clearRcv() {
+  const done = () => { state.rcv = null; clearPhotos(); resetRcvBar(); setRcvBusy(false, ''); renderRcv(); $('#rcvAddCode').focus(); };
+  const n = state.rcv ? state.rcv.rows.length : 0;
+  if (!n) { done(); return; }
+  ask('取消呢張送貨單？', `已經打咗嘅 ${n} 行會清走，唔會入貨。`, '清除', done);
+}
+$('#rcvCancel').addEventListener('click', clearRcv);
+$('#rcvClear').addEventListener('click', clearRcv);
 $('#rcvConfirm').addEventListener('click', confirmReceive);
-$('#rcvTotal').addEventListener('input', () => { if (state.rcv) state.rcv.total = num($('#rcvTotal').value); renderRcvSum(); });
-$('#rcvSupplier').addEventListener('input', () => { if (state.rcv) state.rcv.supplier = $('#rcvSupplier').value; });
-$('#rcvRef').addEventListener('input', () => { if (state.rcv) state.rcv.ref = $('#rcvRef').value; });
-$('#rcvDate').addEventListener('input', () => { if (state.rcv) state.rcv.date = $('#rcvDate').value; });
-const addRcvLine = () => {
-  if (!state.rcv) return;
-  const code = lookup(normCode($('#rcvAddCode').value));
-  if (!code) { setRcvBusy(false, `搵唔到貨號「${normCode($('#rcvAddCode').value)}」。`); return; }
-  const it = state.catalog.get(code);
-  state.rcv.rows.push({ text: '', scode: '', qty: 1, unit: it.unit || '', cost: state.unlocked ? num(it.cost) : null, amount: null, inc: true, code, how: 'picked', cands: [], cs: [] });
-  $('#rcvAddCode').value = '';
+$('#rcvTotal').addEventListener('input', () => { curRcv().total = num($('#rcvTotal').value); renderRcvSum(); $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
+$('#rcvSupplier').addEventListener('input', () => { curRcv().supplier = $('#rcvSupplier').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
+$('#rcvRef').addEventListener('input', () => { curRcv().ref = $('#rcvRef').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
+$('#rcvDate').addEventListener('input', () => { curRcv().date = $('#rcvDate').value; });
+// the add bar works like the till's: item, Enter, quantity, Enter, cost, Enter adds the line
+state.rcvPick = null;   // the product chosen in the item box, waiting for its quantity and cost
+function resetRcvBar() {
+  state.rcvPick = null; hideRcvSuggest();
+  $('#rcvAddCode').value = ''; $('#rcvAddQty').value = '1';
+  const c = $('#rcvAddCost'); c.value = ''; c.placeholder = '來價';
+}
+function rcvBarCode() {
+  const S = state.rcvSug;
+  if (S.idx >= 0 && S.hits[S.idx]) return S.hits[S.idx].code;
+  return lookup(normCode($('#rcvAddCode').value));
+}
+function setPickedRcv(code) {
+  const it = state.catalog.get(code); if (!it) return;
+  state.rcvPick = code; hideRcvSuggest();
+  $('#rcvAddCode').value = code;
+  const c = $('#rcvAddCost'); c.value = '';
+  c.placeholder = state.unlocked && num(it.cost) !== null ? `上次 ${num(it.cost)}` : '來價';
+  setRcvBusy(false, `${code} ${it.name || ''}${it.unit ? ' · ' + it.unit : ''} · 存量 ${num(it.stock) === null ? '未點' : qtyFmt(num(it.stock))}`);
+  const q = $('#rcvAddQty'); q.value = '1'; q.focus(); q.select();
+}
+function rcvNotFound() {
+  setRcvBusy(false, `搵唔到貨號「${normCode($('#rcvAddCode').value)}」。打名可以搜尋，或者去「貨品」揀。`);
+  const b = $('#rcvAddCode'); b.focus(); b.select();
+}
+function addFromBar() {
+  const code = state.rcvPick || rcvBarCode();
+  if (!code) { rcvNotFound(); return; }
+  const it = state.catalog.get(code), q = $('#rcvAddQty').value.trim() === '' ? 1 : num($('#rcvAddQty').value);
+  if (!(q > 0)) { setRcvBusy(false, '數量要大過 0。'); const b = $('#rcvAddQty'); b.focus(); b.select(); return; }
+  const typed = $('#rcvAddCost').value.trim(), cost = typed === '' ? (state.unlocked ? num(it.cost) : null) : num(typed);
+  const r = curRcv();
+  // the same product at the same cost adds to its line, as on the till
+  let i = r.rows.findIndex(x => x.code === code && !x.text && !x.scode && num(x.cost) === cost);
+  if (i >= 0) r.rows[i].qty = round3((num(r.rows[i].qty) || 0) + q);
+  else { r.rows.push({ text: '', scode: '', qty: q, unit: it.unit || '', cost, amount: null, inc: true, code, how: 'picked', cands: [], cs: [] }); i = r.rows.length - 1; }
+  state.rcvFlash = i;
+  resetRcvBar(); setRcvBusy(false, '');
   renderRcv();
-  const q = $$('#rcvLines .rl').at(-1)?.querySelector('[data-qty]');
-  if (q) { q.focus(); q.select(); }   // then Enter: quantity → cost → back to 加一行貨品
-};
-$('#rcvAdd').addEventListener('click', () => { const S = state.rcvSug; if (S.idx >= 0 && S.hits[S.idx]) $('#rcvAddCode').value = S.hits[S.idx].code; hideRcvSuggest(); addRcvLine(); });
+  $('#rcvAddCode').focus();
+}
+$('#rcvScan').addEventListener('submit', e => { e.preventDefault(); addFromBar(); });
 $('#rcvFind').addEventListener('click', startPick);
 $('#pickBack').addEventListener('click', () => { state.pickFor = null; showView('receive'); $('#rcvAddCode').focus(); });
 $('#pickOff').addEventListener('click', () => { state.pickFor = null; syncPick(true); });
-// 入貨: the 加一行貨品 box finds products by code or by name; ↑↓ choose, Enter adds
+// the item box finds products by code or by name; ↑↓ choose, Enter takes it and moves on to 數量
 state.rcvSug = { hits: [], idx: -1 };
 function rcvSuggest() {
   const q = $('#rcvAddCode').value.trim(), S = state.rcvSug, exact = q ? lookup(normCode(q)) : null;
@@ -6400,46 +6503,74 @@ function drawRcvSuggest() {
   const sel = ul.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'nearest' });
 }
 function hideRcvSuggest() { state.rcvSug = { hits: [], idx: -1 }; $('#rcvSuggest').hidden = true; $('#rcvAddCode').setAttribute('aria-expanded', 'false'); }
-$('#rcvAddCode').addEventListener('input', rcvSuggest);
+$('#rcvAddCode').addEventListener('input', () => { state.rcvPick = null; rcvSuggest(); });
 $('#rcvAddCode').addEventListener('blur', () => setTimeout(hideRcvSuggest, 150));
 $('#rcvSuggest').addEventListener('mousedown', e => {
   const li = e.target.closest('[data-code]'); if (!li) return;
   e.preventDefault();
-  $('#rcvAddCode').value = li.dataset.code; hideRcvSuggest(); addRcvLine();
+  setPickedRcv(li.dataset.code);
 });
 $('#rcvAddCode').addEventListener('keydown', e => {
   const S = state.rcvSug;
   if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && S.hits.length) { e.preventDefault(); S.idx = (S.idx + (e.key === 'ArrowDown' ? 1 : -1) + S.hits.length) % S.hits.length; drawRcvSuggest(); return; }
-  if (e.key === 'Escape' && S.hits.length) { e.preventDefault(); hideRcvSuggest(); return; }
-  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  if (e.key === 'Escape') { e.preventDefault(); if (S.hits.length) hideRcvSuggest(); else { resetRcvBar(); setRcvBusy(false, ''); } return; }
+  if (!isEnter(e)) return;
   e.preventDefault();
-  if (S.idx >= 0 && S.hits[S.idx]) { $('#rcvAddCode').value = S.hits[S.idx].code; hideRcvSuggest(); addRcvLine(); return; }
   // an empty box means the note is done: Enter goes to 確認入貨 (press Enter again to confirm)
   if (!$('#rcvAddCode').value.trim()) { const b = $('#rcvConfirm'); if (!b.disabled) b.focus(); else renderRcvSum(); return; }
-  addRcvLine();
+  const code = rcvBarCode();
+  if (code) setPickedRcv(code); else rcvNotFound();
 });
-$('#rcvReview').addEventListener('keydown', e => {
-  if (e.target.id === 'rcvAddCode') return;
-  enterNext(e, $('#rcvReview'), null, el => el.matches('[data-pick]') && el.value && el.value !== '__other');
+$('#rcvAddQty').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); resetRcvBar(); setRcvBusy(false, ''); $('#rcvAddCode').focus(); return; }
+  if (!isEnter(e)) return;
+  e.preventDefault();
+  if (!state.rcvPick) { const code = rcvBarCode(); if (!code) { rcvNotFound(); return; } state.rcvPick = code; }
+  const q = $('#rcvAddQty').value.trim() === '' ? 1 : num($('#rcvAddQty').value);
+  if (!(q > 0)) { setRcvBusy(false, '數量要大過 0。'); $('#rcvAddQty').select(); return; }
+  const c = $('#rcvAddCost'); c.focus(); c.select();
 });
+$('#rcvAddCost').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); resetRcvBar(); setRcvBusy(false, ''); $('#rcvAddCode').focus(); return; }
+  if (!isEnter(e)) return;
+  e.preventDefault(); addFromBar();
+});
+// the note's details: Enter moves 供應商 → 單號 → 日期 → 總數 → the item box
+$('#rcvReview').addEventListener('keydown', e => enterNext(e, $('#rcvReview'), $('#rcvAddCode')));
 $('#modalBody').addEventListener('keydown', e => enterNext(e, $('#modalBody')));
+// the lines: − / + / ✕, quantity and cost typed in place, a photo line's match changed from its list
+const rcvRow = el => { const li = el.closest('.rci'); return li && state.rcv ? [li, state.rcv.rows[Number(li.dataset.i)]] : [null, null]; };
+$('#rcvLines').addEventListener('click', e => {
+  const [li, x] = rcvRow(e.target); if (!x) return;
+  if (e.target.closest('[data-rm]')) state.rcv.rows.splice(Number(li.dataset.i), 1);
+  else if (e.target.closest('[data-inc]')) x.qty = round3((num(x.qty) || 0) + 1);
+  else if (e.target.closest('[data-dec]')) { x.qty = round3((num(x.qty) || 0) - 1); if (x.qty <= 0) state.rcv.rows.splice(Number(li.dataset.i), 1); }
+  else return;
+  renderRcv();
+});
 $('#rcvLines').addEventListener('change', e => {
-  const li = e.target.closest('.rl'); if (!li || !state.rcv) return;
-  const x = state.rcv.rows[Number(li.dataset.i)]; if (!x) return;
-  if (e.target.matches('[data-inc]')) { x.inc = e.target.checked; renderRcv(); }
-  else if (e.target.matches('[data-pick]')) {
-    if (e.target.value === '__other') { x.other = x.other || ''; x.code = null; renderRcv(); const o = $(`#rcvLines .rl[data-i="${li.dataset.i}"] [data-other]`); o && o.focus(); }
-    else { x.code = e.target.value || null; x.how = 'picked'; delete x.other; renderRcv(); }
-  }
+  const [li, x] = rcvRow(e.target); if (!x) return;
+  if (!e.target.matches('[data-pick]')) return;
+  if (e.target.value === '__other') { x.other = x.other || ''; x.code = null; renderRcv(); const o = $(`#rcvLines .rci[data-i="${li.dataset.i}"] [data-other]`); o && o.focus(); }
+  else { x.code = e.target.value || null; x.how = 'picked'; delete x.other; renderRcv(); }
 });
 $('#rcvLines').addEventListener('input', e => {
-  const li = e.target.closest('.rl'); if (!li || !state.rcv) return;
-  const x = state.rcv.rows[Number(li.dataset.i)]; if (!x) return;
-  if (e.target.matches('[data-other]')) { x.other = e.target.value; const c = lookup(normCode(x.other)); x.code = c; x.how = 'picked'; li.classList.toggle('unmatched', x.inc && !c); }
+  const [li, x] = rcvRow(e.target); if (!x) return;
+  if (e.target.matches('[data-other]')) { x.other = e.target.value; const c = lookup(normCode(x.other)); x.code = c; x.how = 'picked'; li.classList.toggle('unmatched', !c); }
   if (e.target.matches('[data-qty]')) x.qty = num(e.target.value);
   if (e.target.matches('[data-cost]')) x.cost = num(e.target.value);
-  li.querySelector('[data-info]').innerHTML = rowInfo(x);
+  const c = num(x.cost);
+  li.querySelector('[data-amt]').textContent = c === null ? '–' : money((num(x.qty) || 0) * c);
+  li.querySelector('[data-info]').innerHTML = rcvInfo(x);
   renderRcvSum();
+});
+$('#rcvLines').addEventListener('keydown', e => {
+  const [li] = rcvRow(e.target); if (!li) return;
+  if (e.key === 'Escape') { e.preventDefault(); $('#rcvAddCode').focus(); return; }
+  if (!isEnter(e)) return;
+  if (e.target.matches('[data-qty]')) { e.preventDefault(); const c = li.querySelector('[data-cost]'); c.focus(); c.select(); }
+  else if (e.target.matches('[data-cost]')) { e.preventDefault(); $('#rcvAddCode').focus(); }
+  else if (e.target.matches('[data-other]')) { e.preventDefault(); renderRcv(); }
 });
 $('#rcvToday').addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (b) askVoidGroup(b.dataset.vp); });
 $('#puMonth').addEventListener('change', () => loadPurchases(false));
@@ -6879,7 +7010,7 @@ async function start() {
   $('#rcvPhotoRow').hidden = !state.canPhoto;
   applyPrint(); abLoad();
   if (!window.claude) applyReader();
-  else if (!state.canPhoto) setRcvBusy(false, '呢度用唔到影相讀單（請喺 Claude 開啟呢頁）。可以用下面「自己逐件輸入」。');
+  else if (!state.canPhoto) $('#rcvPhotoNote').textContent = '呢度用唔到影相讀單（請喺 Claude 開啟呢頁）。可以直接喺下面打貨號入貨。';
   if (db) {
     state.store = makeDbStore(db);
     state.mode = 'live';

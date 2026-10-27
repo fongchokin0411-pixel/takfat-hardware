@@ -1,6 +1,6 @@
 // Keeps every file of the app on this computer, so the installed app opens and reads delivery notes with no internet.
 // Bump VERSION with each release: the new files are fetched in the background and used from the next opening.
-const VERSION = 'tf-1.20.0';
+const VERSION = 'tf-1.21.0';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/pig-128.png', 'icons/pig-192.png', 'icons/pig-512.png', 'icons/pig-maskable-512.png',
