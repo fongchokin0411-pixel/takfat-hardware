@@ -295,8 +295,8 @@ tr.grp td .muted { margin-left: 8px; }
 /* 貨品: every product in code order, drawn a screenful at a time; one fixed row height so a code's place is known */
 .prodlist { overflow: auto; overflow-anchor: none; min-height: 320px; outline: none; }
 .prodlist table { table-layout: fixed; min-width: 900px; }
-.prodlist .c-code { width: 112px; } .prodlist .c-short { width: 84px; } .prodlist .c-type { width: 96px; }
-.prodlist .c-money { width: 104px; } .prodlist .c-recent { width: 142px; } .prodlist .c-pct { width: 66px; } .prodlist .c-stock { width: 76px; } .prodlist .c-act { width: 100px; }   /* money fits $43,000.00 */
+.prodlist .c-code { width: 112px; } .prodlist .c-short { width: 76px; } .prodlist .c-type { width: 88px; }
+.prodlist .c-money { width: 104px; } .prodlist .c-recent { width: 142px; } .prodlist .c-pct { width: 66px; } .prodlist .c-stock { width: 76px; } .prodlist .c-act { width: 140px; }   /* money fits $43,000.00 */
 .prodlist tbody td.short { padding-inline: 6px; }
 .short-in { width: 100%; height: 30px; padding: 0 8px; font: 500 13px/1 var(--mono); text-transform: uppercase; letter-spacing: .02em; }
 .short-in::placeholder { text-transform: none; }
@@ -811,6 +811,40 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .sheet { background: var(--surface); border-radius: 10px; width: min(560px, 100%); max-height: 100%; overflow-y: auto; padding: 20px 24px 24px; display: grid; gap: 16px; box-shadow: var(--float-shadow); animation: rise .18s ease-out; } /* taste-skill-ignore: a dialog */
 .sheet .err { color: var(--negative); font-weight: 500; }
+/* 貨品詳細: a full-height panel over 貨品, scrolled on its own; the shared windows (修改, 入貨) open above it */
+.pd-wrap { position: fixed; inset: 0; z-index: 28; background: var(--overlay); display: flex; justify-content: center;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); }
+.pd { width: min(1180px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; background: var(--ground); border-radius: 12px; box-shadow: var(--float-shadow);
+  display: grid; grid-auto-rows: max-content; align-content: start; gap: var(--gap); padding: 22px 28px 32px; animation: rise .18s ease-out; }   /* rows keep their height: the panel scrolls instead */
+.pd-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; }
+.pd-head h2 { margin: 8px 0 4px; font-size: 24px; line-height: 30px; font-weight: 700; overflow-wrap: anywhere; }
+.pd-head .sub { color: var(--muted); font-size: 14px; }
+.pd-head .actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.pd-sec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px var(--card-pad) 18px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.pd-sec h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.pd-sec .card-head .hint { margin: 0; }
+.pd-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--gap); }
+.pd-scroll { overflow-x: auto; }
+.pd table { width: 100%; font-size: 14px; }
+.pd td, .pd th { padding: 8px 10px; white-space: nowrap; }
+.pd tr.void td { color: var(--faint); }
+.pd tr.void td .what, .pd tr.void td b { text-decoration: line-through; }
+.pd .kind { display: inline-block; min-width: 40px; padding: 0 6px; border-radius: 4px; font-size: 12px; line-height: 20px; text-align: center; font-weight: 600; }
+.pd .k-sale { background: var(--pill-info-bg); color: var(--pill-info-ink); }
+.pd .k-ret { background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+.pd .k-in { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+.pd .k-adjust { background: var(--pill-neutral-bg); color: var(--pill-neutral-ink); }
+.pd-kpis { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0; background: var(--surface); }
+.pd-kpis .kpi { box-shadow: inset -1px -1px 0 var(--rule); }   /* lines on the cells, so a short last row leaves white, not grey */
+.pd-kpis .kpi .v { font-size: 22px; line-height: 28px; }
+.pd-kpis .kpi .s { font-size: 12px; color: var(--muted); }
+.pd-more { justify-self: center; }
+.pd-empty { margin: 0; color: var(--muted); font-size: 14px; }
+/* the month bars on a narrow screen keep the best month's and this month's figure only */
+.pi-sold { container: sold / inline-size; }
+.pd-sec > .pi-sold { border-top: 0; padding-top: 0; }
+@container sold (max-width: 560px) { .pi-sold .ms li:not(.peak):not(.cur) .q { visibility: hidden; } .pi-sold .ms .m { font-size: 11px; } .pi-sold .mo { display: none; } .pi-sold .ms.has-avg { padding-right: 44px; } }
+@media (max-width: 640px) { .pd { padding: 16px 16px 24px; } .pd-head .actions { margin-left: 0; } }
 @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 40;
   background: var(--primary); color: var(--primary-ink); padding: 10px 16px; border-radius: var(--radius-card); font-weight: 500; max-width: calc(100% - 32px); box-shadow: var(--float-shadow); } /* taste-skill-ignore: a toast */
@@ -1604,6 +1638,10 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
     <p id="cfBody" class="hint"></p>
     <div class="actions"><span style="flex:1"></span><button type="button" class="btn ghost" id="cfNo">取消</button><button type="button" class="btn danger solid" id="cfYes">確認</button></div>
   </div>
+</div>
+<!-- 貨品詳細: everything about one product, over the page -->
+<div id="pDetail" class="pd-wrap" hidden>
+  <section class="pd" role="dialog" aria-modal="true" aria-labelledby="pdTitle" id="pdBody"></section>
 </div>
 <div id="modal" class="modal" hidden>
   <form class="sheet" id="modalForm" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -3312,6 +3350,7 @@ function renderTypeFilter() {
 // 貨品 lists every product in code order. Only the rows on screen are drawn, so 13,000 products scroll freely;
 // typing a code scrolls to it (or to the next code after it), and a name filters the list.
 function renderProducts() {
+  if (state.pd && !$('#pDetail').hidden) setTimeout(() => state.pd && loadPDetail(state.pd.code), 0);
   const raw = $('#pSearch').value.trim(), q = raw.toLowerCase();
   const terms = q.split(/\s+/).filter(Boolean), loose = terms.map(squash);
   const type = $('#pType').value, f = state.pFilter;
@@ -3366,7 +3405,7 @@ function productRow(code, i) {
     <td class="r">${p === null ? '<span class="chip warn">未有</span>' : money(p)}</td><td class="r">${stockCell(it.stock)}</td><td class="short">${short}</td><td>${esc(it.type)}</td>
     <td class="r priv">${c === null ? '<span class="chip warn">未有</span>' : money(c)}</td><td class="r priv">${recent}</td>
     <td class="r priv ${c !== null && p !== null && p < c ? 'loss' : ''}">${margin}</td>
-    <td class="act">${state.canWrite ? `<button class="linkbtn" data-recv="${esc(code)}" type="button">入貨</button><button class="linkbtn" data-prod="${esc(code)}" type="button">修改</button>` : ''}</td></tr>`;
+    <td class="act"><button class="linkbtn" data-detail="${esc(code)}" type="button">詳細</button>${state.canWrite ? `<button class="linkbtn" data-recv="${esc(code)}" type="button">入貨</button><button class="linkbtn" data-prod="${esc(code)}" type="button">修改</button>` : ''}</td></tr>`;
 }
 // the list fills the window below the toolbar and scrolls inside itself
 function sizeProducts() {
@@ -3449,10 +3488,10 @@ async function saveShort(code, raw) {
 async function loadHistSold() {
   if (state.histSold) return state.histSold;
   const [hdocs, info] = await Promise.all([state.store.getHist().catch(() => []), state.store.getMeta('histInfo').catch(() => null)]);
-  const map = new Map();
-  for (const h of hdocs) for (const [c, it] of Object.entries(h.items || {})) if (it && Array.isArray(it.q)) map.set(c, it.q);
+  const map = new Map(), amt = new Map();
+  for (const h of hdocs) for (const [c, it] of Object.entries(h.items || {})) if (it && Array.isArray(it.q)) { map.set(c, it.q); if (Array.isArray(it.a)) amt.set(c, it.a); }
   const hd = info && info.asOf ? parseDay(info.asOf) : null;
-  return state.histSold = { map, base: hd ? hd.getFullYear() * 12 + hd.getMonth() : null };
+  return state.histSold = { map, amt, base: hd ? hd.getFullYear() * 12 + hd.getMonth() : null };
 }
 const SOLD_MONTHS = 12;
 async function loadPuIndex(force) {
@@ -3537,7 +3576,8 @@ function renderPInfo() {
   const recs = st.list.slice(0, 4).map(r => `<li><span>${shortDay(r.day)}</span><span class="nm">${esc(r.supplier || '未填供應商')}</span><span>${qtyFmt(r.qty)} ${esc(it.unit || '')}</span><span class="priv">${r.cost === null ? '–' : money(r.cost)}</span></li>`).join('');
   box.innerHTML = `<div class="pi-head"><span><span class="tag">${esc(code)}</span></span><strong>${esc(it.name)}</strong>
       <span class="muted">${[it.brand, it.type, it.unit].filter(Boolean).map(esc).join(' · ')}${it.supplier ? `${it.brand || it.type || it.unit ? ' · ' : ''}供應商 ${esc(it.supplier)}` : ''}</span>
-      <span class="muted">${it.short ? `簡碼 ${esc(it.short)}` : '未有簡碼'}</span></div>
+      <span class="muted">${it.short ? `簡碼 ${esc(it.short)}` : '未有簡碼'}</span>
+      <span><button class="btn small" data-detail="${esc(code)}" type="button">詳細資料</button></span></div>
     <div class="pi-figs">${fig('來價', c === null ? '未有' : money(c), '貨品資料', 'priv')}${fig('平均來價', st.avg === null ? '–' : money(st.avg), st.n ? `${st.n} 次入貨` : '未有入貨紀錄', 'priv')}${fig('最近來價', st.lastCost === null ? '–' : money(st.lastCost), st.lastCostDay ? shortDay(st.lastCostDay) : '', 'priv')}${fig('零售價', p === null ? '未有' : money(p), state.unlocked && c !== null && p ? '毛利率 ' + Math.round((p - c) / p * 100) + '%' : '')}${fig('存量', it.stock === null || it.stock === undefined ? '未點' : qtyFmt(num(it.stock)), esc(it.unit || ''))}</div>
     <div class="pi-recs"><div class="pi-rh"><span>入貨紀錄</span>${st.n ? `<button class="linkbtn" data-precs="${esc(code)}" type="button">全部 ${st.n} 次</button>` : ''}</div>
       ${!state.puIdx ? '<p class="hint">讀緊入貨紀錄…</p>' : recs ? `<ul>${recs}</ul>` : '<p class="hint">喺呢個系統未有入貨紀錄。</p>'}</div>
@@ -3545,19 +3585,24 @@ function renderPInfo() {
 }
 // 每月賣出: the last 12 months on one shelf line, oldest on the left. The average (dashed) counts only finished months
 // the records fully cover: all of them once the old system's history is imported, otherwise the months since the first sale here.
-function soldHtml(code, it) {
-  if (!state.soldIdx) return '<div class="pi-sold"><p class="hint">計緊每月賣出…</p></div>';
+function soldStats(code) {
+  if (!state.soldIdx) return null;
   const q = (state.soldIdx.get(code) || new Array(SOLD_MONTHS).fill(0)).map(round3), now = new Date();
-  const total = round3(q.reduce((t, v) => t + v, 0)), top = Math.max(0, ...q), peak = top > 0 ? q.indexOf(top) : -1;
+  const total = round3(q.reduce((t, v) => t + v, 0)), top = Math.max(0, ...q);
   const from = state.soldHasHist ? null : state.soldFrom ? parseDay(state.soldFrom) : now;
   const full = [];
   for (let i = 1; i < SOLD_MONTHS; i++) if (!from || new Date(now.getFullYear(), now.getMonth() - i, 1) >= from) full.push(q[i]);
-  const avg = full.length >= 2 && top > 0 ? full.reduce((t, v) => t + v, 0) / full.length : null;
+  return { q, total, top, avg: full.length >= 2 && top > 0 ? full.reduce((t, v) => t + v, 0) / full.length : null };
+}
+function soldHtml(code, it) {
+  const st = soldStats(code);
+  if (!st) return '<div class="pi-sold"><p class="hint">計緊每月賣出…</p></div>';
+  const { q, total, top, avg } = st, now = new Date(), peak = top > 0 ? q.indexOf(top) : -1;
   const unit = esc(it.unit || '件');
   const bars = q.map((v, i) => ({ v, i, d: new Date(now.getFullYear(), now.getMonth() - i, 1) })).reverse().map(({ v, i, d }) => {
     const cls = [i === 0 ? 'cur' : '', v > 0 ? '' : 'zero', i === peak ? 'peak' : ''].filter(Boolean).join(' ');
     return `<li${cls ? ` class="${cls}"` : ''} title="${d.getFullYear()}年${d.getMonth() + 1}月${i === 0 ? '（未完）' : ''}：賣出 ${qtyFmt(v)} ${unit}">
-      <span class="q">${v > 0 ? qtyFmt(v) : '–'}</span><i class="b" style="--h:${v > 0 ? Math.max(5, Math.round(v / top * 100)) : 0}"></i><span class="m">${d.getMonth() + 1}月</span></li>`;
+      <span class="q">${v > 0 ? qtyFmt(v) : '–'}</span><i class="b" style="--h:${v > 0 ? Math.max(5, Math.round(v / top * 100)) : 0}"></i><span class="m">${d.getMonth() + 1}<span class="mo">月</span></span></li>`;
   }).join('');
   const avgTxt = avg === null ? '' : avg >= 10 ? String(Math.round(avg)) : qtyFmt(Math.round(avg * 10) / 10);
   const line = avg === null ? '' : `<div class="avg" style="top:${(18 + 44 * (1 - avg / top)).toFixed(1)}px"><span>平均 ${avgTxt}</span></div>`;
@@ -3565,6 +3610,165 @@ function soldHtml(code, it) {
   return `<div class="pi-sold"><div class="pi-rh"><span>每月賣出（${unit}）</span><span>近 12 個月共 <strong class="num">${qtyFmt(total)}</strong> ${unit}${avg === null ? '' : ` · 平均每月 <strong class="num">${avgTxt}</strong>`}</span></div>
     <ol class="ms${line ? ' has-avg' : ''}" aria-label="每月賣出">${bars}${line}</ol>${note}</div>`;
 }
+/* ---------- 貨品詳細: every sale, return, delivery and count of one product, by month and one by one ---------- */
+state.pd = null;
+async function openPDetail(code) {
+  if (!state.catalog.has(code)) return;
+  state.pd = { code, filter: 'all', show: 200, data: null };
+  $('#pDetail').hidden = false;
+  $('#pdBody').innerHTML = `<p class="hint">讀緊 ${esc(code)} 嘅紀錄…</p>`;
+  await loadPDetail(code);
+  const c = $('#pdClose'); c && c.focus();
+}
+function closePDetail(quiet) {
+  $('#pDetail').hidden = true; state.pd = null;
+  if (!quiet && !$('#view-products').hidden) $('#pWrap').focus({ preventScroll: true });
+}
+let pdBusy = false;
+async function loadPDetail(code) {
+  if (pdBusy || !state.pd || state.pd.code !== code) return;
+  pdBusy = true;
+  try {
+    const [docs, hist] = await Promise.all([allDayDocs(), loadHistSold().catch(() => ({ map: new Map(), amt: new Map(), base: null }))]);
+    if (!state.pd || state.pd.code !== code) return;
+    state.pd.data = pdCollect(code, docs, hist);
+    renderPDetail();
+  } catch (e) { $('#pdBody').innerHTML = `<p class="hint">讀唔到紀錄：${esc(e.message || e)}</p>`; }
+  finally { pdBusy = false; }
+}
+const ymOf = day => String(day || '').slice(0, 7);
+function pdCollect(code, docs, hist) {
+  const recs = [];
+  for (const d of docs) {
+    const rc = isObj(d.receipts) ? d.receipts : {}, pu = isObj(d.purchases) ? d.purchases : {};
+    for (const [id, l] of Object.entries(isObj(d.lines) ? d.lines : {})) {
+      if (!l || l.code !== code) continue;
+      const q = num(l.qty) || 0, base = { id, day: d.day, at: String(l.at || ''), qty: q, stockAfter: l.stockAfter, void: !!l.void };
+      if (l.kind === 'sale') {
+        const r = l.rid ? rc[l.rid] || {} : {};
+        recs.push({ ...base, kind: l.ret ? 'ret' : 'sale', price: num(l.price), cost: num(l.cost), no: r.no ?? null, acct: r.acctName || '', order: r.orderNo || null,
+          replaced: r.replacedBy ? r.replacedBy.no : null, void: !!(l.void || r.void), restock: l.restock !== false });
+      } else if (l.kind === 'in') {
+        const p = l.pid ? pu[l.pid] || {} : {};
+        recs.push({ ...base, kind: 'in', cost: num(l.cost), supplier: String(l.supplier || p.supplier || '').trim(), ref: p.ref || '', note: !!l.pid, void: !!(l.void || p.void) });
+      } else if (l.kind === 'adjust') recs.push({ ...base, kind: 'adjust' });
+    }
+  }
+  recs.sort((a, b) => b.day.localeCompare(a.day) || b.at.localeCompare(a.at));
+  // month by month: this system's records, plus the old system's sales where it was imported
+  const months = new Map(), mo = ym => { if (!months.has(ym)) months.set(ym, { ym, sold: 0, amt: 0, profit: 0, known: 0, ret: 0, retAmt: 0, inQty: 0, inCost: 0, sales: new Set(), notes: new Set(), old: 0, oldAmt: 0 }); return months.get(ym); };
+  for (const r of recs) {
+    if (r.void) continue;
+    const m = mo(ymOf(r.day));
+    if (r.kind === 'sale') { m.sold += r.qty; m.amt += r.qty * (r.price || 0); if (r.cost !== null) { m.profit += r.qty * ((r.price || 0) - r.cost); m.known++; } if (r.no !== null) m.sales.add(r.day + r.no); }
+    else if (r.kind === 'ret') { m.ret += -r.qty; m.retAmt += -r.qty * (r.price || 0); }
+    else if (r.kind === 'in') { m.inQty += r.qty; m.inCost += r.qty * (r.cost || 0); m.notes.add(r.day + (r.ref || r.supplier)); }
+  }
+  if (hist && hist.base !== null && hist.map.has(code)) {
+    const q = hist.map.get(code), a = (hist.amt && hist.amt.get(code)) || [];
+    for (let j = 0; j < q.length; j++) {
+      const v = num(q[j]) || 0; if (!v) continue;
+      const idx = hist.base - j, ym = `${Math.floor(idx / 12)}-${String(idx % 12 + 1).padStart(2, '0')}`;
+      const m = mo(ym); m.old += v; m.oldAmt += num(a[j]) || 0;
+    }
+  }
+  return { recs, months: [...months.values()].sort((x, y) => y.ym.localeCompare(x.ym)) };
+}
+const PD_KIND = { sale: '銷售', ret: '退貨', in: '入貨', adjust: '盤點' };
+function renderPDetail() {
+  const P = state.pd; if (!P || !P.data) return;
+  const code = P.code, it = state.catalog.get(code); if (!it) { closePDetail(); return; }
+  const { recs, months } = P.data, unit = esc(it.unit || '件');
+  const c = num(it.cost), p = num(it.price), s = num(it.stock);
+  const live = recs.filter(r => !r.void);
+  const lastSale = live.find(r => r.kind === 'sale'), lastIn = live.find(r => r.kind === 'in');
+  const firstSale = [...live].reverse().find(r => r.kind === 'sale'), firstIn = [...live].reverse().find(r => r.kind === 'in');
+  // the same 12 months and average as the bars; how long the stock lasts at that pace
+  const st = soldStats(code), q12 = st ? st.total : null, perMonth = st ? st.avg : null;
+  const avgTxt = perMonth === null ? '' : perMonth >= 10 ? String(Math.round(perMonth)) : qtyFmt(Math.round(perMonth * 10) / 10);
+  const lasts = s === null ? '未點存量' : s <= 0 ? '已經賣晒' : !perMonth || perMonth <= 0 ? '近期冇賣出' : s / perMonth >= 1 ? `約 ${qtyFmt(Math.round(s / perMonth * 10) / 10)} 個月` : `約 ${Math.max(1, Math.round(s / perMonth * 30))} 日`;
+  const kpi = (k, v, sub, cls) => `<div class="kpi${cls ? ' ' + cls : ''}"><span class="k">${k}</span><span class="v">${v}</span>${sub ? `<span class="s">${sub}</span>` : ''}</div>`;
+  const when = r => r ? `${shortDay(r.day)} ${timeOf(r.at)}` : '–';
+  const head = `<div class="pd-head"><div><span class="tag">${esc(code)}</span><h2 id="pdTitle">${esc(it.name || '')}</h2>
+      <div class="sub">${[it.brand, it.type, it.unit ? '單位：' + it.unit : '', it.supplier ? '供應商：' + it.supplier : '', it.barcode ? '條碼：' + it.barcode : '', it.short ? '簡碼：' + it.short : '未有簡碼'].filter(Boolean).map(esc).join(' · ')}</div></div>
+      <div class="actions"><button class="btn" type="button" data-pd-sell>加入收銀單</button>${state.canWrite ? `<button class="btn" type="button" data-pd-recv>入貨</button><button class="btn" type="button" data-pd-edit>修改貨品</button>` : ''}<button class="btn primary" type="button" id="pdClose">關閉</button></div></div>`;
+  const kpis = `<div class="kpis pd-kpis">${kpi('存量', s === null ? '未點' : qtyFmt(s) + ' ' + unit, `<span class="priv">${s !== null && c !== null ? '存貨值 ' + money(s * c) : ''}</span>`)}
+      ${kpi('零售價', p === null ? '未有' : money(p), state.unlocked && c !== null && p ? '毛利率 ' + Math.round((p - c) / p * 100) + '%' : '')}
+      ${kpi('來價', c === null ? '未有' : money(c), lastIn && lastIn.cost !== null ? `最近 ${money(lastIn.cost)}（${shortDay(lastIn.day)}）` : '', 'priv')}
+      ${kpi('近 12 個月賣出', q12 === null ? '…' : qtyFmt(q12) + ' ' + unit, avgTxt ? `平均每月 ${avgTxt}` : '')}
+      ${kpi('最後賣出', lastSale ? shortDay(lastSale.day) : '–', lastSale ? `${timeOf(lastSale.at)} · 第 ${esc(lastSale.no ?? '–')} 單` : '呢個系統未有賣出')}
+      ${kpi('最後入貨', lastIn ? shortDay(lastIn.day) : '–', lastIn ? esc(lastIn.supplier || '逐件入貨') : '呢個系統未有入貨')}
+      ${kpi('夠賣', lasts, '照近期每月賣出計')}</div>`;
+  // month by month
+  const mrow = m => `<tr><td class="num">${m.ym.slice(0, 4)}年${Number(m.ym.slice(5))}月</td>
+      <td class="r">${m.sold || m.old ? `<b>${qtyFmt(round3(m.sold + m.old))}</b>` : '–'}${m.old ? ' <span class="chip">含舊系統</span>' : ''}</td>
+      <td class="r">${m.amt || m.oldAmt ? money(m.amt + m.oldAmt) : '–'}</td><td class="r priv">${m.known ? money(m.profit) : '–'}</td>
+      <td class="r">${m.ret ? qtyFmt(round3(m.ret)) : '–'}</td><td class="r">${m.inQty ? qtyFmt(round3(m.inQty)) : '–'}</td><td class="r priv">${m.inCost ? money(m.inCost) : '–'}</td>
+      <td class="r">${m.sales.size || '–'}</td><td class="r">${m.notes.size || '–'}</td></tr>`;
+  const monthTable = months.length ? `<div class="pd-scroll table-wrap"><table><thead><tr><th>月份</th><th class="r">賣出（${unit}）</th><th class="r">營業額</th><th class="r priv">利潤</th><th class="r">退貨</th><th class="r">入貨（${unit}）</th><th class="r priv">入貨成本</th><th class="r">銷售單數</th><th class="r">入貨次數</th></tr></thead><tbody>${months.map(mrow).join('')}</tbody></table></div>`
+    : '<p class="pd-empty">未有任何紀錄。</p>';
+  // every record, newest first
+  const F = P.filter, pick = F === 'all' ? recs : F === 'void' ? recs.filter(r => r.void) : recs.filter(r => r.kind === F && !r.void);
+  const count = k => k === 'all' ? recs.length : k === 'void' ? recs.filter(r => r.void).length : recs.filter(r => r.kind === k && !r.void).length;
+  const tabs = ['all', 'sale', 'ret', 'in', 'adjust', 'void'].map(k => `<button type="button" class="segb" data-pd-f="${k}" aria-pressed="${k === F}">${k === 'all' ? '全部' : k === 'void' ? '已作廢' : PD_KIND[k]} ${count(k)}</button>`).join('');
+  const what = r => r.kind === 'sale' ? `第 ${esc(r.no ?? '–')} 單${r.order ? ` · 訂單 #${esc(r.order)}` : ''}${r.acct ? ` · 掛數：${esc(r.acct)}` : ''}`
+    : r.kind === 'ret' ? `退貨 · 第 ${esc(r.no ?? '–')} 單${r.acct ? ` · 扣 ${esc(r.acct)} 月結` : ''}${r.restock ? '' : ' · 冇放返貨架'}`
+    : r.kind === 'in' ? (r.note ? `${esc(r.supplier || '未填供應商')}${r.ref ? ` · 單號 ${esc(r.ref)}` : ''}` : '逐件入貨') : '盤點調整';
+  const price = r => r.kind === 'in' ? (r.cost === null ? '–' : `<span class="priv">${money(r.cost)}</span>`) : r.kind === 'adjust' ? '' : r.price === null ? '–' : money(r.price);
+  const amount = r => r.kind === 'in' ? (r.cost === null ? '' : `<span class="priv">${money(r.qty * r.cost)}</span>`) : r.kind === 'adjust' ? '' : `<b>${money(Math.abs(r.qty) * (r.price || 0))}</b>`;
+  const signed = r => (r.kind === 'sale' ? '−' : r.kind === 'ret' || r.kind === 'in' ? '+' : r.qty > 0 ? '+' : '') + qtyFmt(Math.abs(r.kind === 'adjust' ? r.qty : r.qty));
+  const rrow = r => `<tr class="${r.void ? 'void' : ''}"><td class="num">${shortDay(r.day)}</td><td class="num">${timeOf(r.at)}</td><td><span class="kind k-${r.kind}">${PD_KIND[r.kind]}</span></td>
+      <td><span class="what">${what(r)}</span>${r.void ? ` <span class="chip">${r.replaced ? `已改單 → 第 ${esc(r.replaced)} 單` : '已作廢'}</span>` : ''}</td>
+      <td class="r num">${signed(r)}</td><td class="r">${price(r)}</td><td class="r">${amount(r)}</td><td class="r num">${r.stockAfter === null || r.stockAfter === undefined ? '–' : qtyFmt(num(r.stockAfter))}</td></tr>`;
+  const list = pick.slice(0, P.show);
+  const recTable = pick.length ? `<div class="pd-scroll table-wrap"><table><thead><tr><th>日期</th><th>時間</th><th>類別</th><th>單 / 供應商</th><th class="r">數量</th><th class="r">單價 / 來價</th><th class="r">金額</th><th class="r">之後存量</th></tr></thead><tbody>${list.map(rrow).join('')}</tbody></table></div>
+      ${pick.length > list.length ? `<button class="btn pd-more" type="button" data-pd-more>再顯示 ${Math.min(200, pick.length - list.length)} 筆（共 ${pick.length} 筆）</button>` : ''}`
+    : '<p class="pd-empty">冇呢類紀錄。</p>';
+  // suppliers and their costs
+  const sup = new Map();
+  for (const r of live) if (r.kind === 'in') {
+    const k = r.supplier || (r.note ? '未填供應商' : '逐件入貨');
+    if (!sup.has(k)) sup.set(k, { name: k, n: 0, qty: 0, last: r, min: null, max: null });
+    const e = sup.get(k); e.n++; e.qty += r.qty;
+    if (r.cost !== null) { e.min = e.min === null ? r.cost : Math.min(e.min, r.cost); e.max = e.max === null ? r.cost : Math.max(e.max, r.cost); }
+  }
+  const supHtml = sup.size ? `<div class="pd-scroll"><table><thead><tr><th>供應商</th><th class="r">次數</th><th class="r">共入</th><th class="r">最近來價</th><th class="r">最平</th><th class="r">最貴</th><th class="r">最近一次</th></tr></thead><tbody>${[...sup.values()].map(e => `<tr><td>${esc(e.name)}</td><td class="r">${e.n}</td><td class="r">${qtyFmt(round3(e.qty))}</td><td class="r">${e.last.cost === null ? '–' : money(e.last.cost)}</td><td class="r">${e.min === null ? '–' : money(e.min)}</td><td class="r">${e.max === null ? '–' : money(e.max)}</td><td class="r num">${shortDay(e.last.day)}</td></tr>`).join('')}</tbody></table></div>`
+    : '<p class="pd-empty">呢個系統未有入貨紀錄。</p>';
+  // account customers who bought it
+  const cus = new Map();
+  for (const r of live) if ((r.kind === 'sale' || r.kind === 'ret') && r.acct) {
+    if (!cus.has(r.acct)) cus.set(r.acct, { name: r.acct, n: 0, qty: 0, amt: 0, last: r.day });
+    const e = cus.get(r.acct); if (r.kind === 'sale') e.n++; e.qty += r.kind === 'sale' ? r.qty : r.qty; e.amt += r.qty * (r.price || 0); if (r.day > e.last) e.last = r.day;
+  }
+  const cusHtml = cus.size ? `<table><thead><tr><th>客人</th><th class="r">次數</th><th class="r">件數</th><th class="r">金額</th><th class="r">最近</th></tr></thead><tbody>${[...cus.values()].sort((a, b) => b.amt - a.amt).map(e => `<tr><td>${esc(e.name)}</td><td class="r">${e.n}</td><td class="r">${qtyFmt(round3(e.qty))}</td><td class="r">${money(e.amt)}</td><td class="r num">${shortDay(e.last)}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="pd-empty">未有月結客人買過。</p>';
+  // open orders waiting for it
+  const ST = { wait: '等緊貨', ready: '到貨待取' };
+  const ords = [...state.orders.values()].filter(o => ST[o.status] && (o.items || []).some(i => i.code === code));
+  const ordHtml = ords.length ? `<table><thead><tr><th>訂單</th><th>客人</th><th class="r">數量</th><th>狀態</th><th class="r">落單日</th></tr></thead><tbody>${ords.map(o => `<tr><td>#${esc(o.no)}</td><td>${esc(o.name || '')}${o.phone ? ` <span class="muted">${esc(o.phone)}</span>` : ''}</td><td class="r">${qtyFmt(round3((o.items || []).filter(i => i.code === code).reduce((t, i) => t + (num(i.qty) || 0), 0)))}</td><td>${ST[o.status]}</td><td class="r num">${o.day ? shortDay(o.day) : ''}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="pd-empty">冇客人訂緊呢件貨。</p>';
+  const firsts = `第一次賣出：${firstSale ? when(firstSale) : '–'} · 第一次入貨：${firstIn ? when(firstIn) : '–'}`;
+  $('#pdBody').innerHTML = `${head}${kpis}
+    <div class="pd-sec">${soldHtml(code, it)}</div>
+    <div class="pd-sec"><div class="card-head"><h3>每月總結</h3><span class="hint">${state.soldHasHist ? '賣出包括舊系統匯入嘅數；其他欄只計呢個系統。' : '只計呢個系統嘅紀錄。'}</span></div>${monthTable}</div>
+    <div class="pd-sec"><div class="card-head"><h3>全部紀錄</h3><span class="hint">${firsts}</span></div><div class="utabs pd-tabs" role="group" aria-label="篩選紀錄">${tabs}</div>${recTable}</div>
+    <div class="pd-two"><div class="pd-sec priv"><h3>供應商同來價</h3>${supHtml}</div><div class="pd-sec"><h3>月結客人</h3>${cusHtml}</div></div>
+    <div class="pd-sec"><h3>訂緊呢件貨嘅客人</h3>${ordHtml}</div>`;
+}
+$('#pDetail').addEventListener('click', e => {
+  if (e.target === $('#pDetail') || e.target.closest('#pdClose')) { closePDetail(); return; }
+  const P = state.pd; if (!P) return;
+  const f = e.target.closest('[data-pd-f]'); if (f) { P.filter = f.dataset.pdF; P.show = 200; renderPDetail(); return; }
+  if (e.target.closest('[data-pd-more]')) { P.show += 200; renderPDetail(); return; }
+  if (e.target.closest('[data-pd-sell]')) { const c = P.code; closePDetail(true); sellProduct(c); return; }
+  if (e.target.closest('[data-pd-recv]')) { openReceive(P.code); return; }
+  if (e.target.closest('[data-pd-edit]')) { openProduct(P.code); return; }
+});
+// Esc closes the panel, unless a window opened from it is on top
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('#pDetail').hidden || !$('#modal').hidden || !$('#confirm').hidden || (e.target.closest && e.target.closest('#modal, #confirm'))) return;
+  e.preventDefault(); closePDetail();
+});
 function openProductRecords(code) {
   const it = state.catalog.get(code); if (!it) return;
   const st = puStats(code);
@@ -6268,6 +6472,7 @@ document.addEventListener('keydown', e => {
   if (!v || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
   e.preventDefault();
   if (!$('#modal').hidden) closeModal();
+  if (!$('#pDetail').hidden) closePDetail(true);
   showView(v);
   if (v === 'products') { const s = $('#pSearch'); s.focus(); s.select(); }
 });
@@ -6746,7 +6951,8 @@ $('#pChips').addEventListener('click', e => {
 });
 $('#addProduct').addEventListener('click', () => openProduct(null));
 $('#pBody').addEventListener('click', e => {
-  const ed = e.target.closest('[data-prod]'), rc = e.target.closest('[data-recv]'), tr = e.target.closest('tr[data-code]');
+  const ed = e.target.closest('[data-prod]'), rc = e.target.closest('[data-recv]'), dt = e.target.closest('[data-detail]'), tr = e.target.closest('tr[data-code]');
+  if (dt) { selectProduct(dt.dataset.detail, false); openPDetail(dt.dataset.detail); return; }
   if (ed) openProduct(ed.dataset.prod);
   if (rc) openReceive(rc.dataset.recv);
   if (!tr || ed || rc) return;
@@ -6782,6 +6988,7 @@ $('#pBody').addEventListener('change', e => {
 $('#pBody').addEventListener('focusin', e => { const inp = e.target.closest('.short-in'); if (inp && inp.dataset.short !== state.pSel) selectProduct(inp.dataset.short, false); });
 // buying records, purchase edits
 document.addEventListener('click', e => {
+  const dt = e.target.closest('#pInfo [data-detail]'); if (dt) { openPDetail(dt.dataset.detail); return; }
   const r = e.target.closest('[data-precs]'); if (r) { openProductRecords(r.dataset.precs); return; }
   const pe = e.target.closest('[data-pe]'); if (pe) { const [d, id] = pe.dataset.pe.split('|'); openPurchaseLine(d, id); return; }
   const ph = e.target.closest('[data-ph]'); if (ph) { const [d, pid] = ph.dataset.ph.split('|'); openPurchaseHead(d, pid); return; }
