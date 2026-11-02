@@ -628,6 +628,11 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .slip-head { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 150px) minmax(0, 140px) auto; gap: 10px; align-items: end; padding: 16px var(--card-pad); }
 .slip-head .photo-btn { height: var(--control-height); white-space: nowrap; }
 .rcv-photo { display: grid; gap: 12px; }
+/* a 單號 already entered: the box turns red and the note can't be confirmed */
+.rcv-refmsg { grid-column: 1 / -1; margin: 0; padding: 8px 12px; border-radius: var(--radius-control); font-size: 14px; line-height: 20px; }
+.rcv-refmsg.bad { background: var(--pill-negative-bg); color: var(--pill-negative-ink); font-weight: 500; }
+.rcv-refmsg.warn { background: var(--pill-warning-bg); color: var(--pill-warning-ink); }
+#rcvRef[aria-invalid="true"] { border-color: var(--negative); box-shadow: 0 0 0 1px var(--negative); }
 .rcv-find { position: relative; }
 .rcv-find > label { font-weight: 500; }
 .rcv-find .suggest { left: 0; right: 0; top: 100%; margin-top: 4px; }
@@ -1259,6 +1264,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
           <label class="field"><span>日期</span><input id="rcvDate" type="date"></label>
           <label class="field"><span>單上總數 ($)</span><input id="rcvTotal" type="number" step="0.01" min="0" inputmode="decimal"></label>
           <button id="rcvPhotoBtn" class="btn photo-btn" type="button" aria-expanded="false" aria-controls="rcvPhoto"><svg class="i"><use href="#i-camera"/></svg>影相讀單</button>
+          <p class="rcv-refmsg" id="rcvRefMsg" role="alert" hidden></p>
         </div>
         <div class="card rcv-photo" id="rcvPhoto" hidden>
           <div class="card-head"><h2>影送貨單</h2><span id="rcvEngine" class="chip" hidden></span><span style="flex:1"></span><button id="rcvPhotoClose" class="btn small ghost" type="button">收埋</button></div>
@@ -3388,6 +3394,17 @@ async function loadPuIndex(force) {
   let docs, hist;
   try { [docs, hist] = await Promise.all([state.store.getDays('0000-01-01', '9999-12-31'), loadHistSold()]); } catch (e) { state.puIdxBusy = false; return; }
   // sold per product per month (0 = this month), net of returns: the old history plus this system's sales
+  // every delivery note's 單號 (today's are read from memory, so a note just entered counts at once)
+  const refs = new Map();
+  for (const d of docs) {
+    if (d.day === state.today) continue;
+    for (const [pid, pu] of Object.entries(isObj(d.purchases) ? d.purchases : {})) {
+      const k = pu && !pu.void ? refKey(pu.ref) : ''; if (!k) continue;
+      if (!refs.has(k)) refs.set(k, []);
+      refs.get(k).push({ day: d.day, pid, supplier: String(pu.supplier || '') });
+    }
+  }
+  state.refIdx = refs;
   const now = new Date(), cur = now.getFullYear() * 12 + now.getMonth(), sold = new Map();
   const addSold = (code, i, q) => { if (i < 0 || i >= SOLD_MONTHS || !q) return; let a = sold.get(code); if (!a) sold.set(code, a = new Array(SOLD_MONTHS).fill(0)); a[i] += q; };
   const saleLine = l => { if (!l || l.kind !== 'sale' || l.void) return; const dt = new Date(l.at); if (!isNaN(dt)) addSold(l.code, cur - (dt.getFullYear() * 12 + dt.getMonth()), num(l.qty) || 0); };
@@ -3413,6 +3430,31 @@ async function loadPuIndex(force) {
   for (const list of by.values()) list.sort((a, b) => b.at.localeCompare(a.at));
   state.puIdx = by; state.puIdxDirty = false; state.puIdxBusy = false;
   if (!$('#view-products').hidden) { state.pVer++; state.pDrawn = null; drawProducts(); renderPInfo(); }
+  if (!$('#view-receive').hidden) checkRcvRef();
+}
+// 單號 is never repeated: the same number again from the same supplier (or with no supplier to tell them apart)
+// is the same note entered twice and is refused; the same number from another supplier only gets a reminder
+const refKey = r => String(r || '').toUpperCase().replace(/[\s\-_.\/#]/g, '');
+const supKey = s => String(s || '').toLowerCase().replace(/\s/g, '');
+const sameSup = (a, b) => { a = supKey(a); b = supKey(b); return !a || !b || a.includes(b) || b.includes(a); };
+function refClash(ref, supplier, exceptPid) {
+  const k = refKey(ref); if (!k) return { block: null, other: null };
+  const uses = [...((state.refIdx && state.refIdx.get(k)) || [])];
+  for (const [pid, pu] of Object.entries(state.purchases)) if (pu && !pu.void && refKey(pu.ref) === k) uses.push({ day: state.today, pid, supplier: String(pu.supplier || '') });
+  const others = uses.filter(u => u.pid !== exceptPid);
+  return { block: others.find(u => sameSup(u.supplier, supplier)) || null, other: others.find(u => !sameSup(u.supplier, supplier)) || null };
+}
+const refUseTxt = u => `${shortDay(u.day)}${u.supplier ? ' ' + u.supplier : ''}`;
+function checkRcvRef() {
+  const ref = $('#rcvRef').value.trim(), c = refClash(ref, $('#rcvSupplier').value);
+  state.rcvRefBad = !!c.block;
+  const msg = $('#rcvRefMsg');
+  $('#rcvRef').setAttribute('aria-invalid', String(!!c.block));
+  msg.hidden = !c.block && !c.other;
+  msg.className = 'rcv-refmsg ' + (c.block ? 'bad' : 'warn');
+  msg.textContent = c.block ? `單號「${ref}」已經入過（${refUseTxt(c.block)}），同一張單唔可以入兩次。請檢查單號。`
+    : c.other ? `提提你：單號「${ref}」喺 ${refUseTxt(c.other)} 都用過。如果係另一間供應商嘅單就冇問題。` : '';
+  renderRcvSum();
 }
 function puStats(code) {
   const list = (state.puIdx && state.puIdx.get(code)) || [];
@@ -3560,6 +3602,7 @@ async function openPurchaseHead(day, pid) {
   let doc = null; try { doc = await getDayDoc(day); } catch (e) {}
   const pu = doc && isObj(doc.purchases) ? doc.purchases[pid] : null;
   if (!pu || pu.void) { toast('搵唔到呢張入貨單。', true); return; }
+  if (!state.puIdx || state.puIdxDirty) await loadPuIndex();
   openModal(`修改入貨單 · ${shortDay(day)}`, `
     <div class="fields">
       <label class="field"><span>供應商</span><input name="supplier" type="text" list="dlSuppliers" value="${esc(pu.supplier || '')}"></label>
@@ -3568,6 +3611,8 @@ async function openPurchaseHead(day, pid) {
     </div>
     <p class="hint">改供應商會一齊改呢張單每一行同嗰啲貨品嘅供應商。要改貨品、數量或者來價，請撳嗰一行嘅「修改」。</p>`, async fd => {
     const supplier = String(fd.get('supplier') || '').trim(), ref = String(fd.get('ref') || '').trim(), date = String(fd.get('date') || '') || day;
+    const clash = refClash(ref, supplier, pid).block;
+    if (clash) throw new Error(`單號「${ref}」已經用過（${refUseTxt(clash)}），唔可以重複。`);
     const lines = {}, cw = catalogWriter();
     if (supplier !== (pu.supplier || '')) for (const [id, l] of Object.entries(doc.lines || {})) if (l && l.pid === pid) {
       lines[id] = { supplier };
@@ -4141,7 +4186,7 @@ function renderRcv() {
   $('#rcvEmpty').hidden = !!r.rows.length;
   $('#rcvUnitNote').hidden = !r.rows.some(x => x.text || x.scode);
   $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(r);
-  renderRcvSum();
+  checkRcvRef();
 }
 function renderRcvSum() {
   const rows = state.rcv ? state.rcv.rows.filter(x => x.inc) : [];
@@ -4153,13 +4198,16 @@ function renderRcvSum() {
   const tot = num($('#rcvTotal').value), m = $('#rcvMatch');
   m.hidden = tot === null || !rows.length;
   if (!m.hidden) m.innerHTML = `<span>同單上總數 ${money(tot)}</span>${Math.abs(tot - sum) <= 1 ? '<span class="chip ok">啱數</span>' : `<span class="chip warn">差 ${money(Math.abs(tot - sum))}</span>`}`;
-  const chk = $('#rcvCheck'); chk.hidden = !missing; chk.textContent = missing ? `有 ${missing} 行未揀貨品。揀返貨品，或者撳 ✕ 刪走嗰行。` : '';
+  const notes = [missing ? `有 ${missing} 行未揀貨品。揀返貨品，或者撳 ✕ 刪走嗰行。` : '', state.rcvRefBad ? '單號重複，改好單號先可以確認入貨。' : ''].filter(Boolean);
+  const chk = $('#rcvCheck'); chk.hidden = !notes.length; chk.textContent = notes.join(' ');
   const btn = $('#rcvConfirm');
   btn.textContent = ready ? `確認入貨（${ready} 款）` : '確認入貨';
-  btn.disabled = !ready || !!missing || !state.canWrite;
+  btn.disabled = !ready || !!missing || !state.canWrite || !!state.rcvRefBad;
 }
 async function confirmReceive() {
   const r = state.rcv; if (!r || !state.canWrite) return;
+  checkRcvRef();
+  if (state.rcvRefBad) { toast($('#rcvRefMsg').textContent, true); const b = $('#rcvRef'); b.focus(); b.select(); return; }
   if (state.busy) { toast('正在匯入貨品，請等匯入完成後再入貨。', true); return; }
   r.supplier = $('#rcvSupplier').value.trim(); r.ref = $('#rcvRef').value.trim(); r.date = $('#rcvDate').value; r.total = num($('#rcvTotal').value);
   const good = r.rows.filter(x => x.inc && x.code && (num(x.qty) || 0) > 0 && state.catalog.has(x.code));
@@ -4190,7 +4238,7 @@ async function confirmReceive() {
   Object.assign(state.aliases, aliasPatch);
   const photos = state.rcvPhotos.map(p => p.blob);
   state.rcv = null; state.pu = null; state.puIdxDirty = true; clearPhotos(); renderRcv(); renderRcvToday(); renderSell(); renderProducts(); fillSuppliers();
-  setRcvBusy(false, ''); resetRcvBar(); showRcvPhoto(false);
+  setRcvBusy(false, ''); resetRcvBar(); showRcvPhoto(false); $('#rcvAddCode').focus();   // ready for the next note
   toast(`已入貨 ${good.length} 款，存量已加上。入錯可以喺「入貨記錄」修改。`);
   orderGoodsIn(good.map(x => x.code));
   try {
@@ -5243,7 +5291,7 @@ function showView(v) {
   try { history.replaceState(null, '', '#' + v); } catch (e) {}
   if (v === 'sell') $('#scan').focus();
   if (v === 'products') renderProducts();
-  if (v === 'receive') { renderRcv(); renderRcvToday(); loadRcvRecent(); if (!state.rcvPick) $('#rcvAddCode').focus(); }
+  if (v === 'receive') { renderRcv(); renderRcvToday(); loadRcvRecent(); if (!state.puIdx || state.puIdxDirty) loadPuIndex(); if (!state.rcvPick) $('#rcvAddCode').focus(); }
   if (v === 'purchases') loadPurchases(false);
   if (v === 'returns') openReturns();
   if (v === 'accounts') openAccounts();
@@ -6439,8 +6487,8 @@ $('#rcvCancel').addEventListener('click', clearRcv);
 $('#rcvClear').addEventListener('click', clearRcv);
 $('#rcvConfirm').addEventListener('click', confirmReceive);
 $('#rcvTotal').addEventListener('input', () => { curRcv().total = num($('#rcvTotal').value); renderRcvSum(); $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
-$('#rcvSupplier').addEventListener('input', () => { curRcv().supplier = $('#rcvSupplier').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
-$('#rcvRef').addEventListener('input', () => { curRcv().ref = $('#rcvRef').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); });
+$('#rcvSupplier').addEventListener('input', () => { curRcv().supplier = $('#rcvSupplier').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); checkRcvRef(); });
+$('#rcvRef').addEventListener('input', () => { curRcv().ref = $('#rcvRef').value; $('#rcvClear').hidden = $('#rcvCancel').hidden = !rcvHasNote(state.rcv); checkRcvRef(); });
 $('#rcvDate').addEventListener('input', () => { curRcv().date = $('#rcvDate').value; });
 // the add bar works like the till's: item, Enter, quantity, Enter, cost, Enter adds the line
 state.rcvPick = null;   // the product chosen in the item box, waiting for its quantity and cost
@@ -6536,7 +6584,10 @@ $('#rcvAddCost').addEventListener('keydown', e => {
   e.preventDefault(); addFromBar();
 });
 // the note's details: Enter moves 供應商 → 單號 → 日期 → 總數 → the item box
-$('#rcvReview').addEventListener('keydown', e => enterNext(e, $('#rcvReview'), $('#rcvAddCode')));
+$('#rcvReview').addEventListener('keydown', e => {
+  if (e.target.id === 'rcvRef' && isEnter(e) && (checkRcvRef(), state.rcvRefBad)) { e.preventDefault(); e.target.select(); toast($('#rcvRefMsg').textContent, true); return; }
+  enterNext(e, $('#rcvReview'), $('#rcvAddCode'));
+});
 $('#modalBody').addEventListener('keydown', e => enterNext(e, $('#modalBody')));
 // the lines: − / + / ✕, quantity and cost typed in place, a photo line's match changed from its list
 const rcvRow = el => { const li = el.closest('.rci'); return li && state.rcv ? [li, state.rcv.rows[Number(li.dataset.i)]] : [null, null]; };
