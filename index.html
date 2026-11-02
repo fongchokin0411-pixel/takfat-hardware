@@ -460,6 +460,7 @@ tr.grp td .muted { margin-left: 8px; }
 .need .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .cart { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); display: grid; }
 .cart-head { display: flex; align-items: center; gap: 10px; padding: 14px var(--card-pad); border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.cust.re { background: var(--pill-warning-bg); color: var(--pill-warning-ink); }
 .cust { padding: 0 8px; border-radius: 999px; background: var(--pill-info-bg); color: var(--pill-info-ink); font-size: 13px; line-height: 22px; font-weight: 500; }
 /* five customers at the till, in a column beside the order; F5 steps 1 → 2 → … → 5 → 1 */
 .cart { container: cart / inline-size; }
@@ -982,7 +983,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
         </form>
 
         <div class="cart" id="cart">
-          <div class="cart-head"><h2>目前交易</h2><span class="cust" id="cartCust">客 1</span><span class="muted num" id="cartCount"></span><span style="flex:1"></span><button id="cartClear" class="btn small ghost" type="button" hidden>清除呢張單</button></div>
+          <div class="cart-head"><h2>目前交易</h2><span class="cust" id="cartCust">客 1</span><span class="cust re" id="cartRe" hidden></span><span class="muted num" id="cartCount"></span><span style="flex:1"></span><button id="cartClear" class="btn small ghost" type="button" hidden>清除呢張單</button></div>
           <div class="cart-body">
             <div class="slots" role="group" aria-label="客人">
               <div class="slot-list" id="slots"></div>
@@ -1010,6 +1011,11 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <div class="ord-who"><strong id="ordName"></strong><span class="muted" id="ordNo"></span></div>
             <div class="ord-math num" id="ordMath"></div>
             <button type="button" class="linkbtn" id="ordOff">唔係取訂貨，當普通單</button>
+          </div>
+          <div class="ord-on" id="reOn" hidden>
+            <div class="ord-who"><strong id="reName"></strong><span class="muted" id="reWhen"></span></div>
+            <div class="ord-math num" id="reMath"></div>
+            <button type="button" class="linkbtn" id="reOff">取消改單（原單唔變）</button>
           </div>
           <div class="pay-in" id="payIn">
             <label for="paid" class="k">客人付款</label>
@@ -2541,11 +2547,11 @@ function trySell(raw) {
 /* ---------- current order ---------- */
 const round3 = n => Math.round(n * 1000) / 1000;
 const CART_KEY = 'tf-cart-v1';
-function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify({ items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder })); } catch (e) {} }
+function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify({ items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder, reopen: state.cartReopen })); } catch (e) {} }
 function loadCart() {
   try {
     const d = JSON.parse(localStorage.getItem(CART_KEY) || 'null');
-    if (d && Array.isArray(d.items)) { state.cart = d.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = d.paid || ''; state.cartAcct = d.acct && d.acct.id ? d.acct : null; state.cartOrder = d.order && d.order.id ? d.order : null; }
+    if (d && Array.isArray(d.items)) { state.cart = d.items.filter(x => x && x.code && num(x.qty) > 0); $('#paid').value = d.paid || ''; state.cartAcct = d.acct && d.acct.id ? d.acct : null; state.cartOrder = d.order && d.order.id ? d.order : null; state.cartReopen = d.reopen && d.reopen.rid ? d.reopen : null; }
   } catch (e) {}
   loadHeld();
 }
@@ -2572,13 +2578,14 @@ const slotSale = no => state.held.find(h => h.no === no);
 const itemsTotal = items => items.reduce((s, c) => s + (num(c.qty) || 0) * (num(c.price) || 0), 0);
 function switchCustomer(no) {
   if (no === state.saleNo) { $('#scan').focus(); return; }
-  if (state.cart.length) state.held.push({ no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder, at: new Date().toISOString() });
+  if (state.cart.length) state.held.push({ no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder, reopen: state.cartReopen, at: new Date().toISOString() });
   const h = slotSale(no);
   state.held = state.held.filter(x => x !== h);
   state.cart = h ? h.items.filter(x => x && x.code && num(x.qty) > 0) : [];
   $('#paid').value = h ? h.paid || '' : '';
   state.cartAcct = h && h.acct && h.acct.id ? h.acct : null;
   state.cartOrder = h && h.order && h.order.id ? h.order : null;
+  state.cartReopen = h && h.reopen && h.reopen.rid ? h.reopen : null;
   state.saleNo = no;
   closeNeed(); clearScan();
   saveCart(); saveHeld(); renderCart();
@@ -2588,11 +2595,11 @@ const nextCustomer = () => switchCustomer(state.saleNo % SLOTS + 1);
 function clearSale() {
   resetPick(); hideSuggest(); $('#scan').value = '';
   if (!state.cart.length) { $('#scan').focus(); toast(`客 ${state.saleNo} 嘅單已經係空。`); return; }
-  const was = { no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder };
-  state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; saveCart(); renderCart(); $('#scan').focus();
+  const was = { no: state.saleNo, items: state.cart, paid: $('#paid').value, acct: state.cartAcct, order: state.cartOrder, reopen: state.cartReopen };
+  state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; state.cartReopen = null; saveCart(); renderCart(); $('#scan').focus();
   toast(`已清除客 ${was.no} 嘅 ${was.items.length} 款貨品。`, false, { label: '復原', fn: () => {
     if (state.saleNo !== was.no || state.cart.length) { toast(`客 ${was.no} 已經有新貨品，復原唔到。`, true); return; }
-    state.cart = was.items; $('#paid').value = was.paid; state.cartAcct = was.acct; state.cartOrder = was.order;
+    state.cart = was.items; $('#paid').value = was.paid; state.cartAcct = was.acct; state.cartOrder = was.order; state.cartReopen = was.reopen;
     saveCart(); renderCart(); $('#scan').focus(); toast(`已復原客 ${was.no} 張單。`);
   } });
 }
@@ -2611,7 +2618,33 @@ function renderSlots() {
 function cartTotal() { return state.cart.reduce((s, c) => s + (num(c.qty) || 0) * (num(c.price) || 0), 0); }
 // what is left to pay: an order being collected has its deposit taken off
 const cartDeposit = () => state.cartOrder ? num(state.cartOrder.deposit) || 0 : 0;
-const cartDue = () => round3(cartTotal() - cartDeposit());
+// a sale brought back from 今日銷售 (改單): what the customer paid for it is taken off; an account sale owes nothing in cash
+const cartPrevPaid = () => state.cartReopen && !state.cartAcct ? num(state.cartReopen.amt) || 0 : 0;
+const cartDue = () => round3(cartTotal() - cartDeposit() - cartPrevPaid());
+// 改單: a sale from today goes back to the till (this customer if empty, else the next free one) to add or change items.
+// Nothing changes until 完成交易; then the old sale is voided and the new one recorded in the same save.
+function reopenSale(rid) {
+  const r = state.receipts[rid];
+  if (!r || r.void || r.ret || r.order || !state.canWrite) return;
+  const ls = state.lines.filter(l => l.rid === rid && l.kind === 'sale' && !l.void).sort((a, b) => (a.n ?? 0) - (b.n ?? 0));
+  if (!ls.length) return;
+  if (state.cartReopen && state.cartReopen.rid === rid) { showView('sell'); toast(`第 ${r.no} 單已經喺收銀改緊。`); return; }
+  const held = state.held.find(h => h && h.reopen && h.reopen.rid === rid);
+  if (held) { showView('sell'); switchCustomer(held.no); toast(`第 ${r.no} 單已經喺客 ${held.no} 改緊。`); return; }
+  if (state.cart.length || state.cartReopen) {
+    let free = 0;
+    for (let k = 1; k < SLOTS && !free; k++) { const n = (state.saleNo + k - 1) % SLOTS + 1; if (!slotSale(n)) free = n; }
+    if (!free) { toast(`5 位客都有單未完成，請先完成或者清除一張，再改第 ${r.no} 單。`, true); return; }
+    switchCustomer(free);
+  }
+  state.cart = ls.map(l => ({ key: newId(), code: l.code, name: l.name || '', unit: l.unit || '', qty: num(l.qty) || 0, price: num(l.price) || 0 }));
+  state.cartAcct = r.acct ? { id: r.acct, name: r.acctName || '' } : null;
+  state.cartOrder = null;
+  state.cartReopen = { rid, no: r.no, at: r.at, amt: r.acct ? 0 : round3(itemsTotal(ls)) };
+  $('#paid').value = '';
+  saveCart(); saveHeld(); showView('sell'); renderCart();
+  toast(`第 ${r.no} 單已經放返收銀（客 ${state.saleNo}）。加貨或者改數量，再按「完成交易」就會取代原單。`);
+}
 function addToCart(code, qty, price) {
   const it = state.catalog.get(code); if (!it) return;
   let row = state.cart.find(c => c.code === code && num(c.price) === price);
@@ -2627,15 +2660,34 @@ async function checkout() {
   if (!state.canWrite) { showMsg('你只可以查看，不可以記錄銷售。'); return; }
   if (state.busy) { showMsg('正在匯入貨品，請等匯入完成後再完成交易。'); return; }
   const total = round3(cartTotal()), acct = state.cartOrder ? null : state.cartAcct, ord = state.cartOrder;
-  const dep = ord ? cartDeposit() : 0, due = round3(total - dep);
+  // 改單: the sale being replaced must still be there; if it was voided meanwhile this is simply a new sale
+  let re = state.cartReopen;
+  if (re && (!state.receipts[re.rid] || state.receipts[re.rid].void)) { state.cartReopen = re = null; saveCart(); }
+  const prev = re && !acct ? num(re.amt) || 0 : 0;
+  const dep = ord ? cartDeposit() : 0, due = round3(total - dep - prev);
   const paidIn = num($('#paid').value);
   // an empty payment box is not "exact": the cashier has to type what the customer handed over (or press 剛好)
-  if (!acct && paidIn === null && due > 0) { showMsg(`未輸入客人付款。${ord ? '扣咗訂金尚欠' : '合計'} ${money(due)}，請輸入收咗幾多錢，或者按「剛好」。`); $('#paid').focus(); return; }
+  if (!acct && paidIn === null && due > 0) { showMsg(`未輸入客人付款。${ord ? '扣咗訂金尚欠' : re ? '扣咗原單尚欠' : '合計'} ${money(due)}，請輸入收咗幾多錢，或者按「剛好」。`); $('#paid').focus(); return; }
   const paid = paidIn === null ? Math.max(0, due) : paidIn;
   if (!acct && paid < due - 0.0001) { showMsg(`客人付款唔夠，仲差 ${money(due - paid)}。`); $('#paid').focus(); return; }
   const at = new Date().toISOString(), rid = newId();
   const no = nextReceiptNo();
-  const lines = {}, chunkPatch = new Map();
+  const lines = {}, chunkPatch = new Map(), receipts = {};
+  if (re) {   // the old sale's stock comes back first, then the new lines take theirs
+    for (const l of state.lines) {
+      if (l.rid !== re.rid || l.void) continue;
+      l.void = true; lines[l.id] = { void: true, voidAt: at };
+      const it = state.catalog.get(l.code);
+      if (it && l.kind === 'sale') {
+        it.stock = round3((num(it.stock) ?? 0) + (num(l.qty) || 0));
+        const ch = state.codeChunk.get(l.code);
+        if (!chunkPatch.has(ch)) chunkPatch.set(ch, {});
+        chunkPatch.get(ch)[l.code] = { stock: it.stock };
+      }
+    }
+    receipts[re.rid] = { void: true, replacedBy: { rid, no } };
+    state.receipts[re.rid] = { ...state.receipts[re.rid], ...receipts[re.rid] };
+  }
   let n = 0;   // each line's place on the receipt
   for (const c of state.cart) {
     const it = state.catalog.get(c.code);
@@ -2652,19 +2704,22 @@ async function checkout() {
     lines[id] = { at, kind: 'sale', rid, n: n++, code: c.code, name: c.name || '', unit: c.unit || '', qty: q, price: num(c.price) || 0, cost: it ? num(it.cost) : null, stockAfter: after };
     state.lines.unshift({ id, ...lines[id] });
   }
-  const receipt = acct ? { at, no, total, items: state.cart.length, acct: acct.id, acctName: acct.name } : { at, no, total, paid, change: round3(paid - due), items: state.cart.length };
+  const receipt = acct ? { at, no, total, items: state.cart.length, acct: acct.id, acctName: acct.name } : { at, no, total, paid: round3(prev + paid), change: round3(paid - due), items: state.cart.length };
   if (ord) { receipt.order = ord.id; receipt.orderNo = ord.no; receipt.deposit = dep; }
+  if (re) receipt.prev = { rid: re.rid, no: re.no, amt: prev, paidNow: paid };
   state.receipts[rid] = receipt; state.soldDirty = true;
+  receipts[rid] = receipt;
   state.lastRid = rid;
   if (ord) orderCollected(ord.id, rid, no, at);
-  state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; saveCart(); saveHeld();
+  state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; state.cartReopen = null; saveCart(); saveHeld();
   renderCart(); renderSell();
   $('#scan').focus();
-  if (acct) toast(`已記入 ${acct.name} 嘅月結數：${money(total)}。`);
+  if (re) toast(`已改好：第 ${re.no} 單由第 ${no} 單取代。${acct ? `${acct.name} 嘅月結數已經更新。` : due < 0 ? `要退返客人 ${money(-due)}。` : ''}`);
+  else if (acct) toast(`已記入 ${acct.name} 嘅月結數：${money(total)}。`);
   if (state.held.length) toast(`交易完成。${state.held.map(h => h.no).sort((x, y) => x - y).map(n => '客 ' + n).join('、')} 仲未埋單，按 F5 或者撳左邊轉過去。`);
   try {
     await Promise.all([
-      state.store.patchDay(state.today, { day: state.today, receipts: { [rid]: receipt }, lines }),
+      state.store.patchDay(state.today, { day: state.today, receipts, lines }),
       ...[...chunkPatch].map(([ch, items]) => state.store.patchChunk(ch, { items })),
     ]);
     if (state.mode === 'live' && state.canWrite) setStatus('live', '已儲存 · 即時更新');
@@ -2673,12 +2728,15 @@ async function checkout() {
 }
 function renderCart() {
   const used = new Map();
+  // 改單: the sale being changed already took its stock; it comes back when the new one is finished
+  const back = new Map();
+  if (state.cartReopen) for (const l of state.lines) if (l.rid === state.cartReopen.rid && l.kind === 'sale' && !l.void) back.set(l.code, (back.get(l.code) || 0) + (num(l.qty) || 0));
   $('#cartList').innerHTML = state.cart.map(c => {
     const it = state.catalog.get(c.code);
     const q = num(c.qty) || 0, p = num(c.price) || 0;
     let stockTxt = '存量未點';
     if (it && num(it.stock) !== null) {
-      const before = round3(num(it.stock) - (used.get(c.code) || 0));
+      const before = round3(num(it.stock) + (back.get(c.code) || 0) - (used.get(c.code) || 0));
       stockTxt = `存量 ${qtyFmt(before)} → ${qtyFmt(round3(before - q))}`;
     }
     used.set(c.code, (used.get(c.code) || 0) + q);
@@ -2706,17 +2764,23 @@ function cashParts(amount) {
 }
 const denLabel = v => v >= 100 ? '$' + (v / 100).toLocaleString('en-HK') : v + '¢';
 function renderPay() {
-  const ord = state.cartOrder, total = ord ? cartDue() : cartTotal();
+  const ord = state.cartOrder, re = state.cartReopen, off = !!(ord || (re && !state.cartAcct)), total = off ? cartDue() : cartTotal();
   $('#cartTotal').textContent = money(total); fitBig($('#cartTotal'));
-  $('#totalK').textContent = ord ? (total < 0 ? '要退返客人' : '尚欠（已扣訂金）') : '合計';
+  $('#totalK').textContent = ord ? (total < 0 ? '要退返客人' : '尚欠（已扣訂金）') : off ? (total < 0 ? '要退返客人' : '補收（已扣原單）') : '合計';
   $('#ordOn').hidden = !ord;
+  $('#reOn').hidden = !re;
+  $('#cartRe').hidden = !re; if (re) $('#cartRe').textContent = `改緊第 ${re.no} 單`;
+  if (re) {
+    $('#reName').textContent = `改緊第 ${re.no} 單`; $('#reWhen').textContent = timeOf(re.at);
+    $('#reMath').textContent = state.cartAcct ? `合計 ${money(cartTotal())}，會取代原單記入 ${state.cartAcct.name} 嘅月結數` : `合計 ${money(cartTotal())} − 原單已收 ${money(cartPrevPaid())}`;
+  }
   if (ord) {
     $('#ordName').textContent = ord.name || '訂貨客人'; $('#ordNo').textContent = `訂單 #${ord.no}`;
     $('#ordMath').textContent = `合計 ${money(cartTotal())} − 已付訂金 ${money(cartDeposit())}`;
   }
-  $('#acctBtn').hidden = !!ord;
+  $('#acctBtn').hidden = !!ord || !!(re && !state.cartAcct);
   const paid = num($('#paid').value), row = $('#changeRow');
-  if (ord && total <= 0 && state.cart.length) { $('#changeLabel').textContent = '退返客人'; $('#changeAmt').textContent = money(-total + (paid || 0)); row.classList.remove('short'); }
+  if (off && total <= 0 && state.cart.length) { $('#changeLabel').textContent = '退返客人'; $('#changeAmt').textContent = money(-total + (paid || 0)); row.classList.remove('short'); }
   else if (paid === null || !state.cart.length) { $('#changeLabel').textContent = '找續'; $('#changeAmt').textContent = '–'; row.classList.remove('short'); }
   else if (paid + 0.0001 < total) { $('#changeLabel').textContent = '仲差'; $('#changeAmt').textContent = money(total - paid); row.classList.add('short'); }
   else { $('#changeLabel').textContent = '找續'; $('#changeAmt').textContent = money(paid - total); row.classList.remove('short'); }
@@ -3051,11 +3115,14 @@ function renderSell() {
     } else {
       const r = state.receipts[k] || {}, s = sumOf(ls, allVoid);
       const paid = num(r.paid) !== null ? `收 ${money(num(r.paid))} · 找 ${money(num(r.change) || 0)}` : '';
-      const meta = r.ret ? `${qtyFmt(round3(-s.qty))} 件${r.from ? ` · 原單 ${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單` : ''}${r.acct ? ` · 扣 <strong>${esc(r.acctName || '')}</strong> 月結數` : ''}${r.note ? ` · ${esc(r.note)}` : ''}`
+      const pv = r.prev, chg = num(r.change) || 0;
+      const meta = pv ? `${qtyFmt(round3(s.qty))} 件 · 改自第 ${esc(pv.no)} 單${r.acct ? ` · 掛數：<strong>${esc(r.acctName || '')}</strong>（月結）` : ` · ${num(r.total) < (num(pv.amt) || 0) ? `退返客人 ${money(chg)}` : `補收 ${money(num(pv.paidNow) || 0)} · 找 ${money(chg)}`}`}`
+        : r.ret ? `${qtyFmt(round3(-s.qty))} 件${r.from ? ` · 原單 ${esc(dayLabel(r.from.day))} 第 ${esc(r.from.no)} 單` : ''}${r.acct ? ` · 扣 <strong>${esc(r.acctName || '')}</strong> 月結數` : ''}${r.note ? ` · ${esc(r.note)}` : ''}`
         : `${qtyFmt(round3(s.qty))} 件 · ${r.order ? `訂單 #${esc(r.orderNo)} 扣訂金 ${money(num(r.deposit) || 0)}${paid ? ' · ' + paid : ''}` : r.acct ? `掛數：<strong>${esc(r.acctName || '')}</strong>（月結）` : paid}`;
       const prof = s.known && !allVoid ? `利潤 <span class="${s.profit < 0 ? 'loss' : ''}">${money(s.profit)}</span>` : '';
-      const act = (allVoid ? '<span class="chip">已作廢</span>' : quiet(`data-print-rid="${esc(k)}"`, '列印', false).replace('btn small', 'btn small print-only')
-        + (state.canWrite ? quiet(`data-vr="${esc(k)}"`, '作廢', true) : ''));
+      const canRe = state.canWrite && !r.ret && !r.order;
+      const act = (allVoid ? (r.replacedBy ? `<span class="chip">已改單 → 第 ${esc(r.replacedBy.no)} 單</span>` : '<span class="chip">已作廢</span>') : quiet(`data-print-rid="${esc(k)}"`, '列印', false).replace('btn small', 'btn small print-only')
+        + (canRe ? quiet(`data-reopen="${esc(k)}"`, '改單', false) : '') + (state.canWrite ? quiet(`data-vr="${esc(k)}"`, '作廢', true) : ''));
       rows.push(slip((r.ret ? ' ret' : r.acct ? ' acct' : '') + (allVoid ? ' void' : ''), r.ret ? `退貨 · 第 ${esc(r.no ?? '–')} 單` : `第 ${esc(r.no ?? '–')} 單`, timeOf(r.at || l.at), meta,
         r.ret ? money(-s.amt) : money(s.amt), `<span class="priv">${r.ret ? '退返客人' : prof}</span>`, act, ls));
     }
@@ -5711,7 +5778,7 @@ function setCartAcct(c) {
 /* ---------- 訂貨: a customer orders what is not in stock, pays a deposit, and collects it later ----------
    Orders live in meta/orders. Deposits taken or given back sit in that day's `deposits`, so 日結 shows the cash.
    The sale itself is recorded when the goods are collected, with the deposit taken off what is still owed. */
-state.orders = new Map(); state.cartOrder = null; state.deposits = {}; state.odForm = null;
+state.orders = new Map(); state.cartOrder = null; state.cartReopen = null; state.deposits = {}; state.odForm = null;
 state.od = { filter: 'open', sel: null };
 const OD_STATE = { wait: ['等貨', 'warn'], ready: ['到貨待取', 'info'], done: ['已取貨', 'ok'], cancel: ['已取消', ''] };
 const odOpen = o => o.status === 'wait' || o.status === 'ready';
@@ -6363,6 +6430,12 @@ $('#odActs').addEventListener('click', e => {
   ({ collect: collectOrder, ready: markReady, print: x => printOrder(x.id), edit: orderForm, cancel: cancelOrder })[b.dataset.oa](o);
 });
 $('#ordOff').addEventListener('click', () => { state.cartOrder = null; saveCart(); renderPay(); });
+$('#reOff').addEventListener('click', () => {
+  const re = state.cartReopen; if (!re) return;
+  ask(`取消改第 ${re.no} 單？`, `收銀上面嘅貨品會清走，原本嘅第 ${re.no} 單唔變。`, '取消改單', () => {
+    state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartReopen = null; saveCart(); renderCart(); $('#scan').focus();
+  });
+});
 // the order form's item rows, inside the shared dialog
 $('#modalBody').addEventListener('input', e => {
   if (!state.odForm || !$('#odRows')) return;
@@ -6387,8 +6460,8 @@ $('#acLog').addEventListener('click', e => {
 $('#slots').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (b) switchCustomer(num(b.dataset.slot)); });
 $('#cartClear').addEventListener('click', () => {
   if (!state.cart.length) return;
-  ask('清除呢張單？', `客 ${state.saleNo} 目前交易嘅 ${state.cart.length} 款貨品會清走，唔會記錄。`, '清除', () => {
-    state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; saveCart(); renderCart(); $('#scan').focus();
+  ask('清除呢張單？', `客 ${state.saleNo} 目前交易嘅 ${state.cart.length} 款貨品會清走，唔會記錄。${state.cartReopen ? `原本嘅第 ${state.cartReopen.no} 單唔變。` : ''}`, '清除', () => {
+    state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; state.cartReopen = null; saveCart(); renderCart(); $('#scan').focus();
   });
 });
 $('#scan').addEventListener('input', () => {
@@ -6448,6 +6521,7 @@ function askVoidGroup(key) {
   else ask(`作廢第 ${r.no ?? '–'} 單？`, `${n} 款貨品，合計 ${money(amt)}${r.acct ? `（掛數 ${r.acctName || ''}）` : ''}。存量會加返。`, '確認作廢', () => voidGroup(key));
 }
 $('#tape').addEventListener('click', e => {
+  const ro = e.target.closest('[data-reopen]'); if (ro) { reopenSale(ro.dataset.reopen); return; }
   const v = e.target.closest('[data-void]'), ed = e.target.closest('[data-edit]'), vr = e.target.closest('[data-vr]');
   if (v) askVoidLine(v.dataset.void);
   if (vr) askVoidGroup(vr.dataset.vr);
@@ -6901,7 +6975,7 @@ function daySummary() {
     if (l.ret) { rets.add(l.rid || l.id); retAmt -= (num(l.qty) || 0) * (num(l.price) || 0); continue; }
     if (l.rid) txs.add(l.rid); else loose++;
   }
-  voided += Object.values(state.receipts).filter(r => r && r.void).length;
+  voided += Object.values(state.receipts).filter(r => r && r.void && !r.replacedBy).length;
   const pus = Object.values(state.purchases).filter(p => p && !p.void);
   const puCost = pus.reduce((t, p) => t + (num(p.total) || 0), 0);
   const deps = Object.values(state.deposits || {}).filter(d => d && !d.void);
