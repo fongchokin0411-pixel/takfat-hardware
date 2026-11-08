@@ -1519,7 +1519,12 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
         </div>
         <div class="kpis" id="rKpis" role="tablist" aria-label="銷售數字"></div>
         <div class="card">
-          <div class="card-head"><h2 id="rChartTitle">每日營業額</h2></div>
+          <div class="card-head"><h2 id="rChartTitle">每日營業額</h2>
+            <div class="seg" id="rGroup" role="group" aria-label="圖表按">
+              <button class="fchip" type="button" data-g="day" aria-pressed="false">每日</button>
+              <button class="fchip" type="button" data-g="week" aria-pressed="true">每星期</button>
+              <button class="fchip" type="button" data-g="month" aria-pressed="false">每月</button>
+            </div></div>
           <div class="chart" id="rChart"></div>
         </div>
         <div class="card">
@@ -4133,19 +4138,39 @@ async function runReport() {
 }
 function niceStep(max, n) { const raw = max / n, mag = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw / mag; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag; }
 const R_SERIES = { sales: { t: '營業額', money: true }, profit: { t: '利潤', money: true }, cost: { t: '成本', money: true }, qty: { t: '售出件數' } };
+// 每日: a bar a day. 每星期: up to 10 weeks, each week set out with its days (and its total); longer, a bar a week.
+// 每月: a bar a month. With nothing picked yet, about two months or less shows 每星期, longer 每月.
+const R_GROUP_KEY = 'tf-report-group';
 function drawChart(from, to, byDay) {
   const S = R_SERIES[state.rSeries] || R_SERIES.sales, key = R_SERIES[state.rSeries] ? state.rSeries : 'sales';
   const nDays = Math.round((parseDay(to) - parseDay(from)) / 864e5) + 1;
-  const buckets = [];
-  if (nDays <= 62) { for (let d = from; d <= to; d = addDays(d, 1)) buckets.push({ label: `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`, v: (byDay.get(d) || {})[key] || 0 }); }
-  else {
+  const picked = lsGet(R_GROUP_KEY), g = ['day', 'week', 'month'].includes(picked) ? picked : nDays <= 62 ? 'week' : 'month';
+  $$('#rGroup [data-g]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.g === g)));
+  const val = d => (byDay.get(d) || {})[key] || 0, md = d => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
+  const bars = (buckets, height = 220) => drawBars('#rChart', { labels: buckets.map(x => x.label), values: buckets.map(x => round3(x.v)), money: S.money, height });
+  if (g === 'day') {
+    $('#rChartTitle').textContent = '每日' + S.t;
+    const buckets = [];
+    for (let d = from; d <= to; d = addDays(d, 1)) buckets.push({ label: md(d), v: val(d) });
+    bars(buckets);
+  } else if (g === 'week') {
+    $('#rChartTitle').textContent = '每星期' + S.t;
+    const mon = d => addDays(d, -((parseDay(d).getDay() + 6) % 7));
+    const nWeeks = Math.round((parseDay(mon(to)) - parseDay(mon(from))) / 6048e5) + 1;
+    if (nWeeks <= 10) drawWeeks('#rChart', { from, to, value: val, money: S.money });
+    else {
+      // a bar a week, named by its first day in the range
+      const m = new Map();
+      for (let d = from; d <= to; d = addDays(d, 1)) { const k = mon(d); const x = m.get(k) || { label: md(d < k ? k : d), v: 0 }; x.v += val(d); m.set(k, x); }
+      bars([...m.values()]);
+    }
+  } else {
+    $('#rChartTitle').textContent = '每月' + S.t;
+    // the year goes on the first month and on each January, so a range over New Year reads plainly
     const m = new Map();
-    for (let d = from; d <= to; d = addDays(d, 1)) { const k = d.slice(0, 7); const b = m.get(k) || { label: `${Number(k.slice(5))}月`, v: 0 }; b.v += (byDay.get(d) || {})[key] || 0; m.set(k, b); }
-    buckets.push(...m.values());
+    for (let d = from; d <= to; d = addDays(d, 1)) { const k = d.slice(0, 7); const x = m.get(k) || { k, v: 0 }; x.v += val(d); m.set(k, x); }
+    bars([...m.values()].map((x, i) => ({ label: (i === 0 || x.k.endsWith('-01') ? `${x.k.slice(0, 4)}年` : '') + `${Number(x.k.slice(5))}月`, v: x.v })));
   }
-  $('#rChartTitle').textContent = nDays <= 62 ? `每日${S.t} · 按星期` : '每月' + S.t;
-  if (nDays <= 62) drawWeeks('#rChart', { from, to, value: d => (byDay.get(d) || {})[key] || 0, money: S.money });
-  else drawBars('#rChart', { labels: buckets.map(b => b.label), values: buckets.map(b => round3(b.v)), money: S.money, height: 220 });
 }
 async function exportCsv() {
   const r = state.report;
@@ -7097,6 +7122,12 @@ $('#puMode').addEventListener('click', e => {
 $('#puSup').addEventListener('change', renderPurchases);
 $('#puSupList').addEventListener('click', e => { const b = e.target.closest('[data-sup]'); if (!b) return; const sel = $('#puSup'); sel.value = sel.value === b.dataset.sup ? '' : b.dataset.sup; renderPurchases(); });
 $('#tKpis').addEventListener('click', e => { const b = e.target.closest('[data-series]'); if (!b) return; state.tSeries = b.dataset.series; renderTodayChart(); });
+$('#rGroup').addEventListener('click', e => {
+  const b = e.target.closest('[data-g]'); if (!b) return;
+  lsSet(R_GROUP_KEY, b.dataset.g);
+  $$('#rGroup [data-g]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  if (state.rByDay) drawChart(state.rByDay.from, state.rByDay.to, state.rByDay.byDay);
+});
 $('#rKpis').addEventListener('click', e => {
   const b = e.target.closest('[data-series]'); if (!b || !state.rByDay) return;
   state.rSeries = b.dataset.series;
