@@ -2545,15 +2545,39 @@ function showNearby(center, idx = -1) {
   showSuggest(hits, at, { exact, caption: `${center} 附近嘅貨號 · 用 ↑↓ 揀選，Enter 加入` });
 }
 // dashes, dots and spaces don't matter: "WD-40" finds "WD40", "1/2" finds "1/2"
-const squash = t => t.replace(/[\s\-_.·]/g, '');
+// Search words. "WD-40" finds "WD40" (dashes and dots between letters don't matter), but a decimal point stays: "2.0" is
+// not "20". A word that starts with a number must start a number in the name ("20V" is not "220V", "2.0" is not "12.0",
+// "4\"" is not "1-1/4\""), and one that ends in a digit must end one ("2" is not "20" or "2.5"). Codes, barcodes and 簡碼
+// match anywhere, as before. Spaces stay, so the words of a name don't run together.
+const squash = t => t.replace(/[\-_·]|\.(?!\d)|(?<!\d)\./g, '');
+const isDigit = ch => ch >= '0' && ch <= '9';
+function termIn(text, t) {
+  const numStart = isDigit(t[0]), numEnd = isDigit(t[t.length - 1]);
+  if (!numStart && !numEnd) return text.includes(t);
+  for (let i = text.indexOf(t); i >= 0; i = text.indexOf(t, i + 1)) {
+    const b = text[i - 1] || '', a = text[i + t.length] || '';
+    // a decimal point or a fraction's "/" carries a number on; so does the "-" of a mixed fraction ("1-1/4") when looking for a fraction
+    const bb = text[i - 2] || '', aa = text[i + t.length + 1] || '';
+    if (numStart && (isDigit(b) || ((b === '.' || b === '/') && isDigit(bb)) || (b === '-' && isDigit(bb) && t.includes('/')))) continue;
+    if (numEnd && (isDigit(a) || ((a === '.' || a === '/') && isDigit(aa)))) continue;
+    return true;
+  }
+  return false;
+}
+// does a product match every word typed? `fields` are its words to search (name, brand, type, and on 貨品 the supplier)
+function matchTerms(code, it, terms, loose, fields) {
+  const c = code.toLowerCase(), plain = ((it.barcode || '') + ' ' + (it.short || '')).toLowerCase();
+  const words = fields.map(f => String(it[f] || '').toLowerCase()).filter(Boolean);
+  const has = (t, sq) => c.includes(t) || plain.includes(t) || words.some(w => termIn(sq ? squash(w) : w, t));
+  return terms.every(t => has(t, false)) || (loose.some((t, i) => t !== terms[i]) && loose.every(t => t && has(t, true)));
+}
 function search(q, limit = 8) {
   const terms = String(q).toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   const out = [], loose = terms.map(squash);
   for (const [code, it] of state.catalog) {
     const c = code.toLowerCase();
-    const hay = c + ' ' + (it.name || '').toLowerCase() + ' ' + (it.brand || '').toLowerCase() + ' ' + (it.type || '').toLowerCase() + ' ' + (it.barcode || '').toLowerCase() + ' ' + (it.short || '').toLowerCase();
-    if (!terms.every(t => hay.includes(t)) && !loose.every(t => t && squash(hay).includes(t))) continue;
+    if (!matchTerms(code, it, terms, loose, ['name', 'brand', 'type'])) continue;
     const score = c.startsWith(terms[0]) ? 0 : c.includes(terms[0]) ? 1 : 2;
     out.push({ code, it, score });
   }
@@ -3362,8 +3386,7 @@ function renderProducts() {
     const it = state.catalog.get(code);
     if (!it || !pass(it)) return false;
     if (center || !terms.length) return true;
-    const hay = (code + ' ' + (it.name || '') + ' ' + (it.brand || '') + ' ' + (it.type || '') + ' ' + (it.barcode || '') + ' ' + (it.supplier || '') + ' ' + (it.short || '')).toLowerCase();
-    return terms.every(t => hay.includes(t)) || loose.every(t => t && squash(hay).includes(t));
+    return matchTerms(code, it, terms, loose, ['name', 'brand', 'type', 'supplier']);
   });
   const key = [q, type, f].join('\u0001'), fresh = key !== state.pKey;
   state.pKey = key; state.pRows = rows; state.pVer = (state.pVer || 0) + 1;
