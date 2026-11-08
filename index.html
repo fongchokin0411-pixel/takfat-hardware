@@ -557,6 +557,27 @@ tr.grp td .muted { margin-left: 8px; }
 .notices { display: grid; gap: 8px; margin-bottom: var(--gap); }
 .notices:not(:has(> :not([hidden]))) { display: none; }
 .chart { position: relative; width: 100%; min-height: 180px; }
+/* days by week: each week its total and every day's figure, all bars on one scale so the weeks compare */
+.chart.is-wk { min-height: 0; }
+.wk { display: grid; grid-template-columns: repeat(auto-fit, minmax(186px, 1fr)); gap: 18px 14px; }
+.wk-g { container: wkg / inline-size; position: relative; min-width: 0; }
+.wk-g + .wk-g::before { content: ""; position: absolute; left: -7px; top: 0; bottom: 0; border-left: 1px solid var(--rule); }
+.wk-h { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+.wk-h span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wk-h b { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wk-h b.neg { color: var(--negative); }
+.wk .ms { column-gap: 2px; }
+.wk .ms::after { top: 72px; }
+.wk .ms li { grid-template-rows: 16px 56px 18px; min-width: 0; }
+.wk .ms .q { font-size: 10.5px; line-height: 16px; letter-spacing: -.2px; }
+.wk .ms .q .qn, .wk .ms .q .qk { display: none; }
+.wk .ms li.neg .q { color: var(--negative); }
+.wk .ms li.out .b { visibility: hidden; }
+.wk .ms li.out .m { color: var(--faint); opacity: .6; }
+.wk .ms .m { font-size: 11px; }
+/* narrower weeks drop the comma (1240), the narrowest shorten thousands (1.2k) */
+@container wkg (max-width: 204px) { .wk .ms .q { font-size: 10px; letter-spacing: -.3px; } .wk .ms .q .qf { display: none; } .wk .ms .q .qn { display: inline; } }
+@container wkg (max-width: 150px) { .wk .ms .q .qn { display: none; } .wk .ms .q .qk { display: inline; } }
 /* 今日銷售: each sale a slip (number, time, how it was paid, the total large on the right); undo actions quiet until pointed at */
 .slips { display: grid; gap: var(--gap); }
 .slip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
@@ -772,16 +793,62 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 .ap-list button:hover, .ap-list button:focus-visible { background: var(--raised); }
 tr.rcpt.acct td.sum strong.who { font-weight: 600; }
 /* 退貨 */
-.ret-rcpts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 300px; overflow-y: auto; }
-.ret-rcpts button { display: grid; grid-template-columns: 76px 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background-color .15s ease; }
-.ret-rcpts button:hover { background: var(--raised); }
-.ret-rcpts button[aria-current="true"] { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
-.ret-rcpts .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
-.ret-slip { container: cart / inline-size; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); }
-.ret-slip .cart-list { margin: 0 calc(var(--card-pad) * -1); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
-.ret-slip .cart-list:empty { display: none; }
-.ret-slip .row-wrap { flex-wrap: nowrap; }
-.ret-slip .done { flex: 1; }
+/* 退貨: the day's sales on the left, the chosen sale's goods in the middle, the refund on the right */
+.rt3 { display: grid; grid-template-columns: 296px minmax(0, 1fr) 330px; grid-template-areas: "list mid till"; gap: var(--gap); align-items: start; }
+.rt-sales { grid-area: list; } .rt-mid { grid-area: mid; }
+.rt-till { grid-area: till; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); }
+.rt-find { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.rt-find input { width: 100%; }
+.slist { list-style: none; margin: 0 calc(var(--card-pad) * -1) calc(var(--card-pad) * -1); padding: 0; max-height: max(320px, calc(100vh - 300px)); overflow-y: auto; border-top: 1px solid var(--rule); }
+.slist:empty { display: none; }
+.slist li + li { border-top: 1px solid var(--rule); }
+.slist button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; width: 100%; padding: 10px var(--card-pad); border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background-color .15s ease; }
+.slist button:hover { background: var(--raised); }
+.slist button[aria-current="true"] { background: var(--hue-tint); box-shadow: inset 3px 0 0 var(--hue); }
+.slist .no { font-weight: 700; }
+.slist .t { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.slist .amt { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.slist .items { grid-column: 1 / -1; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slist .acct { color: var(--pill-info-ink); font-weight: 500; }
+.rt-orig { gap: 8px; }
+.rt-orig .hint.warn { color: var(--pill-warning-ink); }
+.pick { list-style: none; margin: 0; padding: 0; display: grid; }
+.pick:empty { display: none; }
+.pick li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--rule); }
+.pick li:first-child { border-top: 0; }
+.pick input[type=checkbox] { width: 20px; height: 20px; margin: 0; justify-self: center; accent-color: var(--text); cursor: pointer; }
+.pick .nm { min-width: 0; justify-self: start; font-size: 16px; font-weight: 600; cursor: pointer; }
+.pick .m { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.pick .ci-qty button { width: 32px; height: 34px; }
+.pick .ci-qty input { width: 46px; height: 34px; font-size: 16px; }
+.pick .ci-price { display: inline-flex; align-items: center; gap: 4px; }
+.pick .ci-price input { width: 68px; height: 34px; font-size: 16px; }
+.pick .amt { margin-left: auto; font-weight: 700; color: var(--text); }
+.pick li.off { color: var(--faint); }
+.pick li.off .nm { text-decoration: line-through; cursor: default; }
+.pick li.hit .nm { background: var(--pill-warning-bg); box-shadow: 0 0 0 3px var(--pill-warning-bg); border-radius: 2px; }
+.pick .ci-x { justify-self: center; }
+.rt-none { margin: 0; color: var(--muted); }
+.rt-none strong { display: block; margin-bottom: 4px; color: var(--text); }
+.rt-man { display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.rt-man .card-head h2 { font-size: 15px; }
+.rt-man-f { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.rt-man-f .field:first-child { grid-column: 1 / -1; }
+.rt-man-f input { width: 100%; }
+.rt-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.rt-list:empty { display: none; }
+.rt-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 9px 0; border-top: 1px solid var(--rule); font-size: 14px; }
+.rt-list li:first-child { border-top: 0; }
+.rt-list .nm { font-weight: 600; }
+.rt-list .amt { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rt-list .s { grid-column: 1 / -1; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.rt-till .k-from { margin-top: -8px; font-size: 13px; color: var(--muted); }
+.rt-till .k-from:empty { display: none; }
+.rt-till .linkbtn { justify-self: center; }
+@media (max-width: 1320px) { .rt3 { grid-template-columns: 300px minmax(0, 1fr); grid-template-areas: "list mid" "list till"; } .rt-till { position: static; }
+  .rt-man-f { grid-template-columns: minmax(0, 1fr) 80px 110px auto; } .rt-man-f .field:first-child { grid-column: auto; } }
+@media (max-width: 900px) { .rt3 { grid-template-columns: minmax(0, 1fr); grid-template-areas: "list" "mid" "till"; } .slist { max-height: 320px; } }
+@media (max-width: 640px) { .rt-man-f { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .rt-man-f .field:first-child, .rt-man-f .btn { grid-column: 1 / -1; } }
 .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .check input { width: 18px; height: 18px; margin: 0; accent-color: var(--text); }
 tr.rcpt.ret td { background: var(--pill-warning-bg); }
@@ -1074,45 +1141,45 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
   <!-- 退貨 -->
   <section id="view-returns" class="view" role="tabpanel" aria-labelledby="tab-returns" hidden>
     <div class="title-row">
-      <div><h2 class="vtitle">退貨</h2><p class="sub">客人攞貨返嚟退：搵返原本張單，揀要退嘅貨品，退錢之後存量會加返。</p></div>
+      <div><h2 class="vtitle">退貨</h2><p class="sub">左邊揀張單，中間剔要退嘅貨，右邊確認退錢。退咗之後存量會加返。</p></div>
     </div>
-    <div class="cols">
-      <div class="stack">
-        <div class="card">
-          <div class="card-head"><h2>搵返原本張單</h2><span class="hint">收據上面有日期同單號</span></div>
-          <form class="row-wrap" id="retFind" autocomplete="off">
-            <label class="field"><span>日期</span><input id="retDay" type="date"></label>
-            <label class="field"><span>單號</span><input id="retNo" type="number" min="1" step="1" inputmode="numeric" placeholder="例如 5"></label>
-            <button class="btn" type="submit">搵</button>
-          </form>
-          <ul class="ret-rcpts" id="retRcpts" aria-label="嗰日嘅單"></ul>
-          <p class="hint" id="retRcptsNote"></p>
-        </div>
-        <div class="card" id="retOrig" hidden>
+    <div class="rt3">
+      <div class="card stack rt-sales">
+        <form class="rt-find" id="retFind" autocomplete="off">
+          <label class="field"><span>日期</span><input id="retDay" type="date"></label>
+          <label class="field"><span>單號或貨品</span><input id="retNo" type="search" spellcheck="false" enterkeyhint="search" placeholder="單號或 wd40"></label>
+        </form>
+        <p class="hint" id="retRcptsNote"></p>
+        <ul class="slist" id="retRcpts" aria-label="嗰日嘅單"></ul>
+      </div>
+      <div class="card stack rt-mid" id="retMid">
+        <div class="stack rt-orig" id="retOrig" hidden>
           <div class="card-head"><h2 id="retOrigTitle"></h2><div class="actions"><button id="retAll" class="btn small" type="button">全部退</button></div></div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>貨號</th><th>貨品</th><th class="r">買咗</th><th class="r">已退</th><th class="r">單價</th><th></th></tr></thead>
-            <tbody id="retOrigBody"></tbody></table></div>
+          <p class="hint" id="retOrigNote"></p>
+          <ul class="pick" id="retOrigBody"></ul>
         </div>
-        <div class="card">
-          <div class="card-head"><h2>冇單據？直接輸入貨號</h2></div>
-          <form class="row-wrap" id="retManual" autocomplete="off">
+        <p class="rt-none" id="retNone"><strong>未揀單</strong>喺左邊揀一張單，剔要退嘅貨。冇單據就喺下面直接打貨號。</p>
+        <div class="rt-man">
+          <div class="card-head"><h2>冇單據？直接打貨號</h2></div>
+          <ul class="pick" id="retManList"></ul>
+          <form class="rt-man-f" id="retManual" autocomplete="off">
             <label class="field"><span>貨號、條碼或簡碼</span><input id="retCode" type="text" spellcheck="false" autocapitalize="characters" placeholder="4002020"></label>
-            <label class="field"><span>數量</span><input id="retQty" type="number" inputmode="decimal" step="any" min="0" value="1" style="width:88px"></label>
-            <label class="field"><span>退款單價 ($)</span><input id="retPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="原價" style="width:120px"></label>
+            <label class="field"><span>數量</span><input id="retQty" type="number" inputmode="decimal" step="any" min="0" value="1"></label>
+            <label class="field"><span>退款單價 ($)</span><input id="retPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="原價"></label>
             <button class="btn" type="submit">加入</button>
           </form>
         </div>
       </div>
-      <div class="card ret-slip">
-        <div class="card-head"><h2>退貨單</h2><span class="hint" id="retFrom"></span></div>
-        <ul class="cart-list" id="retList"></ul>
-        <p class="hint" id="retEmpty">喺左邊揀要退嘅貨品，佢哋會喺呢度列出。</p>
+      <aside class="till rt-till" aria-label="退貨單">
+        <div class="till-total"><span class="k" id="retTotalK">退返客人</span><span class="v" id="retTotal">$0.00</span></div>
+        <span class="k-from" id="retFrom"></span>
+        <ul class="rt-list" id="retList"></ul>
+        <p class="hint" id="retEmpty">喺中間剔要退嘅貨，佢哋會喺呢度列出。</p>
         <label class="check"><input type="checkbox" id="retRestock" checked> 放返貨架（存量加返）</label>
         <label class="field"><span>原因（可以唔填）</span><input id="retNote" type="text" placeholder="例如 壞貨、唔啱尺寸"></label>
-        <div class="till-total"><span class="k" id="retTotalK">退返客人</span><span class="v" id="retTotal">$0.00</span></div>
-        <div class="row-wrap"><button id="retClear" class="btn ghost" type="button" hidden>清除</button><button id="retDo" class="btn primary done" type="button" disabled>確認退貨</button></div>
-      </div>
+        <button id="retDo" class="btn primary done" type="button" disabled>確認退貨</button>
+        <button id="retClear" class="linkbtn" type="button" hidden>清除</button>
+      </aside>
     </div>
   </section>
 
@@ -1197,7 +1264,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       <div class="bs-periods" id="bsPeriods"></div>
       <div class="bs-tiles" id="bsTiles"></div>
       <div class="card">
-        <div class="card-head"><h2>最近 30 日營業額</h2><span class="hint" id="bsChartNote"></span></div>
+        <div class="card-head"><h2>最近 5 個星期營業額</h2><span class="hint" id="bsChartNote"></span></div>
         <div class="chart" id="bsChart"></div>
       </div>
       <div class="card" id="bsPrice">
@@ -3273,10 +3340,41 @@ const moneyTick = v => (v < 0 ? '−$' : '$') + (Math.abs(v) >= 1000 ? (Math.abs
 function drawBars(hostSel, data) {
   const host = $(hostSel), key = JSON.stringify([data.labels, data.values, data.money]);
   if (host._key === key) return;
-  host._key = key; host.innerHTML = '';
+  host._key = key; host.innerHTML = ''; host.classList.remove('is-wk');
   const el = document.createElement('div'); host.appendChild(el);
   if (window.Charts) window.Charts.bars(el, { labels: data.labels, values: data.values, height: data.height || 200,
     format: data.money ? money : v => qtyFmt(round3(v)), tickFormat: data.money ? moneyTick : v => qtyFmt(v), integer: true, min: data.money ? 100 : 4 });
+}
+// Days set out by week, Monday to Sunday: each week's total in large figures and every day's figure over its bar.
+// All bars share one scale so the weeks compare; today is hatched, each week's best day is in full ink, days to come stay empty.
+const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
+function drawWeeks(hostSel, { from, to, value, money: isMoney }) {
+  const host = $(hostSel); host._key = null; host.classList.add('is-wk');
+  const cal = dayKey(new Date()), upTo = cal > state.today ? cal : state.today;   // after midnight the business day can trail the calendar
+  const weeks = [];
+  for (let d = addDays(from, -((parseDay(from).getDay() + 6) % 7)); d <= to; d = addDays(d, 7)) {
+    const w = Array.from({ length: 7 }, (_, k) => { const day = addDays(d, k); return { day, v: day >= from && day <= to && day <= upTo ? round3(value(day) || 0) : null }; });
+    if (w.some(x => x.v !== null)) weeks.push(w);
+  }
+  const top = Math.max(0, ...weeks.flat().map(x => x.v || 0));
+  const md = day => `${Number(day.slice(5, 7))}/${Number(day.slice(8))}`;
+  const whole = v => isMoney ? (v < 0 ? '−$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-HK') : qtyFmt(v);
+  const bare = v => isMoney ? (v < 0 ? '-' : '') + Math.round(Math.abs(v)).toLocaleString('en-HK') : qtyFmt(v);
+  const plain = v => isMoney ? String(Math.round(v)) : qtyFmt(v);
+  const tiny = v => !isMoney || Math.abs(v) < 1000 ? bare(v) : (v < 0 ? '-' : '') + (Math.abs(v) / 1000).toLocaleString('en-HK', { maximumFractionDigits: 1 }) + 'k';
+  const full = v => isMoney ? money(v) : qtyFmt(v);
+  if (!weeks.length) { host.innerHTML = '<p class="hint">呢段日子未到。</p>'; return; }
+  host.innerHTML = `<div class="wk">${weeks.map(w => {
+    const days = w.filter(x => x.v !== null), tot = round3(days.reduce((t, x) => t + x.v, 0)), best = Math.max(...days.map(x => x.v));
+    const span = `${md(days[0].day)}–${md(days[days.length - 1].day)}`;
+    return `<section class="wk-g"><div class="wk-h"><span>${span}</span><b class="${tot < 0 ? 'neg' : ''}">${whole(tot)}</b></div>
+      <ol class="ms" style="grid-template-columns:repeat(7,minmax(0,1fr))" aria-label="${span}">${w.map(x => {
+        const wd = WEEKDAY[parseDay(x.day).getDay()];
+        if (x.v === null) return `<li class="out"><span class="q"></span><i class="b" style="--h:0"></i><span class="m">${wd}</span></li>`;
+        const cls = [x.day === state.today ? 'cur' : '', x.v > 0 ? '' : 'zero', x.v > 0 && x.v === best ? 'peak' : '', x.v < 0 ? 'neg' : ''].filter(Boolean).join(' ');
+        return `<li class="${cls}" title="${esc(dayLabel(x.day))}：${full(x.v)}"><span class="q">${x.v ? `<span class="qf">${bare(x.v)}</span><span class="qn">${plain(x.v)}</span><span class="qk">${tiny(x.v)}</span>` : '–'}</span><i class="b" style="--h:${x.v > 0 && top > 0 ? Math.max(4, Math.round(x.v / top * 100)) : 0}"></i><span class="m">${wd}</span></li>`;
+      }).join('')}</ol></section>`;
+  }).join('')}</div>`;
 }
 function renderTodayChart() {
   const key = state.unlocked || !T_SERIES[state.tSeries].money ? state.tSeries : 'tx';
@@ -4045,8 +4143,9 @@ function drawChart(from, to, byDay) {
     for (let d = from; d <= to; d = addDays(d, 1)) { const k = d.slice(0, 7); const b = m.get(k) || { label: `${Number(k.slice(5))}月`, v: 0 }; b.v += (byDay.get(d) || {})[key] || 0; m.set(k, b); }
     buckets.push(...m.values());
   }
-  $('#rChartTitle').textContent = (nDays <= 62 ? '每日' : '每月') + S.t;
-  drawBars('#rChart', { labels: buckets.map(b => b.label), values: buckets.map(b => round3(b.v)), money: S.money, height: 220 });
+  $('#rChartTitle').textContent = nDays <= 62 ? `每日${S.t} · 按星期` : '每月' + S.t;
+  if (nDays <= 62) drawWeeks('#rChart', { from, to, value: d => (byDay.get(d) || {})[key] || 0, money: S.money });
+  else drawBars('#rChart', { labels: buckets.map(b => b.label), values: buckets.map(b => round3(b.v)), money: S.money, height: 220 });
 }
 async function exportCsv() {
   const r = state.report;
@@ -5622,7 +5721,7 @@ function navSet(open) {
 
 /* ---------- 退貨: find the sale, pick what comes back, refund it; the stock goes back on the shelf ----------
    A return is kept like a sale with negative quantities (kind 'sale', ret: true), so takings, profit and reports net it off. */
-state.ret = { day: '', rcpts: [], open: null, from: null, items: [], returned: new Map() };
+state.ret = { day: '', rcpts: [], open: null, from: null, items: [], returned: new Map(), q: '' };
 function openReturns() {
   const d = $('#retDay');
   d.max = state.today;
@@ -5653,13 +5752,33 @@ async function retLoadDay(day) {
   for (const l of state.lines) count(l);
   renderRetDay();
 }
+// The search box takes a receipt number (up to 4 digits) or a product: its code, barcode, 簡碼 or words of its name.
+const retIsNo = q => /^\d{1,4}$/.test(q);
+function retLineHit(l, q) {
+  if (!q || retIsNo(q)) return false;
+  const code = lookup(normCode(q));
+  if (code && l.code === code) return true;
+  const c = String(l.code || '').toLowerCase(), nm = String(l.name || '').toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(t => c.includes(t) || termIn(nm, t) || termIn(squash(nm), squash(t)));
+}
+function retShown() {
+  const R = state.ret, q = R.q;
+  return !q ? R.rcpts : R.rcpts.filter(x => retIsNo(q) ? String(x.r.no) === q : x.lines.some(l => retLineHit(l, q)));
+}
+const retDayName = day => day === state.today ? '今日' : dayLabel(day);
+const rcptAmt = x => x.lines.reduce((t, l) => t + (num(l.qty) || 0) * (num(l.price) || 0), 0);
 function renderRetDay() {
-  const R = state.ret;
-  $('#retRcpts').innerHTML = R.rcpts.map(x => {
-    const amt = x.lines.reduce((t, l) => t + (num(l.qty) || 0) * (num(l.price) || 0), 0);
-    return `<li><button type="button" data-rid="${esc(x.rid)}"${x.rid === R.open ? ' aria-current="true"' : ''}><strong>第 ${esc(x.r.no ?? '–')} 單</strong><span class="muted num">${timeOf(x.r.at)}</span><span class="muted">${x.lines.length} 款${x.r.acct ? ` · 掛數 ${esc(x.r.acctName || '')}` : ''}</span><span class="amt">${money(amt)}</span></button></li>`;
+  const R = state.ret, shown = retShown();
+  $('#retRcpts').innerHTML = shown.map(x => {
+    const back = x.lines.some(l => R.returned.get(l.id));
+    const what = x.lines.map(l => esc(l.name || l.code) + ((num(l.qty) || 0) !== 1 ? ` ×${qtyFmt(num(l.qty) || 0)}` : '')).join('、');
+    return `<li><button type="button" data-rid="${esc(x.rid)}"${x.rid === R.open ? ' aria-current="true"' : ''}><span class="no">第 ${esc(x.r.no ?? '–')} 單</span><span class="t">${timeOf(x.r.at)}${x.r.acct ? ` · <span class="acct">掛數 ${esc(x.r.acctName || '')}</span>` : ''}${back ? ' · 退過' : ''}</span><span class="amt">${money(rcptAmt(x))}</span><span class="items">${what}</span></button></li>`;
   }).join('');
-  $('#retRcptsNote').textContent = !R.day ? '' : R.rcpts.length ? `${dayLabel(R.day)}有 ${R.rcpts.length} 張單，撳一張睇入面嘅貨品。` : `${dayLabel(R.day)}冇銷售紀錄。`;
+  const day = R.day ? retDayName(R.day) : '', n = R.rcpts.length;
+  $('#retRcptsNote').textContent = !R.day ? '' : !n ? `${day}冇銷售紀錄。`
+    : !R.q ? `${day}有 ${n} 張單，撳一張睇入面嘅貨品。`
+    : shown.length ? `${retIsNo(R.q) ? `第 ${R.q} 單` : `${shown.length} 張單有「${R.q}」`}（${day}共 ${n} 張）。`
+    : `${day}搵唔到${retIsNo(R.q) ? `第 ${R.q} 單` : `有「${R.q}」嘅單`}。`;
   renderRetOrig();
 }
 // how many of a line on the old receipt can still come back: bought, less returned before, less what is on this slip
@@ -5667,18 +5786,31 @@ function retLeft(l) {
   const R = state.ret, onSlip = R.items.filter(i => i.src === l.id).reduce((t, i) => t + (num(i.qty) || 0), 0);
   return round3((num(l.qty) || 0) - (R.returned.get(l.id) || 0) - onSlip);
 }
+const retStepper = c => `<span class="ci-qty"><button type="button" data-dec aria-label="減一件"><svg class="i"><use href="#i-minus"/></svg></button><input type="number" data-qty inputmode="decimal" step="any" min="0" value="${esc(num(c.qty) || 0)}" aria-label="退幾多"><button type="button" data-inc aria-label="加一件"><svg class="i"><use href="#i-plus"/></svg></button></span>`;
+const retPriceIn = c => `<label class="ci-price"><span>@ $</span><input type="number" data-price inputmode="decimal" step="0.1" min="0" value="${esc(num(c.price) || 0)}" aria-label="退款單價"></label>`;
+const retAmtOf = c => `<span class="amt" data-amt>${money((num(c.qty) || 0) * (num(c.price) || 0))}</span>`;
 function renderRetOrig() {
   const R = state.ret, x = R.rcpts.find(y => y.rid === R.open);
-  $('#retOrig').hidden = !x; if (!x) return;
-  $('#retOrigTitle').textContent = `${dayLabel(R.day)} · 第 ${x.r.no ?? '–'} 單${x.r.acct ? ` · 掛數 ${x.r.acctName || ''}` : ''}`;
-  let anyLeft = false;
+  $('#retOrig').hidden = !x; $('#retNone').hidden = !!x;
+  if (!x) return;
+  const other = !!(R.from && R.from.rid !== x.rid), r = x.r;
+  $('#retOrigTitle').textContent = `${R.day === state.today ? '' : dayLabel(R.day) + ' · '}第 ${r.no ?? '–'} 單 · ${timeOf(r.at)}`;
+  const note = $('#retOrigNote');
+  note.textContent = other ? `右邊退貨單已經有第 ${R.from.no} 單嘅貨。一張退貨單只可以退一張單，請先確認或者清除。`
+    : `${x.lines.length} 款 · ${r.acct ? `掛數 ${r.acctName || ''} · ${money(rcptAmt(x))}` : r.paid != null ? `收 ${money(r.paid)} · 找 ${money(r.change || 0)}` : money(rcptAmt(x))}。剔要退嘅貨，改數量。`;
+  note.classList.toggle('warn', other);
   $('#retOrigBody').innerHTML = x.lines.map(l => {
-    const back = R.returned.get(l.id) || 0, left = retLeft(l);
-    if (left > 0) anyLeft = true;
-    return `<tr><td><span class="tag">${esc(l.code)}</span></td><td class="nm">${esc(l.name || l.code)}</td><td class="r">${qtyFmt(num(l.qty) || 0)}</td><td class="r">${back ? qtyFmt(back) : '<span class="muted">–</span>'}</td><td class="r">${money(num(l.price) || 0)}</td>
-      <td class="act">${left > 0 ? `<button class="btn small" type="button" data-retline="${esc(l.id)}">退</button>` : `<span class="chip">${back ? '已退晒' : '已放入退貨單'}</span>`}</td></tr>`;
+    const bought = num(l.qty) || 0, back = R.returned.get(l.id) || 0, max = round3(bought - back);
+    const c = R.items.find(i => i.src === l.id), off = max <= 0, id = 'rl-' + l.id;
+    const meta = off ? `買 ${qtyFmt(bought)} · 已退晒`
+      : c ? `買 ${qtyFmt(bought)}${back ? ` · 已退 ${qtyFmt(back)}` : ''} · 退 ${retStepper(c)} ${retPriceIn(c)}${retAmtOf(c)}`
+      : `買 ${qtyFmt(bought)}${back ? ` · 已退 ${qtyFmt(back)} · 仲可以退 ${qtyFmt(max)}` : ''} · @ ${money(num(l.price) || 0)}`;
+    return `<li class="${c ? 'on' : ''}${off ? ' off' : ''}${retLineHit(l, R.q) ? ' hit' : ''}"${c ? ` data-key="${esc(c.key)}"` : ''}>
+      <input type="checkbox" id="${esc(id)}" data-retline="${esc(l.id)}"${c ? ' checked' : ''}${off || other ? ' disabled' : ''}>
+      <label class="nm" for="${esc(id)}">${esc(l.name || l.code)}</label><span class="tag">${esc(l.code)}</span>
+      <span class="m">${meta}</span></li>`;
   }).join('');
-  $('#retAll').disabled = !anyLeft;
+  $('#retAll').disabled = other || !x.lines.some(l => retLeft(l) > 0);
 }
 function retSameReceipt(x) {
   const F = state.ret.from;
@@ -5688,7 +5820,7 @@ function retSameReceipt(x) {
 function retAddLine(x, l) {
   const R = state.ret, left = retLeft(l);
   if (left <= 0) return false;
-  R.from = { day: R.day, rid: x.rid, no: x.r.no, acct: x.r.acct || '', acctName: x.r.acctName || '' };
+  R.from = { day: R.day, rid: x.rid, no: x.r.no, at: x.r.at || '', acct: x.r.acct || '', acctName: x.r.acctName || '' };
   const have = R.items.find(i => i.src === l.id);
   if (have) have.qty = round3((num(have.qty) || 0) + left);
   else R.items.push({ key: newId(), code: l.code, name: l.name || '', unit: l.unit || '', qty: left, price: num(l.price) || 0, cost: num(l.cost), src: l.id, max: round3((num(l.qty) || 0) - (R.returned.get(l.id) || 0)) });
@@ -5709,23 +5841,29 @@ function retAddManual() {
   renderRetSlip();
   $('#retCode').focus();
 }
-function renderRetSlip() {
-  const R = state.ret;
-  if (!R.items.some(i => i.src)) R.from = null;
+// goods with no receipt, listed above the box they were typed into
+function renderRetMan() {
+  $('#retManList').innerHTML = state.ret.items.filter(c => !c.src).map(c => `<li class="on" data-key="${esc(c.key)}">
+      <button type="button" class="ci-x" data-rm aria-label="唔退呢件"><svg class="i"><use href="#i-x"/></svg></button>
+      <span class="nm">${esc(c.name || c.code)}</span><span class="tag">${esc(c.code)}</span>
+      <span class="m">冇原單 · 退 ${retStepper(c)} ${retPriceIn(c)}${retAmtOf(c)}</span></li>`).join('');
+}
+// the refund on the right: everything on this return slip, the amount, where it came from
+function renderRetTill() {
+  const R = state.ret, F = R.from, man = R.items.filter(c => !c.src).length;
   $('#retList').innerHTML = R.items.map(c => {
     const q = num(c.qty) || 0, p = num(c.price) || 0;
-    return `<li class="ci" data-key="${esc(c.key)}">
-      <div class="ci-name"><span class="tag">${esc(c.code)}</span> <span class="nm">${esc(c.name)}</span>${c.max !== null ? `<div class="hint">原單買咗，最多退 ${qtyFmt(c.max)}</div>` : '<div class="hint">冇原單</div>'}</div>
-      <div class="ci-qty"><button type="button" data-dec aria-label="減一件"><svg class="i"><use href="#i-minus"/></svg></button><input type="number" data-qty inputmode="decimal" step="any" min="0" value="${esc(q)}" aria-label="退幾多"><button type="button" data-inc aria-label="加一件"><svg class="i"><use href="#i-plus"/></svg></button></div>
-      <label class="ci-price"><span class="muted">@ $</span><input type="number" data-price inputmode="decimal" step="0.1" min="0" value="${esc(p)}" aria-label="退款單價"></label>
-      <div class="ci-amt num" data-amt>${money(q * p)}</div>
-      <button type="button" class="ci-x" data-rm aria-label="唔退呢件"><svg class="i"><use href="#i-x"/></svg></button></li>`;
+    return `<li><span class="nm">${esc(c.name || c.code)}</span><span class="amt">${money(q * p)}</span><span class="s"><span class="tag">${esc(c.code)}</span> ${qtyFmt(q)} × ${money(p)} · ${c.src && F ? `第 ${esc(F.no)} 單` : '冇單據'}</span></li>`;
   }).join('');
   $('#retEmpty').hidden = !!R.items.length;
   $('#retClear').hidden = !R.items.length;
-  $('#retFrom').textContent = R.from ? `原單：${dayLabel(R.from.day)} 第 ${R.from.no} 單` : '';
+  $('#retFrom').textContent = F ? `來自${retDayName(F.day)}第 ${F.no} 單${F.at ? `（${timeOf(F.at)}）` : ''}${F.acct ? ` · 掛數 ${F.acctName}` : ''}${man ? ` · 另加 ${man} 款冇單據` : ''}` : man ? '冇單據' : '';
   retTotals();
-  renderRetOrig();
+}
+function renderRetSlip() {
+  const R = state.ret;
+  if (!R.items.some(i => i.src)) R.from = null;
+  renderRetTill(); renderRetMan(); renderRetOrig();
 }
 function retTotals() {
   const R = state.ret, total = R.items.reduce((t, c) => t + (num(c.qty) || 0) * (num(c.price) || 0), 0);
@@ -5775,9 +5913,10 @@ async function doReturn() {
   if (!restock) receipt.restock = false;
   state.receipts[rid] = receipt; state.soldDirty = true;
   for (const c of R.items) if (c.src) R.returned.set(c.src, round3((R.returned.get(c.src) || 0) + num(c.qty)));
-  R.items = []; R.from = null;
+  R.items = []; R.from = null; R.q = ''; $('#retNo').value = '';
   $('#retNote').value = ''; $('#retRestock').checked = true;
-  renderRetSlip(); renderSell(); renderCart();
+  renderRetDay(); renderRetSlip(); renderSell(); renderCart();
+  if (!$('#view-returns').hidden) $('#retNo').focus();
   toast(`已退貨（第 ${no} 單）。${receipt.acct ? `已扣返 ${receipt.acctName} 月結數 ${money(total)}` : `退返客人 ${money(total)}`}${restock ? '，存量已加返' : ''}。`);
   try {
     await Promise.all([
@@ -6264,11 +6403,11 @@ function renderBoss() {
     return `<div class="bs-p"><div class="k"><strong>${k}</strong><span>${sub}</span></div><div class="v">${money(cur.sales)}</div><div class="cmp">${cmpTxt(cur.sales, prev.sales, lk)}</div>
       <div class="sub">利潤 ${money(cur.profit)} · 毛利率 ${cur.known > 0 ? Math.round(cur.profit / cur.known * 100) + '%' : '–'} · ${cur.tx} 單</div></div>`;
   }).join('');
-  const labels = [], values = [];
-  for (let i = 29; i >= 0; i--) { const d = addDays(t, -i); labels.push(`${Number(d.slice(5, 7))}/${Number(d.slice(8))}`); values.push(round3((per.get(d) || { sales: 0 }).sales)); }
-  drawBars('#bsChart', { labels, values, money: true, height: 190 });
-  const top = values.reduce((m, v, i) => v > values[m] ? i : m, 0);
-  $('#bsChartNote').textContent = values[top] > 0 ? `最好嗰日：${labels[top]} ${money(values[top])}` : '';
+  const from5 = addDays(wk, -28), salesOn = d => round3((per.get(d) || { sales: 0 }).sales);
+  drawWeeks('#bsChart', { from: from5, to: t, value: salesOn, money: true });
+  let best = from5;
+  for (let d = from5; d <= t; d = addDays(d, 1)) if (salesOn(d) > salesOn(best)) best = d;
+  $('#bsChartNote').textContent = salesOn(best) > 0 ? `最好嗰日：${shortDay(best)} ${money(salesOn(best))} · 今日到而家 ${money(salesOn(t))}` : '';
   // what needs a look
   const owed = new Map();
   if (state.acct.past) for (const e of acctEntries()) owed.set(e.acct, (owed.get(e.acct) || 0) + e.amount);
@@ -6557,20 +6696,22 @@ $('#checkout').addEventListener('click', checkout);
 // 退貨
 $('#retFind').addEventListener('submit', async e => {
   e.preventDefault();
-  const day = $('#retDay').value, no = num($('#retNo').value);
+  const R = state.ret, day = $('#retDay').value, q = $('#retNo').value.trim();
   if (!day) { $('#retDay').focus(); return; }
-  if (state.ret.day !== day) await retLoadDay(day);
-  if (no === null) return;
-  const x = state.ret.rcpts.find(y => num(y.r.no) === no);
-  if (!x) { toast(`${dayLabel(day)}搵唔到第 ${no} 單。`, true); $('#retNo').select(); return; }
-  state.ret.open = x.rid; renderRetDay();
+  if (R.day !== day) await retLoadDay(day);
+  R.q = q;
+  if (!q) { renderRetDay(); return; }
+  const shown = retShown();
+  if (!shown.length) { renderRetDay(); toast(retIsNo(q) ? `${retDayName(day)}搵唔到第 ${q} 單。` : `${retDayName(day)}冇單有「${q}」。`, true); $('#retNo').select(); return; }
+  R.open = shown[0].rid; renderRetDay();
+  const first = $('#retOrigBody input[data-retline]:not(:disabled)'); if (first) first.focus();
 });
+$('#retNo').addEventListener('input', () => { state.ret.q = $('#retNo').value.trim(); renderRetDay(); });
 $('#retDay').addEventListener('change', () => retLoadDay($('#retDay').value));
-$('#retRcpts').addEventListener('click', e => { const b = e.target.closest('[data-rid]'); if (b) { state.ret.open = b.dataset.rid; renderRetDay(); } });
-$('#retOrigBody').addEventListener('click', e => {
-  const b = e.target.closest('[data-retline]'); if (!b) return;
-  const R = state.ret, x = R.rcpts.find(y => y.rid === R.open), l = x && x.lines.find(y => y.id === b.dataset.retline);
-  if (l && retSameReceipt(x) && retAddLine(x, l)) renderRetSlip();
+$('#retRcpts').addEventListener('click', e => {
+  const b = e.target.closest('[data-rid]'); if (!b) return;
+  state.ret.open = b.dataset.rid; renderRetDay();
+  const again = $(`#retRcpts [data-rid="${CSS.escape(b.dataset.rid)}"]`); if (again) again.focus();
 });
 $('#retAll').addEventListener('click', () => {
   const R = state.ret, x = R.rcpts.find(y => y.rid === R.open);
@@ -6579,35 +6720,53 @@ $('#retAll').addEventListener('click', () => {
   for (const l of x.lines) if (retAddLine(x, l)) any = true;
   if (any) renderRetSlip();
 });
-$('#retManual').addEventListener('submit', e => { e.preventDefault(); retAddManual(); });
-$('#retCode').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); if ($('#retCode').value.trim()) { $('#retQty').focus(); $('#retQty').select(); } } });
-$('#retQty').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); $('#retPrice').focus(); $('#retPrice').select(); } });
-$('#retList').addEventListener('click', e => {
-  const li = e.target.closest('.ci'); if (!li) return;
-  const R = state.ret, c = R.items.find(x => x.key === li.dataset.key); if (!c) return;
-  if (e.target.closest('[data-inc]')) c.qty = round3(Math.min((num(c.qty) || 0) + 1, c.max ?? Infinity));
-  else if (e.target.closest('[data-dec]')) { c.qty = round3((num(c.qty) || 0) - 1); if (c.qty <= 0) R.items = R.items.filter(x => x !== c); }
-  else if (e.target.closest('[data-rm]')) R.items = R.items.filter(x => x !== c);
-  else return;
+// the middle: tick a line to return it, change how many and at what price; goods with no receipt are changed the same way
+const retItemOf = el => { const li = el.closest('li[data-key]'); return li ? state.ret.items.find(x => x.key === li.dataset.key) : null; };
+$('#retMid').addEventListener('click', e => {
+  const b = e.target.closest('[data-inc], [data-dec], [data-rm]'); if (!b) return;
+  const R = state.ret, c = retItemOf(b); if (!c) return;
+  const which = b.matches('[data-inc]') ? '[data-inc]' : b.matches('[data-dec]') ? '[data-dec]' : null;
+  if (which === '[data-inc]') {
+    if (c.max !== null && (num(c.qty) || 0) >= c.max) toast(`${c.code} 最多只可以退 ${qtyFmt(c.max)}。`);
+    c.qty = round3(Math.min((num(c.qty) || 0) + 1, c.max ?? Infinity));
+  } else if (which === '[data-dec]') { c.qty = round3((num(c.qty) || 0) - 1); if (c.qty <= 0) R.items = R.items.filter(x => x !== c); }
+  else R.items = R.items.filter(x => x !== c);
   renderRetSlip();
+  // keep the keyboard where it was
+  const li = $(`#retMid li[data-key="${CSS.escape(c.key)}"]`);
+  const to = li && which ? li.querySelector(which) : c.src ? $(`#retOrigBody [data-retline="${CSS.escape(c.src)}"]`) : $('#retCode');
+  if (to) to.focus();
 });
-$('#retList').addEventListener('input', e => {
-  const li = e.target.closest('.ci'); if (!li) return;
-  const c = state.ret.items.find(x => x.key === li.dataset.key); if (!c) return;
+$('#retMid').addEventListener('input', e => {
+  if (!e.target.matches('[data-qty], [data-price]')) return;
+  const c = retItemOf(e.target); if (!c) return;
   if (e.target.matches('[data-qty]')) c.qty = num(e.target.value) ?? 0;
-  if (e.target.matches('[data-price]')) c.price = num(e.target.value) ?? 0;
-  li.querySelector('[data-amt]').textContent = money((num(c.qty) || 0) * (num(c.price) || 0));
-  retTotals();
+  else c.price = num(e.target.value) ?? 0;
+  e.target.closest('li').querySelector('[data-amt]').textContent = money((num(c.qty) || 0) * (num(c.price) || 0));
+  renderRetTill();
 });
-$('#retList').addEventListener('change', e => {
+$('#retMid').addEventListener('change', e => {
+  const cb = e.target.closest('[data-retline]');
+  if (cb) {
+    const R = state.ret, x = R.rcpts.find(y => y.rid === R.open), l = x && x.lines.find(y => y.id === cb.dataset.retline);
+    if (!l) return;
+    if (cb.checked) { if (!(retSameReceipt(x) && retAddLine(x, l))) { cb.checked = false; return; } }
+    else R.items = R.items.filter(i => i.src !== l.id);
+    renderRetSlip();
+    const again = $(`#retOrigBody [data-retline="${CSS.escape(l.id)}"]`); if (again) again.focus();
+    return;
+  }
   if (!e.target.matches('[data-qty], [data-price]')) return;
   const R = state.ret;
   for (const c of R.items) if (c.max !== null && num(c.qty) > c.max) { c.qty = c.max; toast(`${c.code} 最多只可以退 ${qtyFmt(c.max)}。`); }
   R.items = R.items.filter(c => (num(c.qty) || 0) > 0);
   renderRetSlip();
 });
-$('#retList').addEventListener('keydown', e => { if (isEnter(e) && e.target.matches('input')) { e.preventDefault(); e.target.blur(); } });
-$('#retClear').addEventListener('click', () => { state.ret.items = []; state.ret.from = null; renderRetSlip(); });
+$('#retMid').addEventListener('keydown', e => { if (isEnter(e) && e.target.matches('[data-qty], [data-price]')) { e.preventDefault(); e.target.blur(); } });
+$('#retManual').addEventListener('submit', e => { e.preventDefault(); retAddManual(); });
+$('#retCode').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); if ($('#retCode').value.trim()) { $('#retQty').focus(); $('#retQty').select(); } } });
+$('#retQty').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); $('#retPrice').focus(); $('#retPrice').select(); } });
+$('#retClear').addEventListener('click', () => { state.ret.items = []; state.ret.from = null; renderRetSlip(); $('#retNo').focus(); });
 $('#retDo').addEventListener('click', doReturn);
 // 月結客戶
 $('#acctBtn').addEventListener('click', pickAcct);
