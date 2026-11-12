@@ -455,6 +455,7 @@ tr.grp td .muted { margin-left: 8px; }
 .suggest li[aria-selected="true"], .suggest li:hover { background: var(--active); }
 .suggest .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .suggest li.cap { display: block; cursor: default; min-height: 0; padding: 6px 10px; font-size: var(--fs-small); color: var(--muted); background: var(--surface); position: sticky; top: -4px; z-index: 1; }
+.suggest li.cap.sep { position: static; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--rule); border-radius: 0; }
 .suggest li.exact { outline: 1px solid var(--text); outline-offset: -1px; font-weight: 500; }
 .need { background: var(--surface); border: 1px solid var(--pill-warning-line); border-radius: var(--radius-card); padding: 16px var(--card-pad); display: grid; gap: 12px; }
 .need .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -2616,8 +2617,9 @@ function showNearby(center, idx = -1) {
 // match anywhere, as before. Spaces stay, so the words of a name don't run together.
 const squash = t => t.replace(/[\-_·]|\.(?!\d)|(?<!\d)\./g, '');
 const isDigit = ch => ch >= '0' && ch <= '9';
-function termIn(text, t) {
-  const numStart = isDigit(t[0]), numEnd = isDigit(t[t.length - 1]);
+// `open`: the word is still being typed, so the number may go on ("30" on its way to "3000K")
+function termIn(text, t, open = false) {
+  const numStart = isDigit(t[0]), numEnd = isDigit(t[t.length - 1]) && !open;
   if (!numStart && !numEnd) return text.includes(t);
   for (let i = text.indexOf(t); i >= 0; i = text.indexOf(t, i + 1)) {
     const b = text[i - 1] || '', a = text[i + t.length] || '';
@@ -2655,27 +2657,32 @@ function search(q, limit = 8) {
 // "20" lists 20mm and 20V, not 1000020 or 5003020. A code, barcode or 簡碼 typed in full is still found, and listed first.
 const SELL_SHOW = 500;   // the list stops here; more words narrow it
 const isCode7 = q => /^\d{7}$/.test(q);
-function infoSearch(q) {
+function infoSearch(q, open = false) {
   const terms = String(q).toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
-  const loose = terms.map(squash), out = [];
-  const found = (w, t, sq) => termIn(sq ? squash(w) : w, t);
+  const loose = terms.map(squash), squashed = loose.some((t, i) => t !== terms[i]), last = terms.length - 1, out = [];
+  const found = (w, t, sq, op) => termIn(sq ? squash(w) : w, t, op);
   for (const [code, it] of state.catalog) {
     const name = String(it.name || '').toLowerCase(), words = [name, String(it.brand || '').toLowerCase(), String(it.type || '').toLowerCase()].filter(Boolean);
-    const has = (t, sq) => words.some(w => found(w, t, sq));
-    const strict = terms.every(t => has(t, false));
-    if (!strict && !(loose.some((t, i) => t !== terms[i]) && loose.every(t => t && has(t, true)))) continue;
-    // a product that has every word in its name comes before one matched through its brand or type
-    out.push({ code, it, rank: terms.every(t => found(name, t, false) || found(name, squash(t), true)) ? 0 : 1 });
+    // every word as typed (or with dashes and dots left out); `op` lets the last word be the start of a longer number
+    const every = (pool, op) => terms.every((t, i) => pool.some(w => found(w, t, false, op && i === last)))
+      || (squashed && loose.every((t, i) => t && pool.some(w => found(w, t, true, op && i === last))));
+    const whole = every(words, false);
+    if (!whole && !(open && every(words, true))) continue;
+    // whole numbers first, then the longer numbers; within each, a product with every word in its name first
+    out.push({ code, it, rank: (whole ? 0 : 2) + (every([name], !whole) ? 0 : 1) });
   }
   return out.sort((a, b) => a.rank - b.rank || a.code.localeCompare(b.code));
 }
-// shows the list for what is typed and returns how many products it found
-function sellSuggest(q, idx = -1) {
+// shows the list for what is typed and returns how many products it found; `open`: the last word may still be growing
+function sellSuggest(q, idx = -1, open = true) {
   const c = normCode(q), exact = c ? lookup(c) : null;
   if (!c) { hideSuggest(); return 0; }
   if (isCode7(c)) { showNearby(exact || c, idx); return state.sortedCodes.length; }
-  const hits = infoSearch(q).filter(h => h.code !== exact);
+  const hits = infoSearch(q, open).filter(h => h.code !== exact);
+  // a line between the whole-number matches and those where the number goes on
+  const lastWord = String(q).trim().split(/\s+/).pop(), cut = hits.findIndex(h => h.rank >= 2);
+  if (cut >= 0) hits[cut] = { ...hits[cut], sep: `數字以「${lastWord}」開頭${/^\d+$/.test(lastWord) ? `（例如 ${lastWord}0、${lastWord}00）` : ''}` };
   const all = exact ? [{ code: exact, it: state.catalog.get(exact) }, ...hits] : hits;
   const n = all.length;
   showSuggest(all.slice(0, SELL_SHOW), idx, { exact, caption: n > SELL_SHOW ? `「${q}」有 ${n.toLocaleString('en-HK')} 款，顯示頭 ${SELL_SHOW} 款 · 打多個字收窄` : `「${q}」有 ${n} 款 · ↑↓ 揀選，Enter 加入` });
@@ -3476,7 +3483,7 @@ function showSuggest(hits, idx = -1, opts = {}) {
   ul.innerHTML = (opts.caption && hits.length ? `<li class="cap" aria-hidden="true">${esc(opts.caption)}</li>` : '') + hits.map((h, i) => {
     const pr = num(h.it.price) === null ? '未有售價' : money(num(h.it.price));
     const st = num(h.it.stock) === null ? '–' : qtyFmt(num(h.it.stock));
-    return `<li role="option" data-code="${esc(h.code)}" aria-selected="${i === state.suggestIdx}"${h.code === exact ? ' class="exact"' : ''}><span class="tag">${esc(h.code)}</span><span class="nm">${esc(h.it.name)}</span><span class="num muted">${pr} · 存 ${st}</span></li>`;
+    return (h.sep ? `<li class="cap sep" aria-hidden="true">${esc(h.sep)}</li>` : '') + `<li role="option" data-code="${esc(h.code)}" aria-selected="${i === state.suggestIdx}"${h.code === exact ? ' class="exact"' : ''}><span class="tag">${esc(h.code)}</span><span class="nm">${esc(h.it.name)}</span><span class="num muted">${pr} · 存 ${st}</span></li>`;
   }).join('');
   const focus = ul.querySelector('li[aria-selected="true"]') || ul.querySelector('li.exact');
   ul.scrollTop = focus ? Math.max(0, focus.offsetTop - ul.clientHeight / 2 + focus.offsetHeight / 2) : 0;   // a new list starts at its top
@@ -6904,7 +6911,7 @@ $('#scan').addEventListener('input', () => {
   hideMsg(); if (state.scanPick) resetPick();
   const p = parseScan($('#scan').value);
   if (p.code.length < 2) { hideSuggest(); return; }
-  sellSuggest(p.code);
+  sellSuggest(p.code, -1, !/\s$/.test($('#scan').value));
 });
 $('#scan').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); }
