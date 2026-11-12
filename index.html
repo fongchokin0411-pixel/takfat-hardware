@@ -454,7 +454,7 @@ tr.grp td .muted { margin-left: 8px; }
 .suggest li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 38px; padding: 4px 10px; border-radius: var(--radius-control); cursor: pointer; }
 .suggest li[aria-selected="true"], .suggest li:hover { background: var(--active); }
 .suggest .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.suggest li.cap { display: block; cursor: default; min-height: 0; padding: 6px 10px; font-size: var(--fs-small); color: var(--muted); background: none; }
+.suggest li.cap { display: block; cursor: default; min-height: 0; padding: 6px 10px; font-size: var(--fs-small); color: var(--muted); background: var(--surface); position: sticky; top: -4px; z-index: 1; }
 .suggest li.exact { outline: 1px solid var(--text); outline-offset: -1px; font-weight: 500; }
 .need { background: var(--surface); border: 1px solid var(--pill-warning-line); border-radius: var(--radius-card); padding: 16px var(--card-pad); display: grid; gap: 12px; }
 .need .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -1062,7 +1062,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <button type="submit" class="btn" id="sellBtn">加入</button>
           </div>
           <p class="scan-pick" id="scanPick" hidden></p>
-          <p class="hint" id="scanHint">打貨號按 <kbd>Enter</kbd>，打數量按 <kbd>Enter</kbd>，打售價按 <kbd>Enter</kbd> 就加入。唔使改就照按 <kbd>Enter</kbd>（數量 1、原價）。輸入名稱可以搜尋，<kbd>↑</kbd><kbd>↓</kbd> 揀附近貨號。加完喺空白貨號格按 <kbd>Enter</kbd> 就跳去「客人付款」。喺收銀頁任何位置按 <kbd>Esc</kbd> 就返嚟打貨號。</p>
+          <p class="hint" id="scanHint">打貨號按 <kbd>Enter</kbd>，打數量按 <kbd>Enter</kbd>，打售價按 <kbd>Enter</kbd> 就加入。唔使改就照按 <kbd>Enter</kbd>（數量 1、原價）。打 7 位貨號會列出附近嘅貨號；打其他字或者數字（例如 20mm、wd40）就搵貨品名稱，<kbd>↑</kbd><kbd>↓</kbd> 揀選。加完喺空白貨號格按 <kbd>Enter</kbd> 就跳去「客人付款」。喺收銀頁任何位置按 <kbd>Esc</kbd> 就返嚟打貨號。</p>
           <ul id="suggest" class="suggest" role="listbox" hidden></ul>
         </form>
 
@@ -2598,13 +2598,6 @@ function lookup(code) {
   return null;
 }
 // A typed code (or the start of one) is shown with the codes next to it, since neighbouring codes are related products.
-function codeCenter(q) {
-  const c = normCode(q);
-  if (!c) return null;
-  const hit = lookup(c);
-  if (hit) return hit;
-  return /^\d{3,}$/.test(c) ? c : null;
-}
 function lowerBound(arr, q) { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] < q) lo = m + 1; else hi = m; } return lo; }
 function nearbyCodes(center, before, after, arr = state.sortedCodes) {
   const at = lowerBound(arr, center);
@@ -2657,6 +2650,37 @@ function search(q, limit = 8) {
   return out.slice(0, limit);
 }
 
+// 收銀's item box. Seven digits is a product code: that code and the codes next to it, as before.
+// Anything else is looked up in what the product is (its name, brand and type), never in the digits of its code:
+// "20" lists 20mm and 20V, not 1000020 or 5003020. A code, barcode or 簡碼 typed in full is still found, and listed first.
+const SELL_SHOW = 500;   // the list stops here; more words narrow it
+const isCode7 = q => /^\d{7}$/.test(q);
+function infoSearch(q) {
+  const terms = String(q).toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return [];
+  const loose = terms.map(squash), out = [];
+  const found = (w, t, sq) => termIn(sq ? squash(w) : w, t);
+  for (const [code, it] of state.catalog) {
+    const name = String(it.name || '').toLowerCase(), words = [name, String(it.brand || '').toLowerCase(), String(it.type || '').toLowerCase()].filter(Boolean);
+    const has = (t, sq) => words.some(w => found(w, t, sq));
+    const strict = terms.every(t => has(t, false));
+    if (!strict && !(loose.some((t, i) => t !== terms[i]) && loose.every(t => t && has(t, true)))) continue;
+    // a product that has every word in its name comes before one matched through its brand or type
+    out.push({ code, it, rank: terms.every(t => found(name, t, false) || found(name, squash(t), true)) ? 0 : 1 });
+  }
+  return out.sort((a, b) => a.rank - b.rank || a.code.localeCompare(b.code));
+}
+// shows the list for what is typed and returns how many products it found
+function sellSuggest(q, idx = -1) {
+  const c = normCode(q), exact = c ? lookup(c) : null;
+  if (!c) { hideSuggest(); return 0; }
+  if (isCode7(c)) { showNearby(exact || c, idx); return state.sortedCodes.length; }
+  const hits = infoSearch(q).filter(h => h.code !== exact);
+  const all = exact ? [{ code: exact, it: state.catalog.get(exact) }, ...hits] : hits;
+  const n = all.length;
+  showSuggest(all.slice(0, SELL_SHOW), idx, { exact, caption: n > SELL_SHOW ? `「${q}」有 ${n.toLocaleString('en-HK')} 款，顯示頭 ${SELL_SHOW} 款 · 打多個字收窄` : `「${q}」有 ${n} 款 · ↑↓ 揀選，Enter 加入` });
+  return n;
+}
 function trySell(raw) {
   hideMsg();
   const p = parseScan(raw);
@@ -2666,10 +2690,10 @@ function trySell(raw) {
   if (!(p.qty > 0)) { showMsg('數量要大過 0。'); return; }
   let code = state.suggestIdx >= 0 && state.suggest[state.suggestIdx] ? state.suggest[state.suggestIdx].code : lookup(p.code);
   if (!code) {
-    const center = codeCenter(p.code);
-    const found = center ? state.sortedCodes.length > 0 : search(p.code, 1).length > 0;
-    showMsg(state.catalog.size ? `搵唔到貨號「${p.code}」。${found ? '請喺下面揀選，或者再按 Enter 揀已標示嘅貨品。' : '請檢查貨號，或者喺「貨品」新增。'}` : '未有任何貨品。請喺「貨品」新增，或者喺「匯入」載入舊系統嘅貨品。');
-    if (center) showNearby(center, 0); else showSuggest(search(p.code, 8), 0);
+    const found = sellSuggest(p.code, 0) > 0;
+    showMsg(!state.catalog.size ? '未有任何貨品。請喺「貨品」新增，或者喺「匯入」載入舊系統嘅貨品。'
+      : isCode7(p.code) ? `搵唔到貨號「${p.code}」。${found ? '請喺下面揀選附近嘅貨號，或者再按 Enter 揀已標示嘅貨品。' : '請檢查貨號，或者喺「貨品」新增。'}`
+      : found ? `下面係貨品資料有「${p.code}」嘅貨品。用 ↑↓ 揀選，再按 Enter 加入已標示嗰件。` : `冇貨品嘅名稱、牌子或者類別有「${p.code}」。試下打少啲字，或者打 7 位貨號。`);
     return;
   }
   const it = state.catalog.get(code);
@@ -3455,7 +3479,7 @@ function showSuggest(hits, idx = -1, opts = {}) {
     return `<li role="option" data-code="${esc(h.code)}" aria-selected="${i === state.suggestIdx}"${h.code === exact ? ' class="exact"' : ''}><span class="tag">${esc(h.code)}</span><span class="nm">${esc(h.it.name)}</span><span class="num muted">${pr} · 存 ${st}</span></li>`;
   }).join('');
   const focus = ul.querySelector('li[aria-selected="true"]') || ul.querySelector('li.exact');
-  if (focus) ul.scrollTop = Math.max(0, focus.offsetTop - ul.clientHeight / 2 + focus.offsetHeight / 2);
+  ul.scrollTop = focus ? Math.max(0, focus.offsetTop - ul.clientHeight / 2 + focus.offsetHeight / 2) : 0;   // a new list starts at its top
 }
 function hideSuggest() { state.suggest = []; state.suggestIdx = -1; $('#suggest').hidden = true; }
 function moveSuggest(d) {
@@ -6880,9 +6904,7 @@ $('#scan').addEventListener('input', () => {
   hideMsg(); if (state.scanPick) resetPick();
   const p = parseScan($('#scan').value);
   if (p.code.length < 2) { hideSuggest(); return; }
-  const center = codeCenter(p.code);
-  if (center) showNearby(center);
-  else showSuggest(search(p.code, 8));
+  sellSuggest(p.code);
 });
 $('#scan').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); }
