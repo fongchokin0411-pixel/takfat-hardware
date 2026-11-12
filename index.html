@@ -6907,12 +6907,15 @@ $('#cartClear').addEventListener('click', () => {
     state.cart = []; $('#paid').value = ''; state.cartAcct = null; state.cartOrder = null; state.cartReopen = null; saveCart(); renderCart(); $('#scan').focus();
   });
 });
-$('#scan').addEventListener('input', () => {
+// one character is enough (燈, 鎖, 膠); while a Chinese input method is still choosing the character, wait for it
+function scanTyped() {
   hideMsg(); if (state.scanPick) resetPick();
   const p = parseScan($('#scan').value);
-  if (p.code.length < 2) { hideSuggest(); return; }
+  if (!p.code) { hideSuggest(); return; }
   sellSuggest(p.code, -1, !/\s$/.test($('#scan').value));
-});
+}
+$('#scan').addEventListener('input', e => { if (!e.isComposing) scanTyped(); });
+$('#scan').addEventListener('compositionend', scanTyped);
 $('#scan').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); moveSuggest(-1); }
