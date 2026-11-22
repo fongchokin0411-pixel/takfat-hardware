@@ -2546,6 +2546,7 @@ function writeFailed(e) {
 /* ---------- data from snapshots ---------- */
 function applyCatalog(docs) {
   state.catalog.clear(); state.codeChunk.clear(); state.rawChunks.clear(); state.barcodes.clear(); state.shortcuts.clear();
+  state.shortShared = new Map();   // 簡碼 → every product that has it, when more than one does
   const types = new Set(), units = new Set();
   for (const d of docs) {
     const items = (d.data && d.data.items) || {};
@@ -2557,7 +2558,11 @@ function applyCatalog(docs) {
       const copy = { ...it };
       state.catalog.set(code, copy);
       if (copy.barcode) state.barcodes.set(normCode(copy.barcode), code);
-      if (copy.short) state.shortcuts.set(normCode(copy.short), code);
+      if (copy.short) {
+        const s = normCode(copy.short), had = state.shortcuts.get(s);
+        if (had && had !== code) state.shortShared.set(s, [...(state.shortShared.get(s) || [had]), code]);
+        else state.shortcuts.set(s, code);
+      }
       if (copy.type) types.add(copy.type);
       if (copy.unit) units.add(copy.unit);
     }
@@ -2595,7 +2600,7 @@ function parseScan(raw) {
 function lookup(code) {
   if (state.catalog.has(code)) return code;
   if (state.barcodes.has(code)) return state.barcodes.get(code);
-  if (state.shortcuts.has(code)) return state.shortcuts.get(code);
+  if (state.shortcuts.has(code)) return state.shortShared && state.shortShared.has(code) ? null : state.shortcuts.get(code);   // shared: pick from a list
   return null;
 }
 // A typed code (or the start of one) is shown with the codes next to it, since neighbouring codes are related products.
@@ -2679,6 +2684,13 @@ function sellSuggest(q, idx = -1, open = true) {
   const c = normCode(q), exact = c ? lookup(c) : null;
   if (!c) { hideSuggest(); return 0; }
   if (isCode7(c)) { showNearby(exact || c, idx); return state.sortedCodes.length; }
+  const shared = (state.shortShared && state.shortShared.get(c)) || [];
+  if (shared.length) {
+    const rest = infoSearch(q, open).filter(h => !shared.includes(h.code));
+    const all = [...shared.filter(x => state.catalog.has(x)).map(x => ({ code: x, it: state.catalog.get(x) })), ...rest];
+    showSuggest(all.slice(0, SELL_SHOW), idx, { caption: `「${q}」係 ${shared.length} 件貨品嘅簡碼 · 用 ↑↓ 揀一件，Enter 加入` });
+    return all.length;
+  }
   const hits = infoSearch(q, open).filter(h => h.code !== exact);
   // a line between the whole-number matches and those where the number goes on
   const lastWord = String(q).trim().split(/\s+/).pop(), cut = hits.findIndex(h => h.rank >= 2);
@@ -2700,6 +2712,7 @@ function trySell(raw) {
     const found = sellSuggest(p.code, 0) > 0;
     showMsg(!state.catalog.size ? '未有任何貨品。請喺「貨品」新增，或者喺「匯入」載入舊系統嘅貨品。'
       : isCode7(p.code) ? `搵唔到貨號「${p.code}」。${found ? '請喺下面揀選附近嘅貨號，或者再按 Enter 揀已標示嘅貨品。' : '請檢查貨號，或者喺「貨品」新增。'}`
+      : state.shortShared && state.shortShared.has(normCode(p.code)) ? `「${p.code}」係 ${state.shortShared.get(normCode(p.code)).length} 件貨品嘅簡碼。用 ↑↓ 揀啱嗰件，再按 Enter。`
       : found ? `下面係貨品資料有「${p.code}」嘅貨品。用 ↑↓ 揀選，再按 Enter 加入已標示嗰件。` : `冇貨品嘅名稱、牌子或者類別有「${p.code}」。試下打少啲字，或者打 7 位貨號。`);
     return;
   }
