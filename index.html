@@ -1742,7 +1742,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
       </div>
 
       <div class="set-row">
-        <div class="set-label"><h2>匯入舊系統銷售紀錄</h2><p>「貨品分析・補貨」要知道每件貨以前賣得幾多。紀錄喺 <code>DAT</code> 資料夾嘅 <code>SOITM.DBF</code>（大約 600 MB），最好喺舖頭部電腦揀。系統會逐段讀，只儲存每件貨最近 12 個月每月嘅銷量同金額。</p></div>
+        <div class="set-label"><h2>匯入舊系統銷售紀錄</h2><p>載入之後，「報表」同「總覽」會有舊系統每日嘅營業額同利潤，「貨品分析・補貨」會知道每件貨以前賣得幾多。紀錄喺 <code>DAT</code> 資料夾嘅 <code>SOITM.DBF</code>（大約 600 MB），最好喺舖頭部電腦揀。系統會逐段讀，只儲存每件貨最近 12 個月每月嘅銷量同金額。</p></div>
         <div class="set-panel">
           <div class="row-wrap">
             <label class="field">檔案<input id="hFile" type="file"></label>
@@ -4434,7 +4434,9 @@ async function loadImportFile() {
       let obj = null; try { obj = JSON.parse(await file.text()); } catch (e) {}
       $('#iMapCard').hidden = true; state.imp = null;
       if (obj && obj.format === 'tf-pos-backup') {
-        info.innerHTML = `<strong>${esc(file.name)}</strong> 係呢個系統嘅資料檔（${esc(obj.shop || '')}），唔係舊系統嘅貨品檔，要用「還原備份」入。<br><button class="btn small" type="button" id="iToRestore">用呢個檔案還原備份…</button>`;
+        const add = isObj(obj.docs) && isOldRecords(obj);
+        info.innerHTML = add ? `<strong>${esc(file.name)}</strong> 係舊系統紀錄檔，可以直接加入，唔會改其他資料。<br><button class="btn small" type="button" id="iToRestore">加入舊系統紀錄…</button>`
+          : `<strong>${esc(file.name)}</strong> 係呢個系統嘅資料檔（${esc(obj.shop || '')}），唔係舊系統嘅貨品檔，要用「還原備份」入。<br><button class="btn small" type="button" id="iToRestore">用呢個檔案還原備份…</button>`;
         $('#iToRestore').addEventListener('click', () => { $('#iFile').value = ''; info.hidden = true; restoreBackup(file); });
       } else info.textContent = `${file.name} 唔係舊系統嘅 DBF 或者 CSV 檔案。`;
       return;
@@ -5707,12 +5709,28 @@ async function downloadBackup() {
     $('#bkInfo').textContent = `已下載備份（${n} 份資料，${Math.round(data.length / 1024).toLocaleString()} KB）。`;
   } catch (e) { $('#bkInfo').textContent = e && e.code === 'declined' ? '' : '備份未能下載。'; }
 }
+// a file holding only the old system's records (hist/days-*, hist/pnv-*): added to what is here, nothing replaced
+const isOldRecords = obj => obj.kind === 'old-records' || (Object.keys(obj.docs).length > 0 && Object.keys(obj.docs).every(k => /^hist\/(days|pnv)-/.test(k)));
+function addOldRecords(obj) {
+  const docs = Object.entries(obj.docs).filter(([k, v]) => /^hist\/(days|pnv)-[A-Za-z0-9_\-]+$/.test(k) && isObj(v));
+  const nDays = docs.reduce((t, [, v]) => t + (isObj(v.days) ? Object.keys(v.days).length : 0), 0);
+  const nInv = docs.reduce((t, [, v]) => t + (Array.isArray(v.notes) ? v.notes.length : 0), 0);
+  openModal('加入舊系統紀錄', `<p>呢個檔案有舊系統 ${nDays.toLocaleString()} 日嘅營業紀錄同 ${nInv.toLocaleString()} 張入貨單（${esc(obj.shop || '')}）。</p>
+    <p class="hint">只會加入舊紀錄：貨品、存量、供應商同呢個系統嘅銷售紀錄全部唔會改。再加一次會用新嘅取代舊嘅。</p>`, async () => {
+    $('#bkInfo').textContent = '加入緊…';
+    for (const [k, v] of docs) await state.store.setHist(k.slice(5), v);
+    state.old = null; state.analysis = null;
+    $('#bkInfo').textContent = `已加入 ${nDays.toLocaleString()} 日營業紀錄同 ${nInv.toLocaleString()} 張舊入貨單。去「報表」或者「入貨記錄」揀日子就睇到。`;
+    toast('舊系統紀錄已加入。');
+  }, { ok: '加入' });
+}
 async function restoreBackup(fileArg) {
   const f = fileArg instanceof Blob ? fileArg : $('#bkFile').files[0]; $('#bkFile').value = '';
   if (!f || !state.canWrite) return;
   let obj;
   try { obj = JSON.parse(await f.text()); } catch (e) { $('#bkInfo').textContent = '呢個檔案唔係備份檔。'; return; }
   if (!obj || obj.format !== 'tf-pos-backup' || !isObj(obj.docs)) { $('#bkInfo').textContent = '呢個檔案唔係呢個系統嘅備份檔。'; return; }
+  if (isOldRecords(obj)) { addOldRecords(obj); return; }
   const n = Object.keys(obj.docs).filter(k => BACKUP_KEY.test(k)).length;
   const items = Object.entries(obj.docs).filter(([k]) => k.startsWith('catalog/')).reduce((t, [, v]) => t + Object.keys((v && v.items) || {}).length, 0);
   openModal('還原備份', `<p>備份來自「${esc(obj.shop || '')}」，日期 ${esc(String(obj.exportedAt || '').slice(0, 10))}，有 ${items.toLocaleString()} 件貨品、${n} 份資料。</p><p class="hint">還原會用備份取代而家嘅貨品、存量同銷售紀錄。密碼唔會改變。</p>`, async () => {
