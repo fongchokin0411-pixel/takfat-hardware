@@ -263,7 +263,7 @@ input[type="file"]::file-selector-button:hover { background: var(--secondary-hov
 .kpis { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
 .kpi { display: grid; align-content: start; gap: 6px; padding: 14px var(--card-pad) 16px; background: var(--surface); text-align: left; border: 0; font: inherit; color: inherit; }
 .kpi .k { color: var(--muted); }
-.kpi .v { font-size: var(--fs-kpi); line-height: 34px; font-weight: 500; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.kpi .v { font-size: var(--fs-kpi); line-height: 34px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; min-width: 0; overflow: hidden; }   /* fitKpi() shrinks a long figure to its box */
 .kpi.money .v { font-weight: 700; }
 .kpi.lead .v { font-size: 34px; line-height: 38px; }
 .kpi .v small { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
@@ -789,6 +789,11 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 #acBody tr:hover td { background: var(--well); }
 #acBody tr[aria-selected="true"] td { background: var(--hue-tint); }
 /* 供應商 */
+.sp-old { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.sp-old h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.sp-years { display: flex; flex-wrap: wrap; gap: 6px; }
+.sp-years span { padding: 4px 8px; border-radius: var(--radius-control); background: var(--secondary); font-size: 13px; font-variant-numeric: tabular-nums; }
+.sp-years b { font-weight: 600; }
 #spBody tr { cursor: pointer; }
 #spBody tr[aria-selected="true"] td { background: var(--hue-tint); }
 #spBody .hint { margin-top: 2px; }
@@ -1222,6 +1227,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
         <div class="card ac-card sp-card" id="spCard" hidden>
           <div class="card-head"><h2 id="spName"></h2><div class="actions"><button id="spEdit" class="btn small ghost" type="button">修改</button></div></div>
           <dl class="sp-info" id="spInfo"></dl>
+          <div class="sp-old" id="spOld" hidden></div>
           <div class="sp-prods">
             <div class="card-head"><h3 id="spProdTitle">供應嘅貨品</h3><div class="actions"><button id="spToProducts" class="btn small" type="button">喺貨品頁睇</button></div></div>
             <ul class="sp-list" id="spList"></ul>
@@ -1497,6 +1503,10 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
           </div>
           <div class="table-wrap" id="puWrap" hidden><table><thead id="puHead"></thead><tbody id="puBody"></tbody></table></div>
           <div id="puEmpty" class="empty" hidden></div>
+          <div class="card pu-old" id="puOld" hidden>
+            <div class="card-head"><h2>舊系統入貨單</h2><span class="hint" id="puOldNote"></span></div>
+            <div class="table-wrap"><table><thead><tr><th>日期</th><th>供應商</th><th>單號</th><th class="r priv">金額</th></tr></thead><tbody id="puOldBody"></tbody></table></div>
+          </div>
         </div>
         <div class="card">
           <div class="card-head"><h2>按供應商</h2><span class="hint" id="puSupHint"></span></div>
@@ -1557,6 +1567,8 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <button class="fchip" type="button" data-p="7" aria-pressed="true">最近 7 日</button>
             <button class="fchip" type="button" data-p="month" aria-pressed="false">本月</button>
             <button class="fchip" type="button" data-p="lastmonth" aria-pressed="false">上月</button>
+            <button class="fchip" type="button" data-p="year" aria-pressed="false">今年</button>
+            <button class="fchip" type="button" data-p="lastyear" aria-pressed="false">去年</button>
           </div>
           <input id="rFrom" type="date" aria-label="由">
           <span class="muted">至</span>
@@ -1566,6 +1578,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
           <button id="rExport" class="btn ghost" type="button">匯出 CSV</button>
         </div>
         <div class="kpis" id="rKpis" role="tablist" aria-label="銷售數字"></div>
+        <p class="hint" id="rOldNote" hidden></p>
         <div class="card">
           <div class="card-head"><h2 id="rChartTitle">每日營業額</h2>
             <div class="seg" id="rGroup" role="group" aria-label="圖表按">
@@ -4179,6 +4192,28 @@ function productKeys(e) {
   if (inList && e.key.length === 1 && e.target === w) { e.preventDefault(); const s = $('#pSearch'); s.value = e.key; s.focus(); renderProducts(); }
 }
 
+/* ---------- old records from the previous system: daily takings and supplier invoices ----------
+   hist/days-* hold a day's takings ({ s: net sales, c: cost, p: profit, n: sales, r: returns }), from SOMEMD.DBF or from
+   an SOITM.DBF import; hist/pnv-* hold supplier invoices ({ d, no, sc: supplier code, sn: supplier, a: amount, ret }).
+   They sit apart from this app's own records: they add to 報表, 總覽, 入貨記錄 and 供應商, never to stock or payables. */
+state.old = null;
+async function loadOld() {
+  if (state.old) return state.old;
+  const hdocs = await state.store.getHist().catch(() => []);
+  const days = new Map(), notes = [], rank = { SOMEMD: 2, SOITM: 1 };
+  for (const h of hdocs) {
+    if (h.kind === 'days' && isObj(h.days)) for (const [d, v] of Object.entries(h.days)) {
+      const r = rank[h.src] || 0, cur = days.get(d);
+      if (isObj(v) && (!cur || r > cur.rank)) days.set(d, { ...v, rank: r });   // the old system's own day totals win over sums of its lines
+    }
+    if (h.kind === 'pnv' && Array.isArray(h.notes)) for (const n of h.notes) if (isObj(n) && n.d) notes.push(n);
+  }
+  notes.sort((a, b) => b.d.localeCompare(a.d) || String(b.no).localeCompare(String(a.no)));
+  const dk = [...days.keys()].sort();
+  return (state.old = { days, notes, from: dk[0] || '', to: dk[dk.length - 1] || '' });
+}
+const oldKnown = o => o && typeof o.c === 'number' && typeof o.p === 'number';
+
 /* ---------- reports ---------- */
 function setPreset(p) {
   const t = dayKey(new Date());
@@ -4187,6 +4222,8 @@ function setPreset(p) {
   if (p === '7') from = addDays(t, -6);
   if (p === 'month') from = t.slice(0, 8) + '01';
   if (p === 'lastmonth') { const d = parseDay(t.slice(0, 8) + '01'); d.setDate(0); to = dayKey(d); from = to.slice(0, 8) + '01'; }
+  if (p === 'year') from = t.slice(0, 4) + '-01-01';
+  if (p === 'lastyear') { const y = Number(t.slice(0, 4)) - 1; from = `${y}-01-01`; to = `${y}-12-31`; }
   $('#rFrom').value = from; $('#rTo').value = to;
   $$('#rPresets .fchip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === p)));
   runReport();
@@ -4202,7 +4239,7 @@ async function runReport() {
   for (const d of docs) for (const [id, l] of Object.entries(d.lines || {})) lines.push({ id, day: d.day, ...l });
   lines.sort((a, b) => String(a.at).localeCompare(String(b.at)));
   const sum = summarize(lines);
-  const retAmt = lines.reduce((t, l) => t + (l.kind === 'sale' && l.ret && !l.void ? -(num(l.qty) || 0) * (num(l.price) || 0) : 0), 0);
+  let retAmt = lines.reduce((t, l) => t + (l.kind === 'sale' && l.ret && !l.void ? -(num(l.qty) || 0) * (num(l.price) || 0) : 0), 0);
   const byDay = new Map(), byProd = new Map();
   for (const l of lines) {
     if (l.kind !== 'sale' || l.void) continue;
@@ -4213,6 +4250,23 @@ async function runReport() {
     if (l.name) pp.name = l.name;
     byProd.set(l.code, pp);
   }
+  // days before this app (or with no sales in it) take the old system's takings
+  const old = await loadOld();
+  let oldDays = 0, oldNoCost = 0;
+  if (old.days.size && from <= old.to && to >= old.from) {
+    for (let d = from < old.from ? old.from : from; d <= to && d <= old.to; d = addDays(d, 1)) {
+      const o = old.days.get(d); if (!o || byDay.has(d)) continue;
+      const known = oldKnown(o);
+      byDay.set(d, { sales: o.s || 0, profit: known ? o.p : 0, cost: known ? o.c : 0, qty: 0, old: true });
+      sum.sales += o.s || 0; oldDays++;
+      if (known) { sum.salesKnown += o.s || 0; sum.cost += o.c; sum.profit += o.p; } else oldNoCost++;
+      if (o.r) retAmt += o.r;
+    }
+    sum.margin = sum.salesKnown > 0 ? sum.profit / sum.salesKnown : null;
+  }
+  const on = $('#rOldNote');
+  on.hidden = !oldDays;
+  on.textContent = oldDays ? `包括舊系統 ${oldDays.toLocaleString()} 日嘅營業紀錄（有舊紀錄嘅日子：${old.from} 至 ${old.to}）。舊紀錄冇件數同逐件貨品，「售出件數」同下面嘅貨品只計呢個系統。${oldNoCost ? `其中 ${oldNoCost} 日冇成本，未計入利潤。` : ''}` : '';
   state.report = { from, to, lines };
   const tab = (series, k, v, cls = '') => `<button class="kpi ${cls}" type="button" role="tab" data-series="${series}" aria-selected="${state.rSeries === series}"><span class="k">${k}</span><span class="v">${v}</span></button>`;
   const cell = (k, v) => `<div class="kpi"><span class="k">${k}</span><span class="v">${v}</span></div>`;
@@ -4847,7 +4901,9 @@ async function loadPurchases(force) {
     }
   }
   rows.sort((a, b) => b.at.localeCompare(a.at));
-  state.pu = { month: m, rows };
+  const old = await loadOld();
+  if ($('#puMonth').value !== m) return;
+  state.pu = { month: m, rows, old: old.notes.filter(n => n.d.startsWith(m)) };
   renderPurchases();
 }
 function puFiltered() {
@@ -4859,22 +4915,29 @@ const puAmt = r => r.cost === null ? 0 : r.qty * r.cost;
 function renderPurchases() {
   const P = state.pu; if (!P) return;
   const sel = $('#puSup'), cur = sel.value;
-  const sups = [...new Set(P.rows.map(r => r.supplier))].sort((a, b) => a === NO_SUP ? 1 : b === NO_SUP ? -1 : a.localeCompare(b, 'zh-Hant'));
+  const sups = [...new Set([...P.rows.map(r => r.supplier), ...(P.old || []).map(n => n.sn || NO_SUP)])].sort((a, b) => a === NO_SUP ? 1 : b === NO_SUP ? -1 : a.localeCompare(b, 'zh-Hant'));
   sel.innerHTML = '<option value="">所有供應商</option>' + sups.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   sel.value = sups.includes(cur) ? cur : '';
   const rows = puFiltered();
-  const total = rows.reduce((t, r) => t + puAmt(r), 0);
+  const supSel = sel.value, oTerms = $('#puSearch').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const oldRows = (P.old || []).filter(n => (!supSel || (n.sn || NO_SUP) === supSel) && oTerms.every(t => `${n.sn} ${n.no} ${n.ref || ''}`.toLowerCase().includes(t)));
+  const oldTotal = oldRows.reduce((t, n) => t + (num(n.a) || 0), 0);
+  const total = rows.reduce((t, r) => t + puAmt(r), 0) + oldTotal;
   const noCost = rows.filter(r => r.cost === null).length;
   const singles = rows.filter(r => r.single).length;
   const kp = (k, v, cls = '') => `<div class="kpi${cls ? ' ' + cls : ''}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
-  $('#puKpis').innerHTML = kp('入貨成本', money(total), 'money lead priv') + kp('入貨單', `${new Set(rows.filter(r => !r.single).map(r => r.key)).size}<small>張</small>`)
-    + kp('貨品', `${new Set(rows.map(r => r.code)).size.toLocaleString()}<small>款</small>`) + kp('供應商', `${new Set(rows.map(r => r.supplier)).size}<small>間</small>`);
+  $('#puKpis').innerHTML = kp('入貨成本', money(total), 'money lead priv') + kp('入貨單', `${new Set(rows.filter(r => !r.single).map(r => r.key)).size + oldRows.length}<small>張</small>`)
+    + kp('貨品', `${new Set(rows.map(r => r.code)).size.toLocaleString()}<small>款</small>`) + kp('供應商', `${new Set([...rows.map(r => r.supplier), ...oldRows.map(n => n.sn || NO_SUP)]).size}<small>間</small>`);
   renderSupList(sel.value); fixKpis();
   const sup = sel.value;
   $('#puNote').textContent = `${monthLabel(P.month)}${sup ? ' · ' + sup : ''} · ${rows.length.toLocaleString()} 行入貨紀錄${singles ? `，其中 ${singles} 行係喺「貨品」逐件入貨` : ''}。`
-    + (noCost && state.unlocked ? `有 ${noCost} 行未有來價，未計入成本。` : '');
+    + (noCost && state.unlocked ? `有 ${noCost} 行未有來價，未計入成本。` : '') + (oldRows.length ? ` 另有舊系統入貨單 ${oldRows.length} 張。` : '');
+  $('#puOld').hidden = !oldRows.length;
+  $('#puOldNote').textContent = oldRows.length ? `${oldRows.length} 張${oldRows.some(n => n.ret) ? '（包括退貨畀供應商）' : ''} · 舊系統只有每張單嘅總數` : '';
+  $('#puOldBody').innerHTML = oldRows.map(n => `<tr><td class="num">${shortDay(n.d)}</td><td>${esc(n.sn || n.sc || NO_SUP)}${n.ret ? ' <span class="chip">退貨</span>' : ''}</td><td><span class="tag">${esc(n.no)}</span>${n.ref ? ` <span class="muted">${esc(n.ref)}</span>` : ''}</td><td class="r priv">${money(num(n.a) || 0)}</td></tr>`).join('');
   const empty = $('#puEmpty');
-  $('#puWrap').hidden = !rows.length; empty.hidden = !!rows.length;
+  $('#puWrap').hidden = !rows.length; empty.hidden = !!rows.length || !!oldRows.length;
+  $('#puFixHint').hidden = !P.rows.length; $('#puMode').hidden = !P.rows.length;
   if (!rows.length) {
     empty.innerHTML = P.rows.length ? '<strong>搵唔到符合嘅入貨紀錄</strong>試下揀其他供應商，或者改搜尋字。'
       : `<strong>${monthLabel(P.month)}未有入貨紀錄</strong>喺「入貨」影送貨單或者逐件輸入，確認入貨之後就會喺呢度出現。`;
@@ -4924,11 +4987,17 @@ function renderSupList(cur) {
     let g = by.get(r.supplier); if (!g) by.set(r.supplier, g = { name: r.supplier, amt: 0, codes: new Set() });
     g.amt += puAmt(r); g.codes.add(r.code);
   }
-  const val = g => state.unlocked ? g.amt : g.codes.size;
+  for (const n of P.old || []) {
+    const name = n.sn || NO_SUP;
+    if (!terms.every(t => `${name} ${n.no} ${n.ref || ''}`.toLowerCase().includes(t))) continue;
+    let g = by.get(name); if (!g) by.set(name, g = { name, amt: 0, codes: new Set(), notes: 0 });
+    g.amt += num(n.a) || 0; g.notes = (g.notes || 0) + 1;
+  }
+  const val = g => state.unlocked ? g.amt : g.codes.size + (g.notes || 0);
   const list = [...by.values()].sort((a, b) => val(b) - val(a) || a.name.localeCompare(b.name, 'zh-Hant'));
   const max = Math.max(1e-9, ...list.map(val));
   $('#puSupHint').textContent = state.unlocked ? '入貨成本' : '貨品款數';
-  $('#puSupList').innerHTML = list.length ? list.map(g => `<li><button type="button" data-sup="${esc(g.name)}" aria-pressed="${g.name === cur}"><i style="width:${(val(g) / max * 100).toFixed(1)}%"></i><span class="nm">${esc(g.name)}</span><b>${state.unlocked ? money(g.amt) : g.codes.size + ' 款'}</b></button></li>`).join('')
+  $('#puSupList').innerHTML = list.length ? list.map(g => `<li><button type="button" data-sup="${esc(g.name)}" aria-pressed="${g.name === cur}"><i style="width:${(val(g) / max * 100).toFixed(1)}%"></i><span class="nm">${esc(g.name)}</span><b>${state.unlocked ? money(g.amt) : g.codes.size ? g.codes.size + ' 款' : (g.notes || 0) + ' 張單'}</b></button></li>`).join('')
     : '<li class="hint">呢個月未有供應商送貨。</li>';
 }
 async function exportPurchases() {
@@ -5334,6 +5403,8 @@ async function scanHistory() {
     const fDate = pickField(h.fields, ['CDATE', 'CINVDATE', 'DDATE', 'ENTRYDATE', 'DATE'], 'DTC');
     const fQty = pickField(h.fields, ['NSALQTY', 'NQTY', 'QTY'], 'NFIBY');
     const fAmt = pickField(h.fields, ['NNETAMT', 'NHKAMT', 'NSALAMT', 'NAMT'], 'NFIBY');
+    const fDoc = pickField(h.fields, ['SERNUM', 'CINVNO'], 'C'), fProfit = pickField(h.fields, ['NPROFIT'], 'NFIBY');
+    const dayAgg = new Map();   // day → type → { a: amount, p: profit, docs: the documents that day }
     if (!fCode || !fDate || !fQty) throw new Error(`搵唔到需要嘅欄位（貨號、日期、數量）。呢個檔案有：${h.fields.map(f => f.name).join('、')}`);
     const total = Math.min(h.n, Math.floor((file.size - h.hlen) / h.rlen));
     const now = new Date(), curIdx = now.getFullYear() * 12 + now.getMonth();
@@ -5354,6 +5425,10 @@ async function scanHistory() {
         st.n++; st.q += q; st.a += a;
         const ymd = readYmd(u8, b, fDate); if (!ymd) continue;
         if (ymd < minD) minD = ymd; if (ymd > maxD) maxD = ymd;
+        let dm = dayAgg.get(ymd); if (!dm) dayAgg.set(ymd, dm = new Map());
+        let dt = dm.get(type); if (!dt) dm.set(type, dt = { a: 0, p: 0, docs: new Set() });
+        dt.a += a; if (fProfit) dt.p += readNumF(u8, b, fProfit);
+        if (fDoc) dt.docs.add(asciiTrim(u8, b + fDoc.pos, fDoc.len));
         const idx = curIdx - (Math.floor(ymd / 10000) * 12 + (Math.floor(ymd / 100) % 100) - 1);
         let tm = agg.get(type); if (!tm) agg.set(type, tm = new Map());
         let e = tm.get(code); if (!e) tm.set(code, e = { q: new Float64Array(12), a: new Float64Array(12), last: 0 });
@@ -5364,7 +5439,7 @@ async function scanHistory() {
       info.textContent = `讀緊… ${(i + cnt).toLocaleString()} / ${total.toLocaleString()} 行`;
       await sleep(0);
     }
-    state.histScan = { agg, stats, minD, maxD, total, file: file.name };
+    state.histScan = { agg, stats, minD, maxD, total, file: file.name, dayAgg, hasProfit: !!fProfit };
     const ymdTxt = v => `${String(v).slice(0, 4)}-${String(v).slice(4, 6)}-${String(v).slice(6, 8)}`;
     info.textContent = `讀完 ${total.toLocaleString()} 行，日期由 ${maxD ? ymdTxt(minD) : '–'} 至 ${maxD ? ymdTxt(maxD) : '–'}。請核對下面嘅類別，再按「儲存銷售紀錄」。`;
     const types = [...stats].sort((x, y) => y[1].n - x[1].n);
@@ -5414,8 +5489,29 @@ async function saveHistory() {
       $('#hInfo').textContent = `儲存緊第 ${k} 部分…`;
     }
     for (const old of ((prev && Array.isArray(prev.chunks)) ? prev.chunks : [])) if (!ids.includes(old)) await state.store.setHist(old, { asOf, items: {} });
-    await state.store.patchMeta('histInfo', { asOf, importedAt: new Date().toISOString(), file: sc.file, records: sc.total, from: sc.minD, to: sc.maxD, roles: Object.entries(roles), chunks: ids, products: items.length });
-    $('#hInfo').textContent = `完成。已儲存 ${items.length.toLocaleString()} 件貨品嘅銷售紀錄。去「報表 → 貨品分析・補貨」睇結果。`;
+    // each day's takings: sales less returns, the profit the old system worked out, and how many sales
+    const years = new Map(); let nDays = 0;
+    for (const [ymd, dm] of sc.dayAgg || []) {
+      let s = 0, p = 0, n = 0, r = 0, any = false;
+      for (const [type, e] of dm) {
+        const role = roles[type] || 'skip'; if (role === 'skip') continue;
+        any = true;
+        if (role === 'return') { s -= Math.abs(e.a); p -= Math.abs(e.p); r += Math.abs(e.a); }
+        else { s += e.a; p += e.p; n += e.docs.size; }
+      }
+      if (!any) continue;
+      const day = `${String(ymd).slice(0, 4)}-${String(ymd).slice(4, 6)}-${String(ymd).slice(6, 8)}`;
+      const rec = { s: Math.round(s * 100) / 100, n };
+      if (sc.hasProfit && Math.abs(p) > 1e-9) { rec.p = Math.round(p * 100) / 100; rec.c = Math.round((s - p) * 100) / 100; }
+      if (r) rec.r = Math.round(r * 100) / 100;
+      const y = day.slice(0, 4); if (!years.has(y)) years.set(y, {}); years.get(y)[day] = rec; nDays++;
+    }
+    const dayDocs = [];
+    for (const [y, days] of years) { const id = 'days-soitm-' + y; dayDocs.push(id); await state.store.setHist(id, { kind: 'days', src: 'SOITM', days }); }
+    for (const old of ((prev && Array.isArray(prev.dayDocs)) ? prev.dayDocs : [])) if (!dayDocs.includes(old)) await state.store.setHist(old, { kind: 'days', src: 'SOITM', days: {} });
+    state.old = null;
+    await state.store.patchMeta('histInfo', { asOf, importedAt: new Date().toISOString(), file: sc.file, records: sc.total, from: sc.minD, to: sc.maxD, roles: Object.entries(roles), chunks: ids, products: items.length, dayDocs, days: nDays });
+    $('#hInfo').textContent = `完成。已儲存 ${items.length.toLocaleString()} 件貨品嘅銷售紀錄${nDays ? `，同 ${nDays.toLocaleString()} 日嘅營業額（喺「報表」揀日子就睇到）` : ''}。去「報表 → 貨品分析・補貨」睇結果。`;
     $('#hTypes').hidden = true;
     state.analysis = null; state.histSold = null; state.soldDirty = true;
     toast('舊系統銷售紀錄已儲存。');
@@ -5625,7 +5721,7 @@ async function restoreBackup(fileArg) {
     // what the app only reads when it opens: suppliers, 入貨 aliases, the sales history and the delivery-note index
     const [sp, al] = await Promise.all([state.store.getMeta('suppliers').catch(() => null), state.store.getMeta('aliases').catch(() => null)]);
     state.suppliers = sp && Array.isArray(sp.list) ? sp.list : []; state.aliases = al && isObj(al.map) ? { ...al.map } : {}; fillSuppliers();
-    state.histSold = null; state.puIdx = null; loadPuIndex(true);
+    state.histSold = null; state.puIdx = null; state.old = null; loadPuIndex(true);
     state.analysis = null; state.acct.past = null; state.cart = []; state.cartAcct = null; saveCart(); renderCart();
     const shop = obj.docs['meta/shop']; applyShop(shop && shop.name, shop && shop.logo);
     $('#bkInfo').textContent = `已還原 ${items.toLocaleString()} 件貨品。`;
@@ -5841,8 +5937,17 @@ function fixKpis() {
     const vis = [...k.children].filter(c => getComputedStyle(c).display !== 'none');
     k.querySelectorAll('.solo').forEach(c => c.classList.remove('solo'));
     if (vis.length % 2 && vis.length > 1) vis[vis.length - 1].classList.add('solo');
+    k.querySelectorAll('.kpi .v').forEach(fitKpi);
   }
 }
+// a figure too wide for its box (a year's takings) gets a smaller size instead of breaking in the middle
+function fitKpi(el) {
+  el.style.fontSize = '';
+  const w = el.clientWidth, sw = el.scrollWidth;
+  if (w && sw > w) el.style.fontSize = Math.max(15, Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / sw * 0.98)) + 'px';
+}
+let kpiT = 0;
+window.addEventListener('resize', () => { clearTimeout(kpiT); kpiT = setTimeout(() => $$('.kpis .kpi .v').forEach(el => { if (el.offsetParent) fitKpi(el); }), 150); });
 function navSet(open) {
   $('#app').classList.toggle('nav-open', open);
   $('#navOpen').setAttribute('aria-expanded', String(open));
@@ -6071,6 +6176,7 @@ function supplierRows() {
   return rows;
 }
 function renderSuppliers() {
+  if (!state.old && state.store) loadOld().then(() => { if (!$('#view-suppliers').hidden) renderSuppliers(); });
   const rows = supplierRows(), q = $('#spSearch').value.trim().toLowerCase();
   const withProd = [...state.catalog.values()].filter(it => it.supplier).length;
   const kp = (k, v, cls = '') => `<div class="kpi ${cls}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
@@ -6094,6 +6200,18 @@ function renderSupplierCard(rows) {
   $('#spInfo').innerHTML = (row('電話', s.phone, 'big') + row('聯絡人', s.contact) + row('傳真', s.fax) + row('地址', s.address) + row('備註', s.note) + row('舊編號', s.code))
     || '<dd class="none">未有聯絡資料。按「加入聯絡資料」寫低電話同地址。</dd>';
   $('#spEdit').textContent = s.listed ? '修改' : '加入聯絡資料';
+  // what was ordered from them in the old system: invoices per year, and the latest ones (amounts for 老闆 only)
+  const ns = state.old ? state.old.notes.filter(n => (s.code && n.sc === s.code) || n.sn === s.name) : [];
+  const so = $('#spOld'); so.hidden = !ns.length;
+  if (ns.length) {
+    const years = new Map();
+    for (const n of ns) { const y = n.d.slice(0, 4), e = years.get(y) || { n: 0, a: 0 }; e.n++; e.a += num(n.a) || 0; years.set(y, e); }
+    const ys = [...years].sort((a, b) => b[0].localeCompare(a[0]));
+    so.innerHTML = `<h3>叫貨紀錄（舊系統）</h3>
+      <p class="hint">${ns.length.toLocaleString()} 張入貨單 · ${ns[ns.length - 1].d} 至 ${ns[0].d}</p>
+      <div class="sp-years">${ys.slice(0, 8).map(([y, e]) => `<span>${y} <b>${e.n}</b> 張${state.unlocked ? ` · ${money(e.a)}` : ''}</span>`).join('')}</div>
+      <ul class="sp-list">${ns.slice(0, 8).map(n => `<li><span class="tag">${esc(n.no)}</span><span class="nm">${shortDay(n.d)} ${n.d.slice(0, 4)}${n.ret ? ' · 退貨' : ''}</span><span class="r">${state.unlocked ? money(num(n.a) || 0) : ''}</span></li>`).join('')}</ul>`;
+  }
   $('#spEdit').disabled = !state.canWrite;
   const prods = [...state.catalog].filter(([, it]) => it.supplier === s.name).sort(([a], [b]) => a.localeCompare(b));
   $('#spProdTitle').textContent = `供應嘅貨品（${prods.length.toLocaleString()} 款）`;
@@ -6590,9 +6708,9 @@ async function openBoss() {
   if (!state.unlocked || !state.store) return;
   $('#bsSub').textContent = '計緊數…';
   try {
-    const [docs, pa] = await Promise.all([allDayDocs(), state.store.getMeta('priceAlerts').catch(() => null), loadPuIndex(), loadAcctPast().catch(() => {})]);
+    const [docs, pa, , , old] = await Promise.all([allDayDocs(), state.store.getMeta('priceAlerts').catch(() => null), loadPuIndex(), loadAcctPast().catch(() => {}), loadOld()]);
     state.priceOk = (pa && isObj(pa.ok)) ? pa.ok : {};
-    state.boss = { docs };
+    state.boss = { docs, old };
   } catch (e) { $('#bsSub').textContent = '未能讀取紀錄，請按「重新計算」。'; return; }
   renderBoss();
 }
@@ -6609,6 +6727,12 @@ function renderBoss() {
       if (!l.ret) x.tx.add(l.rid || id);
     }
     per.set(d.day, x);
+  }
+  // days with nothing in this app take the old system's takings, so 上週 / 上月同期 compare from the first day
+  if (B.old) for (const [day, o] of B.old.days) {
+    const x = per.get(day);
+    if (x && (x.sales || x.tx.size)) continue;
+    per.set(day, { sales: o.s || 0, profit: oldKnown(o) ? o.p : 0, known: oldKnown(o) ? (o.s || 0) : 0, tx: { size: o.n || 0 } });
   }
   const span = (a, b) => { const r = { sales: 0, profit: 0, known: 0, tx: 0 }; for (const [day, x] of per) if (day >= a && day <= b) { r.sales += x.sales; r.profit += x.profit; r.known += x.known; r.tx += x.tx.size; } return r; };
   const t = state.today, td = parseDay(t), wk = addDays(t, -((td.getDay() + 6) % 7)), m1 = t.slice(0, 8) + '01';
