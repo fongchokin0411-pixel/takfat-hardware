@@ -5553,6 +5553,10 @@ async function restoreBackup() {
   openModal('還原備份', `<p>備份來自「${esc(obj.shop || '')}」，日期 ${esc(String(obj.exportedAt || '').slice(0, 10))}，有 ${items.toLocaleString()} 件貨品、${n} 份資料。</p><p class="hint">還原會用備份取代而家嘅貨品、存量同銷售紀錄。密碼唔會改變。</p>`, async () => {
     $('#bkInfo').textContent = '還原緊…';
     await state.store.restoreAll(obj.docs);
+    // what the app only reads when it opens: suppliers, 入貨 aliases, the sales history and the delivery-note index
+    const [sp, al] = await Promise.all([state.store.getMeta('suppliers').catch(() => null), state.store.getMeta('aliases').catch(() => null)]);
+    state.suppliers = sp && Array.isArray(sp.list) ? sp.list : []; state.aliases = al && isObj(al.map) ? { ...al.map } : {}; fillSuppliers();
+    state.histSold = null; state.puIdx = null; loadPuIndex(true);
     state.analysis = null; state.acct.past = null; state.cart = []; state.cartAcct = null; saveCart(); renderCart();
     const shop = obj.docs['meta/shop']; applyShop(shop && shop.name, shop && shop.logo);
     $('#bkInfo').textContent = `已還原 ${items.toLocaleString()} 件貨品。`;
