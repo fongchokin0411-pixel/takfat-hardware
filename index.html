@@ -788,6 +788,28 @@ td .sub { display: block; margin-top: 2px; font-size: var(--fs-small); line-heig
 #acBody tr { cursor: pointer; }
 #acBody tr:hover td { background: var(--well); }
 #acBody tr[aria-selected="true"] td { background: var(--hue-tint); }
+/* 舊紀錄 */
+.or-find { display: flex; gap: 6px; }
+.or-find input { width: 210px; }
+.or-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
+.or-lines { list-style: none; margin: 0; padding: 4px 0; }
+.or-lines li { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto 96px; gap: 12px; align-items: center; padding: 6px var(--card-pad); font-size: 15px; font-variant-numeric: tabular-nums; }
+.or-lines .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.or-lines .r { text-align: right; white-space: nowrap; }
+.or-lines .m { color: var(--muted); }
+.slip.hit { box-shadow: 0 0 0 3px var(--hue); }
+.or-pay { list-style: none; margin: 0; padding: 0; display: grid; }
+.or-pay li { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.or-pay li:first-child { border-top: 0; }
+.or-empty { padding: 28px var(--card-pad); text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-card); }
+.or-empty strong { display: block; color: var(--text); margin-bottom: 4px; }
+.pu-items td { background: var(--well); }
+.pu-items ul { list-style: none; margin: 0; padding: 4px 0; display: grid; gap: 4px; }
+.pu-items li { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto auto; gap: 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+#puOldBody tr[data-ser] { cursor: pointer; }
+#puOldBody tr[data-ser]:hover td { background: var(--raised); }
+.pd-hist td.z { color: var(--faint); }
+@media (max-width: 1100px) { .or-cols { grid-template-columns: minmax(0, 1fr); } }
 /* 供應商 */
 .sp-old { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--rule); }
 .sp-old h3 { margin: 0; font-size: 15px; font-weight: 600; }
@@ -1005,7 +1027,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-sell" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="9" rx="1.5"/><path d="M6 11V4.5h9V11"/><path d="M8.5 7.5h4"/><path d="M7 15.5h2M11 15.5h2M15 15.5h2"/></symbol>
-  <symbol id="i-today" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-oldrec" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 4v3.5h3.5"/><path d="M12 8v4.2l2.8 1.8"/></symbol><symbol id="i-today" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
   <symbol id="i-return" viewBox="0 0 24 24"><path d="M9.5 5.5 5 10l4.5 4.5"/><path d="M5.5 10H15a4.5 4.5 0 0 1 0 9h-4"/></symbol>
   <symbol id="i-accounts" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><path d="M16 7h5M16 11h5M17.5 15h3.5"/></symbol>
   <symbol id="i-orders" viewBox="0 0 24 24"><path d="M3.5 8 12 3.5 20.5 8v4"/><path d="M3.5 8v8L12 20.5"/><path d="M3.5 8 12 12.5l3-1.6"/><circle cx="17.5" cy="17" r="3.8"/><path d="M17.5 15.2V17l1.2 1"/></symbol>
@@ -1047,6 +1069,7 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
     <button class="tab" role="tab" id="tab-sell" data-view="sell" aria-selected="true"><svg class="i"><use href="#i-sell"/></svg><span class="lbl">收銀</span><kbd>F2</kbd></button>
     <button class="tab" role="tab" id="tab-returns" data-view="returns" aria-selected="false"><svg class="i"><use href="#i-return"/></svg><span class="lbl">退貨</span><kbd>F3</kbd></button>
     <button class="tab" role="tab" id="tab-today" data-view="today" aria-selected="false"><svg class="i"><use href="#i-today"/></svg><span class="lbl">今日銷售</span><kbd>F8</kbd></button>
+    <button class="tab" role="tab" id="tab-oldrec" data-view="oldrec" aria-selected="false"><svg class="i"><use href="#i-oldrec"/></svg><span class="lbl">舊紀錄</span></button>
     <button class="tab" role="tab" id="tab-accounts" data-view="accounts" aria-selected="false"><svg class="i"><use href="#i-accounts"/></svg><span class="lbl">月結客戶</span></button>
     <button class="tab" role="tab" id="tab-orders" data-view="orders" aria-selected="false"><svg class="i"><use href="#i-orders"/></svg><span class="lbl">訂貨</span></button>
     <button class="tab" role="tab" id="tab-receive" data-view="receive" aria-selected="false"><svg class="i"><use href="#i-receive"/></svg><span class="lbl">入貨</span><kbd>F9</kbd></button>
@@ -1232,6 +1255,32 @@ tr.rcpt.ret td { background: var(--pill-warning-bg); }
             <div class="card-head"><h3 id="spProdTitle">供應嘅貨品</h3><div class="actions"><button id="spToProducts" class="btn small" type="button">喺貨品頁睇</button></div></div>
             <ul class="sp-list" id="spList"></ul>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 舊紀錄 -->
+  <section id="view-oldrec" class="view" role="tabpanel" aria-labelledby="tab-oldrec" hidden>
+    <div class="title-row">
+      <div><h2 class="vtitle">舊紀錄</h2><p class="sub" id="orSub">以前系統每日嘅日結同每張單。揀日子，或者打舊單號。</p></div>
+      <div class="actions">
+        <div class="monthpick">
+          <button id="orPrev" class="btn icon" type="button" aria-label="前一日"><svg class="i"><use href="#i-prev"/></svg></button>
+          <input id="orDay" type="date" aria-label="日子">
+          <button id="orNext" class="btn icon" type="button" aria-label="後一日"><svg class="i"><use href="#i-next"/></svg></button>
+        </div>
+        <form id="orFind" class="or-find" autocomplete="off"><input id="orNo" type="search" placeholder="舊單號" aria-label="舊單號"><button class="btn" type="submit">搵</button></form>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="kpis" id="orKpis"></div>
+      <p class="hint" id="orNote"></p>
+      <div class="cols or-cols">
+        <div class="slips" id="orSlips"></div>
+        <div class="stack">
+          <div class="card"><div class="card-head"><h2>每小時</h2><span class="hint" id="orHourNote"></span></div><div class="hours" id="orHours"></div></div>
+          <div class="card" id="orPayCard" hidden><div class="card-head"><h2>付款方式</h2></div><ul class="or-pay" id="orPay"></ul></div>
         </div>
       </div>
     </div>
@@ -3859,9 +3908,10 @@ async function loadPDetail(code) {
   if (pdBusy || !state.pd || state.pd.code !== code) return;
   pdBusy = true;
   try {
-    const [docs, hist] = await Promise.all([allDayDocs(), loadHistSold().catch(() => ({ map: new Map(), amt: new Map(), base: null }))]);
+    const [docs, hist, oldH] = await Promise.all([allDayDocs(), loadHistSold().catch(() => ({ map: new Map(), amt: new Map(), base: null })), oldGet('ph', code)]);
     if (!state.pd || state.pd.code !== code) return;
     state.pd.data = pdCollect(code, docs, hist);
+    state.pd.oldH = oldH || null;
     renderPDetail();
   } catch (e) { $('#pdBody').innerHTML = `<p class="hint">讀唔到紀錄：${esc(e.message || e)}</p>`; }
   finally { pdBusy = false; }
@@ -3905,6 +3955,21 @@ function pdCollect(code, docs, hist) {
   return { recs, months: [...months.values()].sort((x, y) => y.ym.localeCompare(x.ym)) };
 }
 const PD_KIND = { sale: '銷售', ret: '退貨', in: '入貨', adjust: '盤點' };
+// the old system's record of a product: sold each month since it began, and every time it came in
+function pdOldHtml(code, it) {
+  const H = state.pd && state.pd.oldH; if (!H) return '';
+  const unit = esc(it.unit || '件'), yrs = new Map();
+  for (const [ym, [q]] of Object.entries(H.m || {})) { const y = ym.slice(0, 4); if (!yrs.has(y)) yrs.set(y, new Array(12).fill(0)); yrs.get(y)[Number(ym.slice(4)) - 1] += q; }
+  const ys = [...yrs].sort((a, b) => b[0].localeCompare(a[0]));
+  const grid = ys.length ? `<div class="pd-scroll table-wrap"><table class="pd-hist"><thead><tr><th>年</th>${[...Array(12)].map((_, i) => `<th class="r">${i + 1}月</th>`).join('')}<th class="r">全年</th></tr></thead><tbody>${ys.map(([y, m]) =>
+    `<tr><td>${y}</td>${m.map(v => `<td class="r${v ? '' : ' z'}">${v ? qtyFmt(round3(v)) : '–'}</td>`).join('')}<td class="r"><b>${qtyFmt(round3(m.reduce((t, v) => t + v, 0)))}</b></td></tr>`).join('')}</tbody></table></div>` : '<p class="pd-empty">舊系統冇賣出紀錄。</p>';
+  const supName = c => { const s = state.suppliers.find(x => x.code === c); return s ? s.name : c || '–'; };
+  const buys = H.b || [];
+  const buyTable = buys.length ? `<div class="pd-scroll table-wrap"><table><thead><tr><th>日期</th><th>供應商</th><th class="r">數量</th><th class="r priv">來價</th><th>單號</th></tr></thead><tbody>${buys.slice(0, 120).map(b =>
+    `<tr><td>${esc(b[0])}</td><td>${esc(supName(b[1]))}</td><td class="r">${qtyFmt(b[2])} ${unit}</td><td class="r priv">${money(b[3])}</td><td><span class="tag">${esc(b[4])}</span></td></tr>`).join('')}</tbody></table></div>${buys.length > 120 ? `<p class="hint">仲有 ${(buys.length - 120).toLocaleString()} 次更早嘅入貨。</p>` : ''}` : '<p class="pd-empty">舊系統冇入貨紀錄。</p>';
+  return `<div class="pd-sec"><div class="card-head"><h3>舊系統：每月賣出（${unit}）</h3><span class="hint">由舊系統 SOITM.DBF 載入</span></div>${grid}</div>
+    <div class="pd-sec"><div class="card-head"><h3>舊系統：入貨（叫貨）</h3><span class="hint">${buys.length ? `${buys.length.toLocaleString()} 次 · 最近 ${esc(buys[0][0])}` : ''}</span></div>${buyTable}</div>`;
+}
 function renderPDetail() {
   const P = state.pd; if (!P || !P.data) return;
   const code = P.code, it = state.catalog.get(code); if (!it) { closePDetail(); return; }
@@ -3981,6 +4046,7 @@ function renderPDetail() {
   $('#pdBody').innerHTML = `${head}${kpis}
     <div class="pd-sec">${soldHtml(code, it)}</div>
     <div class="pd-sec"><div class="card-head"><h3>每月總結</h3><span class="hint">${state.soldHasHist ? '賣出包括舊系統匯入嘅數；其他欄只計呢個系統。' : '只計呢個系統嘅紀錄。'}</span></div>${monthTable}</div>
+    ${pdOldHtml(code, it)}
     <div class="pd-sec"><div class="card-head"><h3>全部紀錄</h3><span class="hint">${firsts}</span></div><div class="utabs pd-tabs" role="group" aria-label="篩選紀錄">${tabs}</div>${recTable}</div>
     <div class="pd-two"><div class="pd-sec priv"><h3>供應商同來價</h3>${supHtml}</div><div class="pd-sec"><h3>月結客人</h3>${cusHtml}</div></div>
     <div class="pd-sec"><h3>訂緊呢件貨嘅客人</h3>${ordHtml}</div>`;
@@ -4908,6 +4974,11 @@ async function loadPurchases(force) {
   state.pu = { month: m, rows, old: old.notes.filter(n => n.d.startsWith(m)) };
   renderPurchases();
 }
+function puItemsRow(items) {
+  if (items === 'wait') return '<tr class="pu-items"><td colspan="4" class="muted">讀緊…</td></tr>';
+  if (!Array.isArray(items) || !items.length) return `<tr class="pu-items"><td colspan="4" class="muted">${OLDR.meta ? '舊系統冇呢張單嘅貨品紀錄。' : '未有呢張單嘅貨品。喺「匯入・設定」載入舊系統 SOITM.DBF 之後就睇到。'}</td></tr>`;
+  return `<tr class="pu-items"><td colspan="4"><ul>${items.map(([c, q, pr, a]) => { const it = state.catalog.get(c); return `<li><span class="tag">${esc(c)}</span><span>${esc(it ? it.name : c)}</span><span class="num">${qtyFmt(q)}${it && it.unit ? ' ' + esc(it.unit) : ''}</span><span class="num priv">${money(pr)} · ${money(a)}</span></li>`; }).join('')}</ul></td></tr>`;
+}
 function puFiltered() {
   const P = state.pu; if (!P) return [];
   const sup = $('#puSup').value, terms = $('#puSearch').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -4935,8 +5006,10 @@ function renderPurchases() {
   $('#puNote').textContent = `${monthLabel(P.month)}${sup ? ' · ' + sup : ''} · ${rows.length.toLocaleString()} 行入貨紀錄${singles ? `，其中 ${singles} 行係喺「貨品」逐件入貨` : ''}。`
     + (noCost && state.unlocked ? `有 ${noCost} 行未有來價，未計入成本。` : '') + (oldRows.length ? ` 另有舊系統入貨單 ${oldRows.length} 張。` : '');
   $('#puOld').hidden = !oldRows.length;
-  $('#puOldNote').textContent = oldRows.length ? `${oldRows.length} 張${oldRows.some(n => n.ret) ? '（包括退貨畀供應商）' : ''} · 舊系統只有每張單嘅總數` : '';
-  $('#puOldBody').innerHTML = oldRows.map(n => `<tr><td class="num">${shortDay(n.d)}</td><td>${esc(n.sn || n.sc || NO_SUP)}${n.ret ? ' <span class="chip">退貨</span>' : ''}</td><td><span class="tag">${esc(n.no)}</span>${n.ref ? ` <span class="muted">${esc(n.ref)}</span>` : ''}</td><td class="r priv">${money(num(n.a) || 0)}</td></tr>`).join('');
+  $('#puOldNote').textContent = oldRows.length ? `${oldRows.length} 張${oldRows.some(n => n.ret) ? '（包括退貨畀供應商）' : ''} · ${OLDR.meta ? '撳一張單睇入咗咩貨' : '撳一張單睇貨品（要先載入舊系統 SOITM.DBF）'}` : '';
+  if (oldRows.length && OLDR.meta === null) oldMeta().then(m => { if (m) renderPurchases(); });
+  const open = state.puOpen || (state.puOpen = new Map());
+  $('#puOldBody').innerHTML = oldRows.map(n => `<tr${n.ser ? ` data-ser="${esc(n.ser)}" title="撳一下睇呢張單嘅貨品"` : ''}><td class="num">${shortDay(n.d)}</td><td>${esc(n.sn || n.sc || NO_SUP)}${n.ret ? ' <span class="chip">退貨</span>' : ''}</td><td><span class="tag">${esc(n.no)}</span>${n.ref ? ` <span class="muted">${esc(n.ref)}</span>` : ''}</td><td class="r priv">${money(num(n.a) || 0)}</td></tr>${n.ser && open.has(n.ser) ? puItemsRow(open.get(n.ser)) : ''}`).join('');
   const empty = $('#puEmpty');
   $('#puWrap').hidden = !rows.length; empty.hidden = !!rows.length || !!oldRows.length;
   $('#puFixHint').hidden = !P.rows.length; $('#puMode').hidden = !P.rows.length;
@@ -5441,7 +5514,7 @@ async function scanHistory() {
       info.textContent = `讀緊… ${(i + cnt).toLocaleString()} / ${total.toLocaleString()} 行`;
       await sleep(0);
     }
-    state.histScan = { agg, stats, minD, maxD, total, file: file.name, dayAgg, hasProfit: !!fProfit };
+    state.histScan = { agg, stats, minD, maxD, total, file: file.name, dayAgg, hasProfit: !!fProfit, fileObj: file };
     const ymdTxt = v => `${String(v).slice(0, 4)}-${String(v).slice(4, 6)}-${String(v).slice(6, 8)}`;
     info.textContent = `讀完 ${total.toLocaleString()} 行，日期由 ${maxD ? ymdTxt(minD) : '–'} 至 ${maxD ? ymdTxt(maxD) : '–'}。請核對下面嘅類別，再按「儲存銷售紀錄」。`;
     const types = [...stats].sort((x, y) => y[1].n - x[1].n);
@@ -5512,8 +5585,16 @@ async function saveHistory() {
     for (const [y, days] of years) { const id = 'days-soitm-' + y; dayDocs.push(id); await state.store.setHist(id, { kind: 'days', src: 'SOITM', days }); }
     for (const old of ((prev && Array.isArray(prev.dayDocs)) ? prev.dayDocs : [])) if (!dayDocs.includes(old)) await state.store.setHist(old, { kind: 'days', src: 'SOITM', days: {} });
     state.old = null;
+    // every sale and every 叫貨 item, kept on this computer for 舊紀錄, 貨品 詳細 and 入貨記錄
+    let lineTxt = '';
+    if (sc.fileObj) {
+      hCtl = new AbortController(); $('#hStop').hidden = false;
+      try { const L = await saveOldLines(sc.fileObj, roles); if (L) lineTxt = `、${L.nSale.toLocaleString()} 行舊單同 ${L.invoices.toLocaleString()} 張叫貨單嘅貨品`; }
+      catch (e) { lineTxt = `（每張單未能儲存：${e.message || e}）`; }
+      finally { $('#hStop').hidden = true; }
+    }
     await state.store.patchMeta('histInfo', { asOf, importedAt: new Date().toISOString(), file: sc.file, records: sc.total, from: sc.minD, to: sc.maxD, roles: Object.entries(roles), chunks: ids, products: items.length, dayDocs, days: nDays });
-    $('#hInfo').textContent = `完成。已儲存 ${items.length.toLocaleString()} 件貨品嘅銷售紀錄${nDays ? `，同 ${nDays.toLocaleString()} 日嘅營業額（喺「報表」揀日子就睇到）` : ''}。去「報表 → 貨品分析・補貨」睇結果。`;
+    $('#hInfo').textContent = `完成。已儲存 ${items.length.toLocaleString()} 件貨品嘅銷售紀錄${nDays ? `，同 ${nDays.toLocaleString()} 日嘅營業額（喺「報表」揀日子就睇到）` : ''}${lineTxt}。喺「舊紀錄」揀日子睇每張單。去「報表 → 貨品分析・補貨」睇結果。`;
     $('#hTypes').hidden = true;
     state.analysis = null; state.histSold = null; state.soldDirty = true;
     toast('舊系統銷售紀錄已儲存。');
@@ -5914,7 +5995,7 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(es => es.forEach(e =>
 function setStatus(cls, text) { const s = $('#status'); s.className = 'status ' + cls; s.textContent = text; }
 
 /* ---------- views ---------- */
-const VIEWS = ['sell', 'returns', 'today', 'accounts', 'orders', 'receive', 'purchases', 'suppliers', 'products', 'boss', 'reports', 'payables', 'import'];
+const VIEWS = ['sell', 'returns', 'today', 'oldrec', 'accounts', 'orders', 'receive', 'purchases', 'suppliers', 'products', 'boss', 'reports', 'payables', 'import'];
 const BOSS_VIEWS = ['boss', 'reports', 'payables', 'import'];
 function showView(v) {
   if (!VIEWS.includes(v) || (!state.unlocked && BOSS_VIEWS.includes(v))) v = 'sell';
@@ -5932,6 +6013,7 @@ function showView(v) {
   if (v === 'returns') openReturns();
   if (v === 'accounts') openAccounts();
   if (v === 'suppliers') renderSuppliers();
+  if (v === 'oldrec') openOldRec();
   if (v === 'orders') renderOrders();
   if (v === 'boss') openBoss();
   if (v === 'payables') openPayables();
@@ -6280,6 +6362,172 @@ function editSupplier(name) {
     state.sp.sel = null; renderSuppliers();
     toast(`已刪除供應商「${name}」。`);
   } } : null });
+}
+/* ---------- the old system's lines, kept on this computer (IndexedDB 'tf-old') ----------
+   The SOITM.DBF import fills it: each month's sales (sl/YYYY-MM: [day, time, 單號, type, code, qty, price, amount, profit]),
+   each 叫貨 invoice's items (pl/<document>: [code, qty, cost, amount]), each product's history
+   (ph/<code>: { m: { YYYYMM: [qty, amount] }, b: [[date, supplier code, qty, cost, 單號]] }) and what was read (info/meta).
+   Too big for a backup: importing SOITM.DBF on another computer brings it back. */
+const OLDL = { db: null };
+function oldDb() {
+  return OLDL.db || (OLDL.db = new Promise((res, rej) => {
+    const r = indexedDB.open('tf-old', 1);
+    r.onupgradeneeded = () => { const d = r.result; for (const s of ['sl', 'pl', 'ph', 'info']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s); };
+    r.onsuccess = () => res(r.result); r.onerror = () => { OLDL.db = null; rej(r.error); };
+  }));
+}
+async function oldGet(store, key) {
+  try { const db = await oldDb(); return await new Promise((res, rej) => { const q = db.transaction(store).objectStore(store).get(key); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+  catch (e) { return undefined; }
+}
+async function oldPut(store, entries) {
+  const db = await oldDb();
+  return new Promise((res, rej) => { const t = db.transaction(store, 'readwrite'), st = t.objectStore(store); for (const [k, v] of entries) st.put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); });
+}
+async function oldClearAll() {
+  const db = await oldDb(), names = ['sl', 'pl', 'ph', 'info'];
+  return new Promise((res, rej) => { const t = db.transaction(names, 'readwrite'); for (const s of names) t.objectStore(s).clear(); t.oncomplete = () => res(); t.onerror = () => rej(t.error); });
+}
+const r2 = v => Math.round(v * 100) / 100;
+const docNo = s => { const m = String(s || '').match(/(\d+)\D*$/); return m ? Number(m[1]) : null; };
+// the second pass of the SOITM.DBF import: every sale line by month, every 叫貨 item, every product's history
+async function saveOldLines(file, roles) {
+  const info = $('#hInfo'), bar = $('#hProg').querySelector('i');
+  const hb = await file.slice(0, 1 << 16).arrayBuffer();
+  const h = dbfHeader(new Uint8Array(hb), new DataView(hb));
+  const pf = (names, types) => pickField(h.fields, names, types);
+  const f = { code: pf(['CITEMNO', 'ITEMNO', 'CODE'], 'C'), type: pf(['CTYPE', 'TYPE'], 'C'), date: pf(['CDATE', 'CINVDATE', 'DDATE', 'ENTRYDATE', 'DATE'], 'DTC'),
+    qty: pf(['NSALQTY', 'NQTY', 'QTY'], 'NFIBY'), amt: pf(['NNETAMT', 'NHKAMT', 'NSALAMT', 'NAMT'], 'NFIBY'), price: pf(['NHKUPRICE', 'NUPRICE'], 'NFIBY'),
+    profit: pf(['NPROFIT'], 'NFIBY'), doc: pf(['SERNUM'], 'C'), inv: pf(['CINVNO'], 'C'), time: pf(['CTIME'], 'C'), cust: pf(['CCUSTNO'], 'C') };
+  if (!f.code || !f.date || !f.qty) return null;
+  const PUR = new Set(['PNV', 'PRE']);
+  const total = Math.min(h.n, Math.floor((file.size - h.hlen) / h.rlen)), per = Math.max(1, Math.floor((8 << 20) / h.rlen));
+  await oldClearAll();
+  const months = new Map(), pur = new Map(), prod = new Map(), ranges = {};
+  let buffered = 0, nSale = 0, nPur = 0, minD = 99999999, maxD = 0;
+  const flush = async () => {
+    const out = [];
+    for (const [mk, arr] of months) { const cur = await oldGet('sl', mk); out.push([mk, cur ? cur.concat(arr) : arr]); }
+    if (out.length) await oldPut('sl', out);
+    months.clear(); buffered = 0;
+  };
+  for (let i = 0; i < total; i += per) {
+    if (hCtl && hCtl.signal.aborted) throw new Error('已停止。');
+    const cnt = Math.min(per, total - i);
+    const u8 = new Uint8Array(await file.slice(h.hlen + i * h.rlen, h.hlen + (i + cnt) * h.rlen).arrayBuffer());
+    const t = (b, fl) => fl ? asciiTrim(u8, b + fl.pos, fl.len) : '';
+    for (let r = 0; r < cnt; r++) {
+      const b = r * h.rlen;
+      if (u8[b] === 0x2A || b + h.rlen > u8.length) continue;
+      const type = t(b, f.type).toUpperCase(), role = roles[type] || 'skip', isPur = PUR.has(type);
+      if (role === 'skip' && !isPur) continue;
+      const code = t(b, f.code).toUpperCase(); if (!code) continue;
+      const ymd = readYmd(u8, b, f.date); if (!ymd) continue;
+      if (ymd < minD) minD = ymd; if (ymd > maxD) maxD = ymd;
+      const q = readNumF(u8, b, f.qty), a = readNumF(u8, b, f.amt), pr = f.price ? readNumF(u8, b, f.price) : (q ? a / q : 0);
+      const inv = t(b, f.inv) || t(b, f.doc), doc = t(b, f.doc) || (type + inv);
+      const mk = `${Math.floor(ymd / 10000)}-${String(Math.floor(ymd / 100) % 100).padStart(2, '0')}`, d = ymd % 100;
+      let ph = prod.get(code); if (!ph) prod.set(code, ph = { m: {}, b: [] });
+      if (isPur) {
+        // goods sent back to the supplier (PRE) count as minus
+        const sq = type === 'PRE' ? -Math.abs(q) : q, sa = type === 'PRE' ? -Math.abs(a) : a;
+        let it = pur.get(doc); if (!it) pur.set(doc, it = []);
+        it.push([code, round3(sq), r2(pr), r2(sa)]);
+        ph.b.push([`${mk}-${String(d).padStart(2, '0')}`, t(b, f.cust), round3(sq), r2(pr), inv]);
+        nPur++;
+        continue;
+      }
+      let arr = months.get(mk); if (!arr) months.set(mk, arr = []);
+      arr.push([d, t(b, f.time), inv, type, code, round3(q), r2(pr), r2(a), f.profit ? r2(readNumF(u8, b, f.profit)) : null]);
+      const ym = mk.replace('-', ''), e = ph.m[ym] || (ph.m[ym] = [0, 0]);
+      if (role === 'return') { e[0] = round3(e[0] - Math.abs(q)); e[1] = r2(e[1] - Math.abs(a)); } else { e[0] = round3(e[0] + q); e[1] = r2(e[1] + a); }
+      const n = docNo(inv);
+      if (n !== null) { const g = ranges[mk]; if (!g) ranges[mk] = [n, n]; else { if (n < g[0]) g[0] = n; if (n > g[1]) g[1] = n; } }
+      nSale++; buffered++;
+    }
+    if (buffered > 150000) await flush();
+    bar.style.width = Math.round((i + cnt) / total * 100) + '%';
+    info.textContent = `儲存緊每張單… ${(i + cnt).toLocaleString()} / ${total.toLocaleString()} 行`;
+    await sleep(0);
+  }
+  await flush();
+  const pe = [...pur]; for (let k = 0; k < pe.length; k += 2000) await oldPut('pl', pe.slice(k, k + 2000));
+  for (const v of prod.values()) v.b.sort((x, y) => y[0].localeCompare(x[0]));
+  const pp = [...prod]; for (let k = 0; k < pp.length; k += 2000) await oldPut('ph', pp.slice(k, k + 2000));
+  await oldPut('info', [['meta', { file: file.name, at: new Date().toISOString(), from: minD, to: maxD, sales: nSale, purchases: nPur, invoices: pur.size, products: prod.size, ranges, roles }]]);
+  OLDR.meta = null; OLDR.cache = new Map();
+  return { nSale, nPur, invoices: pur.size };
+}
+
+/* ---------- 舊紀錄: a day of the old system, like its 日結 report, with every sale ---------- */
+const OLDR = { meta: null, cache: new Map(), day: '', hit: '', picked: false };
+async function oldMeta() { if (OLDR.meta === null) OLDR.meta = (await oldGet('info', 'meta')) || false; return OLDR.meta; }
+async function oldMonth(mk) { if (!OLDR.cache.has(mk)) OLDR.cache.set(mk, (await oldGet('sl', mk)) || []); return OLDR.cache.get(mk); }
+const ymdDay = v => v ? `${String(v).slice(0, 4)}-${String(v).slice(4, 6)}-${String(v).slice(6, 8)}` : '';
+async function openOldRec() {
+  const [old, meta] = await Promise.all([loadOld(), oldMeta()]);
+  // the newest old day, until the user picks one
+  if (!OLDR.picked) $('#orDay').value = (meta && meta.to ? ymdDay(meta.to) : '') || old.to || addDays(state.today, -1);
+  renderOldRec();
+}
+async function renderOldRec() {
+  const day = $('#orDay').value; if (!day) return;
+  OLDR.day = day;
+  const [old, meta] = await Promise.all([loadOld(), oldMeta()]);
+  const roles = meta && meta.roles ? meta.roles : {};
+  const lines = meta ? (await oldMonth(day.slice(0, 7))).filter(l => l[0] === Number(day.slice(8))) : [];
+  if ($('#orDay').value !== day) return;
+  const o = old.days.get(day);
+  // the day's sales, each with its lines; a return reads as money going back
+  const docs = new Map();
+  for (const l of lines) {
+    const key = l[3] + '|' + l[2]; let s = docs.get(key);
+    if (!s) docs.set(key, s = { inv: l[2], type: l[3], time: l[1], ret: roles[l[3]] === 'return', lines: [], total: 0, profit: 0 });
+    s.lines.push(l); if (!s.time && l[1]) s.time = l[1];
+    s.total += s.ret ? -Math.abs(l[7]) : l[7]; s.profit += s.ret ? -Math.abs(l[8] || 0) : (l[8] || 0);
+  }
+  const sales = [...docs.values()].sort((a, b) => String(b.time).localeCompare(String(a.time)) || String(b.inv).localeCompare(String(a.inv)));
+  const fromLines = { s: sales.reduce((t, x) => t + x.total, 0), n: sales.filter(x => !x.ret).length, r: sales.filter(x => x.ret).reduce((t, x) => t - x.total, 0), p: sales.reduce((t, x) => t + x.profit, 0) };
+  const T = o || (sales.length ? { ...fromLines, c: fromLines.s - fromLines.p } : null);
+  const kp = (k, v, cls = '') => `<div class="kpi ${cls}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  $('#orKpis').innerHTML = T ? kp('營業額', money(T.s || 0), 'money lead') + kp('單數', `${(T.n || 0).toLocaleString()}<small>張</small>`) + kp('退貨', money(T.r || 0), 'money')
+    + (state.unlocked && oldKnown(T) ? kp('利潤', money(T.p), 'money') + kp('毛利率', T.s ? Math.round(T.p / T.s * 100) + '%' : '–') : '') : '';
+  $('#orKpis').hidden = !T; fixKpis();
+  $('#orSub').textContent = `${day.slice(0, 4)} 年 ${dayLabel(day)}${o ? ' · 舊系統日結' : sales.length ? ' · 由每張單計' : ''}`;
+  $('#orNote').textContent = !meta ? (old.days.size ? '未載入每張單（舊系統 SOITM.DBF）。喺「匯入・設定 → 匯入舊系統銷售紀錄」載入之後，就睇到每張單同貨品。' : '未有舊系統紀錄。喺「匯入・設定」載入舊系統 SOITM.DBF。')
+    : `每張單由 ${ymdDay(meta.from)} 至 ${ymdDay(meta.to)}。`;
+  // hour by hour: the old 日結's own figures, or the times on the sales
+  let hrs = o && Array.isArray(o.h) ? o.h.map(([hh, n, a]) => [hh, n, a]) : null;
+  if (!hrs && sales.length) { const m = new Map(); for (const x of sales) { const hh = Number(String(x.time).slice(0, 2)); if (Number.isFinite(hh) && String(x.time).includes(':')) { const e = m.get(hh) || [hh, 0, 0]; e[1]++; e[2] += x.total; m.set(hh, e); } } hrs = [...m.values()]; }
+  if (hrs && hrs.length) {
+    const lo = Math.min(9, ...hrs.map(x => x[0])), hi = Math.max(19, ...hrs.map(x => x[0])), by = new Map(hrs.map(x => [x[0], x]));
+    const vals = []; for (let hh = lo; hh <= hi; hh++) vals.push([hh, by.has(hh) ? by.get(hh)[2] : 0, by.has(hh) ? by.get(hh)[1] : 0]);
+    const top = Math.max(0, ...vals.map(v => v[1])), peak = top > 0 ? vals.findIndex(v => v[1] === top) : -1;
+    $('#orHours').innerHTML = `<ol class="ms" style="grid-template-columns:repeat(${vals.length},minmax(0,1fr))">${vals.map(([hh, a, n], i) => `<li class="${a > 0 ? '' : 'zero'}${i === peak ? ' peak' : ''}" title="${String(hh).padStart(2, '0')}:00 · ${n} 張 · ${money(a)}"><span class="q">${a ? '$' + Math.round(a).toLocaleString('en-HK') : '–'}</span><i class="b" style="--h:${a > 0 && top > 0 ? Math.max(5, Math.round(a / top * 100)) : 0}"></i><span class="m">${String(hh).padStart(2, '0')}</span></li>`).join('')}</ol>`;
+    $('#orHourNote').textContent = peak >= 0 ? `最多：${String(vals[peak][0]).padStart(2, '0')}:00–${String(vals[peak][0] + 1).padStart(2, '0')}:00` : '';
+  } else { $('#orHours').innerHTML = '<p class="hint">冇每小時紀錄。</p>'; $('#orHourNote').textContent = ''; }
+  const pay = o && isObj(o.pay) ? Object.entries(o.pay) : [];
+  $('#orPayCard').hidden = !pay.length;
+  $('#orPay').innerHTML = pay.map(([k, v]) => `<li><span>${esc({ HKD: '現金', AE: 'American Express', VISA: 'Visa', MASTER: 'Master', EPS: 'EPS', CHEQUE: '支票' }[k] || k)}</span><b>${money(v)}</b></li>`).join('');
+  // every sale that day
+  $('#orSlips').innerHTML = sales.length ? sales.map(x => `<article class="slip${x.ret ? ' ret' : ''}${OLDR.hit && x.inv.toUpperCase() === OLDR.hit ? ' hit' : ''}" data-inv="${esc(x.inv)}">
+      <div class="slip-top"><span class="slip-no">${esc(x.inv)}<small>${esc(x.time || '')}</small></span><span class="slip-meta">${x.ret ? '<strong>退貨</strong>' : esc(TYPE_NAME[x.type] || x.type)} · ${x.lines.length} 款</span><span></span>
+        <span class="slip-sum"><span class="v">${money(x.total)}</span>${state.unlocked && x.profit ? `<span class="p">利潤 ${money(x.profit)}</span>` : ''}</span></div>
+      <ul class="or-lines">${x.lines.map(l => { const it = state.catalog.get(l[4]); return `<li><span class="tag">${esc(l[4])}</span><span class="nm">${esc(it ? it.name : l[4])}</span><span class="r m">${qtyFmt(l[5])}${it && it.unit ? ' ' + esc(it.unit) : ''} × ${money(l[6])}</span><span class="r">${money(l[7])}</span></li>`; }).join('')}</ul></article>`).join('')
+    : `<div class="or-empty"><strong>${T ? '呢日有日結，但未有每張單' : '呢日冇舊紀錄'}</strong>${T ? (meta ? '舊系統冇呢日嘅每張單紀錄。' : '載入舊系統 SOITM.DBF 之後就睇到每張單。') : '揀第二日，或者打舊單號。'}</div>`;
+  if (OLDR.hit) { const el = $('#orSlips .slip.hit'); if (el) el.scrollIntoView({ block: 'center' }); }
+}
+// an old 單號: the months whose numbers cover it, then the sale itself
+async function findOldNo() {
+  const q = $('#orNo').value.trim().toUpperCase(); if (!q) return;
+  const meta = await oldMeta();
+  if (!meta) { toast('未載入舊系統每張單（SOITM.DBF），搵唔到舊單號。', true); return; }
+  const n = docNo(q), months = Object.entries(meta.ranges || {}).filter(([, g]) => n !== null && n >= g[0] && n <= g[1]).map(([mk]) => mk).sort().reverse();
+  for (const mk of months) {
+    const hit = (await oldMonth(mk)).find(l => { const v = String(l[2]).toUpperCase(); return v === q || (/^\d+$/.test(q) && docNo(v) === n); });
+    if (hit) { OLDR.hit = String(hit[2]).toUpperCase(); OLDR.picked = true; $('#orDay').value = `${mk}-${String(hit[0]).padStart(2, '0')}`; renderOldRec(); return; }
+  }
+  toast(`搵唔到舊單號「${q}」。`, true);
 }
 /* ---------- 月結客戶: sales put on a customer's account (掛數), payments, monthly statements ----------
    Customers live in meta/customers. A sale on account is an ordinary receipt carrying `acct`; a payment sits in its day's
@@ -7127,6 +7375,18 @@ $('#retCode').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefa
 $('#retQty').addEventListener('keydown', e => { if (isEnter(e)) { e.preventDefault(); $('#retPrice').focus(); $('#retPrice').select(); } });
 $('#retClear').addEventListener('click', () => { state.ret.items = []; state.ret.from = null; renderRetSlip(); $('#retNo').focus(); });
 $('#retDo').addEventListener('click', doReturn);
+// 舊紀錄
+$('#orDay').addEventListener('change', () => { OLDR.hit = ''; OLDR.picked = true; renderOldRec(); });
+$('#orPrev').addEventListener('click', () => { if (!$('#orDay').value) return; OLDR.hit = ''; OLDR.picked = true; $('#orDay').value = addDays($('#orDay').value, -1); renderOldRec(); });
+$('#orNext').addEventListener('click', () => { if (!$('#orDay').value) return; OLDR.hit = ''; OLDR.picked = true; $('#orDay').value = addDays($('#orDay').value, 1); renderOldRec(); });
+$('#orFind').addEventListener('submit', e => { e.preventDefault(); findOldNo(); });
+$('#puOldBody').addEventListener('click', async e => {
+  const tr = e.target.closest('tr[data-ser]'); if (!tr) return;
+  const ser = tr.dataset.ser, open = state.puOpen || (state.puOpen = new Map());
+  if (open.has(ser)) { open.delete(ser); renderPurchases(); return; }
+  open.set(ser, 'wait'); renderPurchases();
+  open.set(ser, (await oldGet('pl', ser)) || []); renderPurchases();
+});
 // 供應商
 $('#spSearch').addEventListener('input', renderSuppliers);
 $('#spBody').addEventListener('click', e => { const tr = e.target.closest('[data-sp]'); if (tr) { state.sp.sel = tr.dataset.sp; renderSuppliers(); } });
