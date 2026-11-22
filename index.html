@@ -2538,6 +2538,28 @@ const state = {
 };
 
 /* ---------- storage ---------- */
+// The online store (the claude.ai page) takes at most 256 KiB in one record. A big year of old records is saved
+// a month to a record: <id> stays as an empty record (so an older whole-year copy is cleared) and <id>-01 … <id>-12 hold the months.
+const HIST_SPLIT = 150000;
+function splitHist(id, body) {
+  if (!isObj(body) || (body.kind !== 'days' && body.kind !== 'pnv')) return [[id, body]];
+  let size = 0;
+  try { size = new TextEncoder().encode(JSON.stringify(body)).length; } catch (e) { return [[id, body]]; }
+  if (size <= HIST_SPLIT) return [[id, body]];
+  const months = new Map(), mOf = d => { const m = String(d || '').slice(5, 7); return /^\d\d$/.test(m) ? m : '00'; };
+  if (body.kind === 'days' && isObj(body.days)) for (const [d, v] of Object.entries(body.days)) { const m = mOf(d); if (!months.has(m)) months.set(m, {}); months.get(m)[d] = v; }
+  if (body.kind === 'pnv' && Array.isArray(body.notes)) for (const n of body.notes) { const m = mOf(isObj(n) ? n.d : ''); if (!months.has(m)) months.set(m, []); months.get(m).push(n); }
+  const out = [[id, body.kind === 'days' ? { ...body, days: {} } : { ...body, notes: [] }]];
+  for (const [m, part] of [...months].sort((a, b) => a[0].localeCompare(b[0]))) out.push([`${id}-${m}`, body.kind === 'days' ? { ...body, days: part } : { ...body, notes: part }]);
+  return out;
+}
+// a busy store ("too many writes") or a passing outage: wait a little longer each time, then try again
+async function dbRetry(fn) {
+  for (let i = 0; ; i++) {
+    try { return await fn(); }
+    catch (e) { const c = e && e.code; if (i >= 5 || (c !== 'resource_exhausted' && c !== 'unavailable')) throw e; await sleep(700 * 2 ** i + Math.random() * 400); }
+  }
+}
 function makeDbStore(db) {
   const queues = new Map();
   const enqueue = (path, fn) => { const next = (queues.get(path) || Promise.resolve()).catch(() => {}).then(fn); queues.set(path, next); return next; };
@@ -2572,8 +2594,14 @@ function makeDbStore(db) {
       for (const id of ['suppliers', 'aliases', 'session', 'histInfo', 'shop', 'customers', 'orders', 'payables', 'priceAlerts']) { const s = await db.doc('meta/' + id).get(); if (s.exists) out['meta/' + id] = s.data(); }
       return out;
     },
-    async restoreAll(map) { for (const [k, v] of Object.entries(map)) { if (!BACKUP_KEY.test(k) || !isObj(v) || k === 'meta/settings') continue; await db.doc(k).set(v); } },
-    setHist(id, body) { return enqueue('hist/' + id, () => db.doc('hist/' + id).set(body)); },
+    async restoreAll(map) {
+      for (const [k, v] of Object.entries(map)) {
+        if (!BACKUP_KEY.test(k) || !isObj(v) || k === 'meta/settings') continue;
+        if (k.startsWith('hist/')) { for (const [hk, hv] of splitHist(k.slice(5), v)) await dbRetry(() => db.doc('hist/' + hk).set(hv)); }
+        else await dbRetry(() => db.doc(k).set(v));
+      }
+    },
+    async setHist(id, body) { for (const [k, v] of splitHist(id, body)) await enqueue('hist/' + k, () => dbRetry(() => db.doc('hist/' + k).set(v))); },
     patchMeta(id, patch) {
       const ref = db.doc('meta/' + id);
       return enqueue('meta/' + id, async () => {
@@ -5799,8 +5827,19 @@ function addOldRecords(obj) {
   openModal('加入舊系統紀錄', `<p>呢個檔案有舊系統 ${nDays.toLocaleString()} 日嘅營業紀錄同 ${nInv.toLocaleString()} 張入貨單（${esc(obj.shop || '')}）。</p>
     <p class="hint">只會加入舊紀錄：貨品、存量、供應商同呢個系統嘅銷售紀錄全部唔會改。再加一次會用新嘅取代舊嘅。</p>`, async () => {
     $('#bkInfo').textContent = '加入緊…';
-    for (const [k, v] of docs) await state.store.setHist(k.slice(5), v);
+    // every part is tried; what did not go in is named, and adding the same file again fills it in
+    const failed = []; let n = 0;
+    for (const [k, v] of docs) {
+      try { await state.store.setHist(k.slice(5), v); }
+      catch (e) { console.error(k, e); failed.push(`${k.slice(5)}：${(e && (e.message || e.code)) || e}`); }
+      $('#bkInfo').textContent = `加入緊… ${++n} / ${docs.length}`;
+    }
     state.old = null; state.analysis = null;
+    if (failed.length) {
+      $('#bkInfo').textContent = `${docs.length - failed.length} / ${docs.length} 部分已加入；未能加入：${failed.join('；')}。請再用「還原備份…」加入同一個檔案。`;
+      toast('部分舊紀錄未能加入。', true);
+      return;
+    }
     $('#bkInfo').textContent = `已加入 ${nDays.toLocaleString()} 日營業紀錄同 ${nInv.toLocaleString()} 張舊入貨單。去「報表」或者「入貨記錄」揀日子就睇到。`;
     toast('舊系統紀錄已加入。');
   }, { ok: '加入' });
